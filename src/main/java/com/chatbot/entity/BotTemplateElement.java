@@ -53,6 +53,11 @@ public class BotTemplateElement implements Serializable {
 	@ManyToOne
 	@JoinColumn(name = "SUB_TITLE_TEXT_ID")
 	private BotText subTitle;
+	
+	
+	@ManyToOne
+	@JoinColumn(name = "BOTWEBSERVICEMESSAGE_ID")
+	private BotWebserviceMessage botWebserviceMessage;
 
 	public BotTemplateElement() {
 	}
@@ -127,4 +132,14 @@ public class BotTemplateElement implements Serializable {
 		this.subTitle = subTitle;
 	}
 
+	public BotWebserviceMessage getBotWebserviceMessage() {
+		return botWebserviceMessage;
+	}
+
+	public void setBotWebserviceMessage(BotWebserviceMessage botWebserviceMessage) {
+		this.botWebserviceMessage = botWebserviceMessage;
+	}
+
+	
+	
 }

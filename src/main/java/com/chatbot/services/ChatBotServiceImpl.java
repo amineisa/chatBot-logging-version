@@ -15,8 +15,11 @@ import com.chatbot.dao.BotTextMessageRepo;
 import com.chatbot.dao.BotTextResponseMappingRepo;
 import com.chatbot.dao.BotWebserviceMappingRepo;
 import com.chatbot.dao.BotWebserviceMessageRepo;
+import com.chatbot.dao.CustomerProfileRepo;
+import com.chatbot.dao.InteractionLoggingRepo;
 import com.chatbot.dao.InteractionMessageRepo;
 import com.chatbot.dao.PersistenceMenuButtonRepo;
+import com.chatbot.dao.SubscribeWSBodyRepo;
 import com.chatbot.entity.BotButton;
 import com.chatbot.entity.BotButtonTemplateMSG;
 import com.chatbot.entity.BotGTemplateMessage;
@@ -28,7 +31,12 @@ import com.chatbot.entity.BotTextMessage;
 import com.chatbot.entity.BotTextResponseMapping;
 import com.chatbot.entity.BotWebserviceMapping;
 import com.chatbot.entity.BotWebserviceMessage;
+import com.chatbot.entity.CustomerProfile;
+import com.chatbot.entity.EnabledCategoryConfiguration;
+import com.chatbot.entity.InteractionLogging;
 import com.chatbot.entity.PersistenceMenuButton;
+import com.chatbot.entity.SubscribeWSBody;
+import com.chatbot.dao.EnabledCategoryConfigurationRepo;
 
 @Service
 public class ChatBotServiceImpl implements ChatBotService {
@@ -68,7 +76,18 @@ public class ChatBotServiceImpl implements ChatBotService {
 	@Autowired
 	private BotButtonTemplateMSGRepo botButtonTemplateMSGRepo;
 	
-
+	@Autowired
+	private CustomerProfileRepo customerProfileRepo;
+	
+	@Autowired
+	private InteractionLoggingRepo interactionLoggingRepo;
+	
+	@Autowired
+	private SubscribeWSBodyRepo subscribeWSBodyRepo;
+	
+	@Autowired
+	private EnabledCategoryConfigurationRepo  enabledCategoryConfigurationRepo;
+	
 	public List<BotInteractionMessage> findInteractionMessagesByInteractionId(Long interactionId) {
 		return interactionMessageRepo.findByBotInteractionInteractionIdOrderByMessagePriority(interactionId);
 	}
@@ -167,5 +186,50 @@ public class ChatBotServiceImpl implements ChatBotService {
 		return botButtonRepo.findBotButtonByBotWebserviceMessage(botWebserviceMessage);
 	}
 
+	@Override
+	public CustomerProfile getCustomerProfileBySenderId(String senderId) {
+		return customerProfileRepo.findCustomerProfileBySenderID(senderId);
+	}
+
+	@Override
+	public CustomerProfile saveCustomerProfile(CustomerProfile customerProfile) {
+		return customerProfileRepo.save(customerProfile);
+	}
+
+	@Override
+	public List<InteractionLogging> getInteractionLoggingsByCustomer(CustomerProfile customerProfile) {
+		return interactionLoggingRepo.findAllByCustomerProfile(customerProfile);
+	}
+
+	@Override
+	public List<InteractionLogging> getInteractionLoggingsByInteraction(BotInteraction botInteraction) {
+		return interactionLoggingRepo.findAllByBotInteraction(botInteraction);
+	}
+
+	@Override
+	public InteractionLogging getInteractionLoggingByID(Long id) {
+		return interactionLoggingRepo.findInteractionLoggingByInteractionLoggingId(id);
+	}
+
+	@Override
+	public InteractionLogging saveInteractionLogging(InteractionLogging interactionLogging) {
+		return interactionLoggingRepo.save(interactionLogging);
+	}
+	@Override
+	public SubscribeWSBody getSubscribeWSBodyById(String id) {
+		return subscribeWSBodyRepo.findSubscribeWSBodyByBundleId(id);
+	}
+
+	@Override
+	public SubscribeWSBody saveSubscribeWSBody(SubscribeWSBody subscribeWSBody) {
+		return subscribeWSBodyRepo.save(subscribeWSBody);
+	}
+
+	@Override
+	public EnabledCategoryConfiguration getEnabledCategoryConfigurationDaoById(Long id) {
+		return enabledCategoryConfigurationRepo.findEnabledCategoryConfigurationById(id) ;
+	}
+
+	
 
 }

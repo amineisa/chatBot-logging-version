@@ -62,10 +62,10 @@ public class BotWebserviceMessage implements Serializable {
 	@JoinColumn(name = "OUT_TYPE_ID")
 	private BotInOutType outType;
 	
-	@ManyToOne
+	/*@ManyToOne
 	@JoinColumn(name = "SUBTITLE_TEXT_ID")
 	private BotText subTitle;
-	
+	*/
 	
 	@ManyToOne
 	@JoinColumn(name = "TITLE_TEXT_ID")
@@ -173,15 +173,7 @@ public class BotWebserviceMessage implements Serializable {
 		this.listParamName = listParamName;
 	}
 
-	
 
-	public BotText getSubTitle() {
-		return subTitle;
-	}
-
-	public void setSubTitle(BotText subTitle) {
-		this.subTitle = subTitle;
-	}
 
 	public BotText getTitle() {
 		return title;

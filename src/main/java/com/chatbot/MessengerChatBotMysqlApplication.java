@@ -50,7 +50,6 @@ public class MessengerChatBotMysqlApplication {
 	private BotButtonRepo botButtonRepo;
 
 	private static final Logger logger = LoggerFactory.getLogger(MessengerChatBotMysqlApplication.class);
-
 	public static void main(String[] args) {
 		SpringApplication.run(MessengerChatBotMysqlApplication.class, args);
 	}
@@ -66,11 +65,9 @@ public class MessengerChatBotMysqlApplication {
 		try {
 			messenger.updateSettings(initSendPersistenceMenu());
 		} catch (MessengerApiException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error(e.getMessage());
 		} catch (MessengerIOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error(e.getMessage());
 		}
 		return messenger;
 	}
@@ -117,7 +114,7 @@ public class MessengerChatBotMysqlApplication {
 				try {
 					url = new URL(realButton.getButtonUrl());
 				} catch (MalformedURLException e) {
-					e.printStackTrace();
+					logger.error(e.getMessage());
 				}
 				UrlCallToAction urlCallToAction = UrlCallToAction.create(realButton.getBotText().getEnglishText(), url,
 						Optional.of(WebviewHeightRatio.FULL), empty(), empty(),
@@ -166,7 +163,7 @@ public class MessengerChatBotMysqlApplication {
 					UrlCallToAction urlCallToAction = UrlCallToAction.create(title, new URL(url));
 					subNestedButton.add(urlCallToAction);
 				} catch (MalformedURLException e) {
-					e.printStackTrace();
+					logger.error(e.getMessage());
 				}
 			}
 		}

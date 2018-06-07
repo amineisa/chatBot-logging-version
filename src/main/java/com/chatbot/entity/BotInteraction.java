@@ -23,7 +23,7 @@ public class BotInteraction implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	@Id
-	@Column(name = "INTERACTION_ID")
+	@Column(name = "INTERACTION_ID" ,nullable=false)
 	private Long interactionId;
 
 	@Column(name = "INTERACTION_NAME")
@@ -45,9 +45,14 @@ public class BotInteraction implements Serializable {
 	@OneToMany(mappedBy = "botInteraction")
 	private List<BotInteractionMessage> botInteractionMessages;
 
+	
 	public BotInteraction() {
 	}
 
+	
+	
+	
+	
 	public Long getInteractionId() {
 		return this.interactionId;
 	}

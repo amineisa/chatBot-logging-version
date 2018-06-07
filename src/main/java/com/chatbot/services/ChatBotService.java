@@ -13,7 +13,11 @@ import com.chatbot.entity.BotTextMessage;
 import com.chatbot.entity.BotTextResponseMapping;
 import com.chatbot.entity.BotWebserviceMapping;
 import com.chatbot.entity.BotWebserviceMessage;
+import com.chatbot.entity.CustomerProfile;
+import com.chatbot.entity.EnabledCategoryConfiguration;
+import com.chatbot.entity.InteractionLogging;
 import com.chatbot.entity.PersistenceMenuButton;
+import com.chatbot.entity.SubscribeWSBody;
 
 
 public interface ChatBotService {
@@ -64,8 +68,33 @@ public interface ChatBotService {
 	public List<BotButtonTemplateMSG> findBotButtonTemplateMSGByBotInteractionMessage(BotInteractionMessage interactionMSG);
 	
 	
+	//Customer Profile 
+	
+	public CustomerProfile getCustomerProfileBySenderId(String senderId);
+	
+	public CustomerProfile saveCustomerProfile(CustomerProfile customerProfile);
+	
+	// InteractionLogging
+	
+	public List<InteractionLogging> getInteractionLoggingsByCustomer(CustomerProfile customerProfile);
+	
+	public List<InteractionLogging> getInteractionLoggingsByInteraction(BotInteraction botInteraction);
+	
+	public InteractionLogging getInteractionLoggingByID(Long id);
+	
+	public InteractionLogging saveInteractionLogging(InteractionLogging interactionLogging);
 	
 	
+	// SubscribeWSBody
+	
+	public SubscribeWSBody getSubscribeWSBodyById(String id);
+	
+	public SubscribeWSBody saveSubscribeWSBody(SubscribeWSBody subscribeWSBody);
+	
+	
+	// EnabledCategoryConfigurationDao
+	
+	public EnabledCategoryConfiguration getEnabledCategoryConfigurationDaoById(Long id);
 	
 	
 }
