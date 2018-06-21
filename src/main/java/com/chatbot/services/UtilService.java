@@ -37,12 +37,15 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.cache.CachingHttpClients;
 import org.apache.http.util.EntityUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.stereotype.Service;
 
+import com.chatbot.controller.ChatBotController;
 import com.chatbot.entity.BotButton;
 import com.chatbot.entity.BotButtonTemplateMSG;
 import com.chatbot.entity.BotGTemplateMessage;
@@ -80,10 +83,12 @@ import aj.org.objectweb.asm.Label;
 import sun.misc.BASE64Decoder;
 
 @Service
-public class UtilServiceImpl implements UtilsService {
+public class UtilService
+{
 
+	final static Logger logger = LogManager.getLogger(UtilService.class); 
 	// IN Case Zero Level JSONObject
-	@Override
+//	@Override
 	public Map<String, ArrayList<String>> inCaseZeroLevelJsonObject(String[] keys, JSONObject jsonObject, String msg,
 			String locale) {
 		Map<String, ArrayList<String>> mapValues = new HashMap<String, ArrayList<String>>();
@@ -105,7 +110,7 @@ public class UtilServiceImpl implements UtilsService {
 	}
 
 	// IN Case Zero Level JSONArray
-	@Override
+//	@Override
 	public Map<String, ArrayList<String>> inCaseZeroLevelJsonArray(String[] keys, JSONArray rootArray, String msg,
 			String locale) {
 
@@ -122,8 +127,7 @@ public class UtilServiceImpl implements UtilsService {
 				mapValues.put("title", titleList);
 				mapValues.put("msg", textMsgs);
 			} catch (JSONException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				logger.error("Exceptoion is "+e.getMessage());
 			}
 			// replace message missed values
 			String finalMsg = replaceValuesByMapping(values, msg, locale);
@@ -140,7 +144,7 @@ public class UtilServiceImpl implements UtilsService {
 	}
 
 	// IN Case ONE Level JSONObject
-	@Override
+//	@Override
 	public Map<String, ArrayList<String>> inCaseOneLevelJsonObject(String[] paths, String[] keys, JSONObject jsonObject,
 			String msg, String locale) {
 		Map<String, ArrayList<String>> mapValues = new HashMap<String, ArrayList<String>>();
@@ -156,14 +160,13 @@ public class UtilServiceImpl implements UtilsService {
 			try {
 				firstLevelArray = jsonObject.getJSONArray(paths[0]);
 			} catch (JSONException e) {
-
+				logger.error(" Exceptoion is "+e.getMessage());
 			}
 			for (int i = 0; i < firstLevelArray.length(); i++) {
 				try {
 					firstLevelObject = firstLevelArray.getJSONObject(i);
 				} catch (JSONException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					logger.error(" Exceptoion is "+e.getMessage());
 				}
 				values = getValuesFromJson(firstLevelObject, keys);
 				// replace message missed values
@@ -178,8 +181,7 @@ public class UtilServiceImpl implements UtilsService {
 			try {
 				firstLevelObject = jsonObject.getJSONObject(paths[0]);
 			} catch (JSONException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				logger.error(" Exceptoion is "+e.getMessage());
 			}
 			values = getValuesFromJson(firstLevelObject, keys);
 			// replace message missed values
@@ -195,7 +197,7 @@ public class UtilServiceImpl implements UtilsService {
 	}
 
 	// IN Case ONE Level JSONOArray
-	@Override
+	// @Override
 	public Map<String, ArrayList<String>> inCaseOneLevelJsonArrayForTextMessage(String[] paths, String[] keys,
 			JSONArray rootArray, String msg, String locale) {
 		ArrayList<String> values = new ArrayList<String>();
@@ -237,7 +239,7 @@ public class UtilServiceImpl implements UtilsService {
 					mapValues.put("msg", textMsgs);
 				}
 			} catch (Exception e) {
-				System.out.println(e.getStackTrace());
+				logger.error(" Exceptoion is "+e.getMessage());
 			}
 		}
 
@@ -246,7 +248,7 @@ public class UtilServiceImpl implements UtilsService {
 	}
 
 	// Tested and works well get values from json object by its keys
-	@Override
+	// @Override
 	public ArrayList<String> getValuesFromJson(JSONObject jsonObject, String[] keys) {
 		ArrayList<String> values = new ArrayList<String>();
 		for (int i = 0; i < keys.length; i++) {
@@ -271,7 +273,7 @@ public class UtilServiceImpl implements UtilsService {
 	}
 
 	// Tested works well replace ? in String by its new values
-	@Override
+	// @Override
 	public String replaceValuesByMapping(ArrayList<String> values, String msg, String locale) {
 
 		String messages = "";
@@ -294,7 +296,7 @@ public class UtilServiceImpl implements UtilsService {
 	}
 
 	// In case Two Level JSONObject
-	@Override
+	// @Override
 	public Map<String, ArrayList<String>> inCaseTwoLevelJsonObject(JSONObject jsonObject, String[] paths, String[] keys,
 			String msg, String locale) {
 		ArrayList<String> values = new ArrayList<String>();
@@ -349,7 +351,7 @@ public class UtilServiceImpl implements UtilsService {
 					}
 				}
 			} catch (Exception e) {
-				System.out.println(e.getStackTrace());
+				logger.error(" Exceptoion is "+e.getMessage());
 			}
 			// TODO: handle exception
 		} else if (!path.startsWith("#")) {
@@ -382,7 +384,8 @@ public class UtilServiceImpl implements UtilsService {
 					mapValues.put("msg", textMsgs);
 				}
 			} catch (Exception e) {
-				System.out.println(e.getStackTrace());
+				logger.error(" Exceptoion is "+e.getMessage());
+				
 			}
 		}
 		return mapValues;
@@ -390,7 +393,7 @@ public class UtilServiceImpl implements UtilsService {
 	}
 
 	// In case Two Level JSONArray
-	@Override
+	// @Override
 	public Map<String, ArrayList<String>> inCaseTwoLevelJsonArrayForTextMessage(JSONArray rootArray, String[] paths,
 			String[] keys, String msg, String locale) {
 		ArrayList<String> titleList = new ArrayList<String>();
@@ -458,7 +461,7 @@ public class UtilServiceImpl implements UtilsService {
 
 				}
 			} catch (Exception e) {
-				System.out.println(e.getStackTrace());
+				logger.error(" Exceptoion is "+e.getMessage());
 			}
 		}
 
@@ -467,7 +470,7 @@ public class UtilServiceImpl implements UtilsService {
 	}
 
 	// Method to get Path Details
-	@Override
+	// @Override
 	public String[] getPaths(String path) {
 		String[] paths = new String[0];
 		if (path.contains(",")) {
@@ -479,7 +482,7 @@ public class UtilServiceImpl implements UtilsService {
 	}
 
 	// Method to get keys
-	@Override
+	// @Override
 	public String[] getKeys(String key) {
 		String[] keys = new String[0];
 		if (key.contains(",")) {
@@ -491,7 +494,7 @@ public class UtilServiceImpl implements UtilsService {
 	}
 
 	// Switcher for JSONObject
-	@Override
+	// @Override
 	public Map<String, ArrayList<String>> switchToObjectMode(JSONObject jsonResponse, String[] paths, String[] keys,
 			String msg, String locale) {
 		ArrayList<String> values = new ArrayList<String>();
@@ -508,7 +511,7 @@ public class UtilServiceImpl implements UtilsService {
 	}
 
 	// Switcher for JSONArray
-	@Override
+	// @Override
 	public Map<String, ArrayList<String>> switchToArrayMode(JSONArray jsonResponse, String[] paths, String[] keys,
 			String msg, String locale) {
 		Map<String, ArrayList<String>> mapValues = new HashMap<String, ArrayList<String>>();
@@ -524,7 +527,7 @@ public class UtilServiceImpl implements UtilsService {
 	}
 
 	// Create Button
-	@Override
+	// @Override
 	public Button createButton(BotButton botButton, String locale, JSONObject jsonObject, String dialNumber) {
 		// PostBack
 		if (botButton.getButtonType().getId() == Utils.ButtonTypeEnum.POSTBACK.getValue()) {
@@ -560,7 +563,7 @@ public class UtilServiceImpl implements UtilsService {
 						return UrlButton.create(Utils.getTextValueForButtonLabel(locale, botButton), newUrl);
 					}
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error(" Exceptoion is "+e.getMessage());
 				}
 			} else {
 				try {
@@ -579,7 +582,7 @@ public class UtilServiceImpl implements UtilsService {
 						return UrlButton.create(Utils.getTextValueForButtonLabel(locale, botButton), newUrl);
 					}
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error(" Exceptoion is "+e.getMessage());
 				}
 			}
 			return UrlButton.create(Utils.getTextValueForButtonLabel(locale, botButton), url);
@@ -599,7 +602,7 @@ public class UtilServiceImpl implements UtilsService {
 	 * @param chatBotService
 	 * @return
 	 */
-	@Override
+	// @Override
 	public Template createGenericTemplate(Long messageId, ChatBotService chatBotService, String userlocale,
 			BotWebserviceMessage botWebserviceMessage, JSONObject jsonObject, String dialNumber,
 			ArrayList<String> consumptionNames) {
@@ -634,19 +637,22 @@ public class UtilServiceImpl implements UtilsService {
 				ArrayList<String> titles = mapValues.get("title");
 				ArrayList<String> percentageList = mapValues.get("percentage");
 				if (values == null || values.size() == 0) {
+					String errorTitle = "";
 					elemnetImageUrl = botTemplateElement.getImageUrl() + "warning.png?version=";
 					if (userlocale.contains("ar")) {
 						msg = "ناسف أنت غير مشترك بأي باقة";
+						errorTitle = "! عفوا";
 					} else {
-						msg = "Your Bundle does not has consumption";
+						errorTitle = "Sorry !";
+						msg = "Sorry, you are not subscribed to any internet bundle";
 					}
-					element = createElement(buttonsList, elemnetImageUrl, "RatePlan", msg);
+					element = createElement(buttonsList, elemnetImageUrl, errorTitle, msg);
 					elements.add(element);
 				} else {
 					for (int i = 0; i < values.size(); i++) {
 						title = titles.get(i);
 						if (title.equalsIgnoreCase("Mobile Internet") || title.equalsIgnoreCase("موبايل انترنت")) {
-							title = consumptionNames.get(i);
+							title = consumptionNames.size() > i ? consumptionNames.get(i) : title;
 						}
 						String perc = String.valueOf(percentageList.get(i));
 						if (perc.contains(".")) {
@@ -690,7 +696,7 @@ public class UtilServiceImpl implements UtilsService {
 		return element;
 	}
 
-	@Override
+	// @Override
 	public String getTitletBotTemplateElement(BotTemplateElement botTemplateElement, String local) {
 		String title = "";
 		if (local.equalsIgnoreCase("ar")) {
@@ -701,7 +707,7 @@ public class UtilServiceImpl implements UtilsService {
 		return title;
 	}
 
-	@Override
+	// @Override
 	public String getSubTitletBotTemplateElement(BotTemplateElement botTemplateElement, String local) {
 		String title = "";
 		if (local.equalsIgnoreCase("ar")) {
@@ -718,7 +724,7 @@ public class UtilServiceImpl implements UtilsService {
 	 * @param chatBotService
 	 * @return
 	 */
-	@Override
+	// @Override
 	public ButtonTemplate createButtonTemplateInScenario(BotInteractionMessage botInteractionMessage,
 			ChatBotService chatBotService, String local, String dialNumber) {
 		String title = "";
@@ -737,7 +743,7 @@ public class UtilServiceImpl implements UtilsService {
 
 	}
 
-	@Override
+	// @Override
 	public String getTextForButtonTemplate(String local, BotButtonTemplateMSG botButtonTemplateMSG) {
 		String text = "";
 		if (local.equalsIgnoreCase("ar")) {
@@ -748,7 +754,7 @@ public class UtilServiceImpl implements UtilsService {
 		return text;
 	}
 
-	@Override
+	// @Override
 	public List<QuickReply> createQuickReply(ChatBotService chatBotService, Long messageId, String local) {
 		BotQuickReplyMessage botQuickReplyMessage = chatBotService.findQuickReplyMessageByMessageId(messageId);
 		List<QuickReply> quickReplies = new ArrayList<>();
@@ -774,7 +780,7 @@ public class UtilServiceImpl implements UtilsService {
 	}
 
 	// This Method For call Parent MessagePayLoad again
-	@Override
+	// @Override
 	public MessagePayload createMessagePayload(String parentPayLoad, ChatBotService chatBotService, String senderId,
 			String userLocale, BotWebserviceMessage botWebserviceMessage, String dialNumber) {
 		MessagePayload messagePayload = null;
@@ -803,7 +809,7 @@ public class UtilServiceImpl implements UtilsService {
 	 * @param jsonBodyString
 	 * @throws JSONException
 	 */
-	@Override
+	// @Override
 	public void getTextMessageIfResponseIsArray(String senderId, ArrayList<MessagePayload> messagePayloadList,
 			BotWebserviceMessage botWebserviceMessage, String jsonBodyString, ChatBotService chatBotService,
 			String local) throws JSONException {
@@ -827,7 +833,7 @@ public class UtilServiceImpl implements UtilsService {
 		}
 	}
 
-	@Override
+	// @Override
 	public String getTextForBotTextResponseMapping(String local, BotTextResponseMapping botTextResponseMapping) {
 		String text = "";
 		if (local.equalsIgnoreCase("ar")) {
@@ -845,7 +851,7 @@ public class UtilServiceImpl implements UtilsService {
 	 * @param jsonBodyString
 	 * @throws JSONException
 	 */
-	@Override
+	// @Override
 	public void getTextMessageIfResponseIsObject(String senderId, ArrayList<MessagePayload> messagePayloadList,
 			BotWebserviceMessage botWebserviceMessage, String jsonBodyString, ChatBotService chatBotService,
 			String local) throws JSONException {
@@ -873,34 +879,37 @@ public class UtilServiceImpl implements UtilsService {
 		}
 	}
 
-	@Override
+	// @Override
 	public MessagePayload getBundleCategories(JSONArray arrayResponse, String senderId, ChatBotService chatBotService,
 			String locale, String dial) {
 		ArrayList<Element> elements = new ArrayList<Element>();
-		List<Button> buttonsList = new ArrayList<Button>();
+		List<QuickReply> quickReplies = new ArrayList<>();
+		ArrayList<String> categories = new ArrayList<String>();
+		String[] categoriesArray = chatBotService.getEnabledCategoryConfigurationDaoById(1l)
+				.getEnglishCategories().split(",");
+		categories = new ArrayList(Arrays.asList(categoriesArray));
 		for (int i = 0; i < arrayResponse.length(); i++) {
 			try {
 				JSONObject object = arrayResponse.getJSONObject(i);
 				JSONObject categoryObject = object.getJSONObject("category");
-				String title = "Mobile Internet Bundles";
-				String subTitle = "Mobile Internet Bundles";
+				String title = "";
+				String subTitle = "";
+				String name = "";
 				String buttonLabel = "";
-				ArrayList<String> categories = new ArrayList<String>();
-				if (locale.equalsIgnoreCase("ar")) {
-					buttonLabel = categoryObject.getString("categoryNameAr");
-					String[] categoriesArray = chatBotService.getEnabledCategoryConfigurationDaoById(1l)
-							.getArabicCategories().split(",");
-					categories = new ArrayList(Arrays.asList(categoriesArray));
-				} else {
-					buttonLabel = categoryObject.getString("categoryNameEn");
-					String[] categoriesArray = chatBotService.getEnabledCategoryConfigurationDaoById(1l)
-							.getArabicCategories().split(",");
-					categories = new ArrayList(Arrays.asList(categoriesArray));
-				}
-				String payLoad = "sub_" + categoryObject.getString("categoryId");
+				if (categories.contains(categoryObject.get("categoryId"))) {
+					if (locale.equalsIgnoreCase("ar")) {
+						buttonLabel = categoryObject.getString("categoryNameAr");
+						name = "عرض";
+					} else {
+						buttonLabel = categoryObject.getString("categoryNameEn");
+						name = "view";
+					}
+					String payLoad = "sub_" + categoryObject.getString("categoryId");
 
-				if (categories.contains(buttonLabel)) {
-					PostbackButton bundleButton = PostbackButton.create(buttonLabel, payLoad);
+					title = buttonLabel;
+					subTitle = "_ _ _";
+					List<Button> buttonsList = new ArrayList<Button>();
+					PostbackButton bundleButton = PostbackButton.create(name, payLoad);
 					buttonsList.add(bundleButton);
 					Element element = Element.create(title, Optional.of(subTitle), empty(), empty(),
 							Optional.of(buttonsList));
@@ -908,13 +917,14 @@ public class UtilServiceImpl implements UtilsService {
 				}
 
 			} catch (JSONException e) {
-				e.printStackTrace();
+				logger.error(" Exceptoion is "+e.getMessage());
 			}
 		}
 		if (elements.size() > 0) {
 			GenericTemplate gTemplate = GenericTemplate.create(elements);
 			return MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(gTemplate));
 		} else {
+			List<Button> buttonsList = new ArrayList<Button>();
 			GenericTemplate gTemplate = CreateGenericTemplateForNotEligiblBundleDials(locale, buttonsList, elements,
 					dial);
 
@@ -922,7 +932,7 @@ public class UtilServiceImpl implements UtilsService {
 		}
 	}
 
-	@Override
+	// @Override
 	public void getTextMessageIfResponseIsString(String senderId, ArrayList<MessagePayload> messagePayloadList,
 			BotWebserviceMessage botWebserviceMessage, String jsonBodyString, ChatBotService chatBotService,
 			String local) throws JSONException {
@@ -939,7 +949,7 @@ public class UtilServiceImpl implements UtilsService {
 	}
 
 	// Return key As one String according to customer local
-	@Override
+	// @Override
 	public String getKeysString(BotTextResponseMapping botTextResponseMapping, String local) {
 		String keys = "";
 		if (local.equalsIgnoreCase("ar")) {
@@ -960,7 +970,7 @@ public class UtilServiceImpl implements UtilsService {
 	 * @param messageTypeId
 	 * @param messageId
 	 */
-	@Override
+	// @Override
 	public MessagePayload responseInCaseStaticScenario(String payload, String senderId, String userFirstName,
 			BotInteraction botInteraction, BotInteractionMessage botInteractionMessage, Long messageTypeId,
 			Long messageId, ChatBotService chatBotService, String parentPayLoad, String locale, String userDial) {
@@ -1028,7 +1038,7 @@ public class UtilServiceImpl implements UtilsService {
 	}
 
 	// get text for BotTextMessage according to local
-	@Override
+	// @Override
 	public String getTextValueForBotTextMessage(BotTextMessage botTextMessage, String local) {
 		String text = "";
 		if (local.equalsIgnoreCase("ar")) {
@@ -1045,46 +1055,15 @@ public class UtilServiceImpl implements UtilsService {
 	 * @return String response
 	 * @param botWebserviceMessage
 	 */
-	@Override
+	// @Override
 	public Map<String, String> callGetWebService(BotWebserviceMessage botWebserviceMessage, String senderId,
 			ChatBotService chatBotService) {
-		/*CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
-		Map<String, String> resposeMap = new HashMap<String, String>();
-		String dialNumber = customerProfile.getMsisdn();
-		Long time = System.currentTimeMillis() / 1000;
-		String par = "";
-		String paramChannel = "4e47684968446e4e7067726d3968507a4f77585273684d3152647046703752454c6d4a4b59533978484557636750357151644c487154544370445343414d7252";
-		String response = null;
-		try {
-			par = Utils.encryptDPIParam("time=1498033943505" + "&user=" + dialNumber + "&URL=facebook");
-
-			String realParameter = "param:" + par +",paramChannel:"+paramChannel ;
-			HttpClient client = HttpClients.createDefault();
-
-			HttpGet httpGet = new HttpGet(botWebserviceMessage.getWsUrl());
-			URI uri = new URIBuilder(httpGet.getURI()).addParameter("dial", realParameter).build();
-			System.out.println("URL is " + uri);
-			httpGet.setURI(uri);
-			HttpResponse response2 = client.execute(httpGet);
-			HttpEntity entity = response2.getEntity();
-			int responseStatusId = response2.getStatusLine().getStatusCode();
-			response = EntityUtils.toString(entity, "UTF-8");
-			if (responseStatusId == 200) {
-				resposeMap.put("status", String.valueOf(responseStatusId));
-				System.out.println(response);
-				resposeMap.put("response", response);
-			} else {
-				resposeMap.put("status", String.valueOf(responseStatusId));
-				resposeMap.put("response", response);
-			}
-		} catch (Exception e) {
-			System.out.println(e.getMessage());
-		}*/
-
+		String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
+		logger.debug("Methoud Name Is "+methodName);
 		return cachingResponse(botWebserviceMessage, senderId, chatBotService);
 	}
 
-	@Override
+	// @Override
 	public Map<String, String> callPostWebService(BotWebserviceMessage botWebserviceMessage, String jsonParam,
 			ChatBotService chatBotService, String senderId, ArrayList<String> paramList) {
 		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
@@ -1097,8 +1076,7 @@ public class UtilServiceImpl implements UtilsService {
 		try {
 			par = Utils.encryptDPIParam("time=1498033943505" + "&user=" + dialNumber + "&URL=facebook");
 		} catch (Exception e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			logger.error("Sender ID iS "+ senderId +" Exceptoion is "+e1.getMessage());
 		}
 
 		String realParameter = "param:" + par + ",paramChannel:" + paramChannel;
@@ -1108,8 +1086,7 @@ public class UtilServiceImpl implements UtilsService {
 			URI uri = new URIBuilder(httpPost.getURI()).addParameter("dial", realParameter).build();
 			httpPost.setURI(uri);
 		} catch (URISyntaxException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			logger.error("Sender ID iS "+ senderId +" Exceptoion is "+e1.getMessage());
 		}
 
 		String stringResponse = "";
@@ -1126,14 +1103,11 @@ public class UtilServiceImpl implements UtilsService {
 			stringResponse = EntityUtils.toString(responseEntity, "UTF-8");
 			client.close();
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error("Sender ID iS "+ senderId +" Exceptoion is "+e.getMessage());
 		} catch (ClientProtocolException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error("Sender ID iS "+ senderId +" Exceptoion is "+e.getMessage());
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error("Sender ID iS "+ senderId +" Exceptoion is "+e.getMessage());
 		}
 		if (responseStatusId == 200) {
 			mapResponse.put("status", String.valueOf(responseStatusId));
@@ -1152,7 +1126,7 @@ public class UtilServiceImpl implements UtilsService {
 	 * @param jsonBodyString
 	 * @throws JSONException
 	 */
-	@Override
+	// @Override
 	public void createTextMessageInDynamicScenario(String senderId, ArrayList<MessagePayload> messagePayloadList,
 			BotWebserviceMessage botWebserviceMessage, String jsonBodyString, ChatBotService chatBotService,
 			String local) throws JSONException {
@@ -1172,7 +1146,7 @@ public class UtilServiceImpl implements UtilsService {
 		}
 	}
 
-	@Override
+	// @Override
 	public String getTextForQuickReply(String local, BotQuickReplyMessage botQuickReplyMessage, String userDial) {
 		String text = "";
 		if (local.equalsIgnoreCase("ar")) {
@@ -1183,16 +1157,16 @@ public class UtilServiceImpl implements UtilsService {
 		return text;
 	}
 
-	@Override
+	// @Override
 	public CustomerProfile setLinkingInfoForCustomer(String senderId, Messenger messenger, String customerDial,
 			ChatBotService chatBotService) {
 		UserProfile userProfile = null;
 		try {
 			userProfile = messenger.queryUserProfile(senderId);
 		} catch (MessengerApiException e) {
-			System.out.println(e.getMessage());
+			logger.error("Sender ID is "+senderId +" Exceptoion is "+e.getMessage());
 		} catch (MessengerIOException e) {
-			System.out.println(e.getMessage());
+			logger.error("Sender ID is "+senderId +" Exceptoion is "+e.getMessage());
 		}
 		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 		CustomerProfile newCustomerProfile = new CustomerProfile();
@@ -1212,7 +1186,7 @@ public class UtilServiceImpl implements UtilsService {
 		return newCustomerProfile;
 	}
 
-	@Override
+	// @Override
 	public void setCustomerProfileLocalAsArabic(CustomerProfile customerProfile, ChatBotService chatBotService) {
 		CustomerProfile customerProfileForLocal = new CustomerProfile();
 		Date date = new Date();
@@ -1227,7 +1201,7 @@ public class UtilServiceImpl implements UtilsService {
 		chatBotService.saveCustomerProfile(customerProfileForLocal);
 	}
 
-	@Override
+	// @Override
 	public void setCustomerProfileLocalAsEnglish(CustomerProfile customerProfile, ChatBotService chatBotService) {
 		CustomerProfile customerProfileForLocal = new CustomerProfile();
 		Date date = new Date();
@@ -1242,7 +1216,7 @@ public class UtilServiceImpl implements UtilsService {
 		chatBotService.saveCustomerProfile(customerProfileForLocal);
 	}
 
-	@Override
+	// @Override
 	public MessagePayload getProductsFromJsonByCategory(JSONArray arrayResponse, String category, String senderId,
 			ChatBotService chatBotService, String locale) {
 		MessagePayload fmsg = null;
@@ -1283,14 +1257,14 @@ public class UtilServiceImpl implements UtilsService {
 
 				}
 			} catch (JSONException e) {
-				System.out.println(e.getMessage());
+				logger.error("Sender ID iS "+ senderId +" Exceptoion is "+e.getMessage());
 			}
 		}
 		return fmsg;
 
 	}
 
-	@Override
+	// @Override
 	public MessagePayload getProductsByCategoryNotLego(String senderId, String locale, JSONArray products)
 			throws JSONException {
 		MessagePayload fmsg;
@@ -1333,7 +1307,7 @@ public class UtilServiceImpl implements UtilsService {
 		return fmsg;
 	}
 
-	@Override
+	// @Override
 	public MessagePayload getProductsByCategoryIfLego(String senderId, String locale, JSONArray products)
 			throws JSONException {
 		MessagePayload fmsg;
@@ -1374,7 +1348,7 @@ public class UtilServiceImpl implements UtilsService {
 		return fmsg;
 	}
 
-	@Override
+	// @Override
 	public MessagePayload getRelatedProductFromJsonByBundleId(JSONArray arrayResponse, String productId,
 			String senderId, ChatBotService chatBotService, String locale) {
 		MessagePayload fmsg = null;
@@ -1412,44 +1386,35 @@ public class UtilServiceImpl implements UtilsService {
 					}
 				}
 			} catch (JSONException e) {
-				System.out.println(e.getMessage());
+				logger.error("Sender ID iS "+ senderId +" Exceptoion is "+e.getMessage());
 			}
 		}
 		return fmsg;
 	}
 
-	@Override
+	// @Override
 	public MessagePayload getExtraMobileInternetAddonsByCategory(JSONArray arrayResponse, String senderId,
 			ChatBotService chatBotService, String locale, String addonId) {
 		ArrayList<Element> elements = new ArrayList<Element>();
+		String title = "";
+		String subTitle = "_ _ _";
+		String buttonLabel = "";
 		for (int i = 0; i < arrayResponse.length(); i++) {
 			try {
 				List<Button> buttonsList = new ArrayList<Button>();
 				JSONObject object = arrayResponse.getJSONObject(i);
-
 				JSONArray retrievedCategoriesArray = object.getJSONArray("productCategories");
-
-				String title = "Mobile Internet Bundles";
-				String subTitle = "Mobile Internet Bundles";
-				String buttonLabel = "";
-				ArrayList<String> categories = new ArrayList<String>();
 				String id = object.getString("id");
-				if (locale.equalsIgnoreCase("ar")) {
-					buttonLabel = object.getString("arabicName");
-					String[] categoriesArray = chatBotService.getEnabledCategoryConfigurationDaoById(2l)
-							.getArabicCategories().split(",");
-					categories = new ArrayList(Arrays.asList(categoriesArray));
-				} else {
-					buttonLabel = object.getString("englishName");
-					String[] categoriesArray = chatBotService.getEnabledCategoryConfigurationDaoById(2l)
-							.getArabicCategories().split(",");
-					categories = new ArrayList(Arrays.asList(categoriesArray));
-				}
-				String payLoad = "subaddon_" + id;
-
-				for (int o = 0; o < retrievedCategoriesArray.length(); o++) {
-					String category = retrievedCategoriesArray.get(o).toString();
-					if (category.equals(addonId)) {
+				for (int o = 0 ; o < retrievedCategoriesArray.length(); o++) {
+					if (retrievedCategoriesArray.getString(o).equalsIgnoreCase(addonId)) {
+						if (locale.equalsIgnoreCase("ar")) {
+							title = object.getString("arabicName");
+							buttonLabel = "اشترك";
+						} else {
+							title = object.getString("englishName");
+							buttonLabel = "Subscribe";
+						}
+						String payLoad = "subaddon_" + id;
 						PostbackButton bundleButton = PostbackButton.create(buttonLabel, payLoad);
 						buttonsList.add(bundleButton);
 						Element element = Element.create(title, Optional.of(subTitle), empty(), empty(),
@@ -1458,7 +1423,7 @@ public class UtilServiceImpl implements UtilsService {
 					}
 				}
 			} catch (JSONException e) {
-				e.printStackTrace();
+				logger.error("Sender ID iS "+ senderId +" Exceptoion is "+e.getMessage());;
 			}
 
 		}
@@ -1471,55 +1436,43 @@ public class UtilServiceImpl implements UtilsService {
 			ChatBotService chatBotService, String locale) {
 		Map<String, String> categoriesMap = new HashMap<String, String>();
 		ArrayList<Element> elements = new ArrayList<Element>();
-		List<Button> buttonsList = new ArrayList<Button>();
-		String title = "Mobile Internet Bundles";
-		String subTitle = "Mobile Internet Bundles";
+		String[] categoriesArrayLabels = chatBotService.getEnabledCategoryConfigurationDaoById(2l).getEnglishCategories().split(",");
+		
+		String title = "";
+		String subTitle = "_ _ _";
+		String buttonLabel = "";
 		for (int i = 0; i < arrayResponse.length(); i++) {
 			try {
-
 				JSONObject object = arrayResponse.getJSONObject(i);
 				JSONArray retrievedCategoriesArray = object.getJSONArray("productCategories");
-
-				String buttonLabel = "";
 				ArrayList<String> categoriesLabels = new ArrayList<String>();
 				ArrayList<String> categoriesPayloads = new ArrayList<String>();
+				categoriesLabels = new ArrayList(Arrays.asList(categoriesArrayLabels));
 				String id = object.getString("id");
-				if (locale.equalsIgnoreCase("ar")) {
-					buttonLabel = object.getString("arabicName");
-					String[] categoriesArrayPayLoads = chatBotService.getEnabledCategoryConfigurationDaoById(2l)
-							.getArabicCategories().split(",");
-					String[] categoriesArrayLabels = chatBotService.getEnabledCategoryConfigurationDaoById(2l)
-							.getCategoryLabel().getArabicText().split(",");
-					categoriesLabels = new ArrayList(Arrays.asList(categoriesArrayLabels));
-					categoriesPayloads = new ArrayList<>(Arrays.asList(categoriesArrayPayLoads));
-				} else {
-					buttonLabel = object.getString("englishName");
-					String[] categoriesArrayPayLoads = chatBotService.getEnabledCategoryConfigurationDaoById(2l)
-							.getArabicCategories().split(",");
-					String[] categoriesArrayLabels = chatBotService.getEnabledCategoryConfigurationDaoById(2l)
-							.getCategoryLabel().getEnglishText().split(",");
-					categoriesLabels = new ArrayList(Arrays.asList(categoriesArrayPayLoads));
-					categoriesPayloads = new ArrayList<>(Arrays.asList(categoriesArrayPayLoads));
-				}
-
-				for (int j = 0; j < retrievedCategoriesArray.length(); j++) {
-					String category = retrievedCategoriesArray.get(j).toString();
-					if (categoriesPayloads.contains(category)) {
-						int index = categoriesPayloads.indexOf(category);
-						categoriesMap.put(category, categoriesLabels.get(index));
-
+				for (int o = 0; retrievedCategoriesArray.length() > o; o++) {
+					if (categoriesLabels.contains(retrievedCategoriesArray.get(o))) {
+						categoriesMap.put(retrievedCategoriesArray.getString(o), retrievedCategoriesArray.getString(o));
+											
 					}
+					
 				}
+
 			} catch (JSONException e) {
-				e.printStackTrace();
+				logger.error("Sender ID iS "+ senderId +" Exceptoion is "+e.getMessage());
 			}
 
 		}
 		if (categoriesMap.size() > 0) {
 			for (String key : categoriesMap.keySet()) {
-				PostbackButton bundleButton = PostbackButton.create(key, "MIAddon" + categoriesMap.get(key));
+				if (locale.equalsIgnoreCase("ar")) {
+					buttonLabel = "عرض";
+				} else {
+					buttonLabel = "View";
+				}
+				List<Button> buttonsList = new ArrayList<Button>();
+				PostbackButton bundleButton = PostbackButton.create(buttonLabel, "MIAddon" + categoriesMap.get(key));
 				buttonsList.add(bundleButton);
-				Element element = Element.create(title, Optional.of(subTitle), empty(), empty(),
+				Element element = Element.create(key, Optional.of(subTitle), empty(), empty(),
 						Optional.of(buttonsList));
 				elements.add(element);
 			}
@@ -1540,7 +1493,7 @@ public class UtilServiceImpl implements UtilsService {
 		return label;
 	}
 
-	private GenericTemplate CreateGenericTemplateForNotEligiblBundleDials(String locale, List<Button> buttonsList,
+	public GenericTemplate CreateGenericTemplateForNotEligiblBundleDials(String locale, List<Button> buttonsList,
 			ArrayList<Element> elements, String dial) {
 
 		if (locale.contains("ar")) {
@@ -1562,47 +1515,38 @@ public class UtilServiceImpl implements UtilsService {
 		}
 	}
 
-	
 	public Map<String, String> cachingResponse(BotWebserviceMessage botWebserviceMessage, String senderId,
 			ChatBotService chatBotService) {
-		
+		String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
+		logger.debug("Methoud Name Is "+methodName);
 		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 		Map<String, String> resposeMap = new HashMap<String, String>();
 		String dialNumber = customerProfile.getMsisdn();
 		String stringResponse = "";
-		CacheConfig cacheConfig = CacheConfig.custom()
-		        .setMaxCacheEntries(1000)
-		        .setMaxObjectSize(8192)
-		        .build();
-		RequestConfig requestConfig = RequestConfig.custom()
-		        .setConnectTimeout(30000)
-		        .setSocketTimeout(30000)
-		        .build();
-		CloseableHttpClient cachingClient = CachingHttpClients.custom()
-		        .setCacheConfig(cacheConfig)
-		        .setDefaultRequestConfig(requestConfig)
-		        .build();
+		CacheConfig cacheConfig = CacheConfig.custom().setMaxCacheEntries(1000).setMaxObjectSize(8192).build();
+		RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(30000).setSocketTimeout(30000).build();
+		CloseableHttpClient cachingClient = CachingHttpClients.custom().setCacheConfig(cacheConfig)
+				.setDefaultRequestConfig(requestConfig).build();
 		HttpCacheContext context = HttpCacheContext.create();
 		String par = "";
 		String paramChannel = "4e47684968446e4e7067726d3968507a4f77585273684d3152647046703752454c6d4a4b59533978484557636750357151644c487154544370445343414d7252";
-		
-			try {
-				par = Utils.encryptDPIParam("time=1498033943505" + "&user=" + dialNumber + "&URL=facebook");
-			} catch (Exception e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			CloseableHttpResponse response = null;
-			String realParameter = "param:" + par/* +",paramChannel:"+paramChannel */;
 
-			HttpGet httpGet = new HttpGet(botWebserviceMessage.getWsUrl());
-			URI uri = null;
-			try {
-				uri = new URIBuilder(httpGet.getURI()).addParameter("dial", realParameter).build();
-			} catch (URISyntaxException e1) {
-				e1.printStackTrace();
-			}
-			httpGet.setURI(uri);
+		try {
+			par = Utils.encryptDPIParam("time=1498033943505" + "&user=" + dialNumber + "&URL=facebook");
+		} catch (Exception e1) {
+			logger.error("Sender ID iS "+ senderId +"Dial is "+dialNumber+" Exceptoion is "+e1.getMessage());
+		}
+		CloseableHttpResponse response = null;
+		String realParameter = "param:" + par/* +",paramChannel:"+paramChannel */;
+
+		HttpGet httpGet = new HttpGet(botWebserviceMessage.getWsUrl());
+		URI uri = null;
+		try {
+			uri = new URIBuilder(httpGet.getURI()).addParameter("dial", realParameter).build();
+		} catch (URISyntaxException e1) {
+			logger.error("Sender ID iS "+ senderId +"Dial is "+dialNumber+" Exceptoion is "+e1.getMessage());
+		}
+		httpGet.setURI(uri);
 		try {
 			response = cachingClient.execute(httpGet, context);
 			HttpEntity entity = response.getEntity();
@@ -1617,38 +1561,171 @@ public class UtilServiceImpl implements UtilsService {
 				resposeMap.put("response", stringResponse);
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		try {
-		    CacheResponseStatus responseStatus = context.getCacheResponseStatus();
-		    switch (responseStatus) {
-		        case CACHE_HIT:
-		            System.out.println("A response was generated from the cache with " +
-		                    "no requests sent upstream");
-		            break;
-		        case CACHE_MODULE_RESPONSE:
-		            System.out.println("The response was generated directly by the " +
-		                    "caching module");
-		            break;
-		        case CACHE_MISS:
-		            System.out.println("The response came from an upstream server");
-		            break;
-		        case VALIDATED:
-		            System.out.println("The response was generated from the cache " +
-		                    "after validating the entry with the origin server");
-		            break;
-		    }
-		} finally {
-		    try {
-				response.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			logger.error("Sender ID iS "+ senderId +"Dial is "+dialNumber+" Exceptoion is "+e.getMessage());
 		}
 		return resposeMap;
 	}
+
+	public Map<String, String> getSubscriberProfile(BotWebserviceMessage botWebserviceMessage, String senderId,
+			ChatBotService chatBotService) {
+		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
+		Map<String, String> resposeMap = new HashMap<String, String>();
+		String dialNumber = customerProfile.getMsisdn();
+		String stringResponse = "";
+		CacheConfig cacheConfig = CacheConfig.custom().setMaxCacheEntries(1000).setMaxObjectSize(8192).build();
+		RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(30000).setSocketTimeout(30000).build();
+		CloseableHttpClient cachingClient = CachingHttpClients.custom().setCacheConfig(cacheConfig)
+				.setDefaultRequestConfig(requestConfig).build();
+		HttpCacheContext context = HttpCacheContext.create();
+		String par = "";
+		String paramChannel = "4e47684968446e4e7067726d3968507a4f77585273684d3152647046703752454c6d4a4b59533978484557636750357151644c487154544370445343414d7252";
+
+		try {
+			par = Utils.encryptDPIParam("time=1498033943505" + "&user=" + dialNumber + "&URL=facebook");
+		} catch (Exception e1) {
+			logger.error("Sender ID iS "+ senderId +"Dial is "+dialNumber+" Exceptoion is "+e1.getMessage());
+		}
+		CloseableHttpResponse response = null;
+		String realParameter = "param:" + par/* +",paramChannel:"+paramChannel */;
+
+		HttpGet httpGet = new HttpGet(botWebserviceMessage.getWsUrl());
+		URI uri = null;
+		try {
+			uri = new URIBuilder(httpGet.getURI()).addParameter("dial", realParameter).build();
+			logger.debug("Web Service URL is "+uri);
+		} catch (URISyntaxException e1) {
+			logger.error("Sender ID iS "+ senderId +"Dial is "+dialNumber+" Exceptoion is "+e1.getMessage());
+		}
+		httpGet.setURI(uri);
+		try {
+			response = cachingClient.execute(httpGet, context);
+			HttpEntity entity = response.getEntity();
+			stringResponse = EntityUtils.toString(entity, "UTF-8");
+			logger.debug("Get Subscriber profile for dial "+dialNumber+ "is "+stringResponse);
+			int responseStatusId = response.getStatusLine().getStatusCode();
+			if (responseStatusId == 200) {
+				resposeMap.put("status", String.valueOf(responseStatusId));
+				System.out.println(response);
+				resposeMap.put("response", stringResponse);
+			} else {
+				resposeMap.put("status", String.valueOf(responseStatusId));
+				resposeMap.put("response", stringResponse);
+			}
+		} catch (IOException e) {
+			logger.error("Sender ID iS "+ senderId +"Dial is "+dialNumber+" Exceptoion is "+e.getMessage());
+		}
+		try {
+			CacheResponseStatus responseStatus = context.getCacheResponseStatus();
+			switch (responseStatus) {
+			case CACHE_HIT:
+				System.out.println("A response was generated from the cache with " + "no requests sent upstream");
+				break;
+			case CACHE_MODULE_RESPONSE:
+				System.out.println("The response was generated directly by the " + "caching module");
+				break;
+			case CACHE_MISS:
+				System.out.println("The response came from an upstream server");
+				break;
+			case VALIDATED:
+				System.out.println("The response was generated from the cache "
+						+ "after validating the entry with the origin server");
+				break;
+			}
+		} finally {
+			try {
+				response.close();
+			} catch (IOException e) {
+				logger.error("Sender ID iS "+ senderId +"Dial is "+dialNumber+" Exceptoion is "+e.getMessage());
+			}
+		}
+		return resposeMap;
+
+	}
+
+	public Map<String, String> getEligibleProducts(BotWebserviceMessage botWebserviceMessage, String senderId,
+			ChatBotService chatBotService) {
+		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
+		Map<String, String> resposeMap = new HashMap<String, String>();
+		String dialNumber = customerProfile.getMsisdn();
+		String stringResponse = "";
+		CacheConfig cacheConfig = CacheConfig.custom().setMaxCacheEntries(1000).setMaxObjectSize(8192).build();
+		RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(30000).setSocketTimeout(30000).build();
+		CloseableHttpClient cachingClient = CachingHttpClients.custom().setCacheConfig(cacheConfig)
+				.setDefaultRequestConfig(requestConfig).build();
+		HttpCacheContext context = HttpCacheContext.create();
+		String par = "";
+		String paramChannel = "4e47684968446e4e7067726d3968507a4f77585273684d3152647046703752454c6d4a4b59533978484557636750357151644c487154544370445343414d7252";
+
+		try {
+			par = Utils.encryptDPIParam("time=1498033943505" + "&user=" + dialNumber + "&URL=facebook");
+		} catch (Exception e1) {
+			logger.error("Sender ID iS "+ senderId +" Exceptoion is "+e1.getMessage());
+		}
+		CloseableHttpResponse response = null;
+		String realParameter = "param:" + par/* +",paramChannel:"+paramChannel */;
+
+		HttpGet httpGet = new HttpGet(botWebserviceMessage.getWsUrl());
+		URI uri = null;
+		try {
+			uri = new URIBuilder(httpGet.getURI()).addParameter("dial", realParameter).build();
+		} catch (URISyntaxException e1) {
+			logger.error("Sender ID iS "+ senderId +" Exceptoion is "+e1.getMessage());
+		}
+		httpGet.setURI(uri);
+		try {
+			response = cachingClient.execute(httpGet, context);
+			HttpEntity entity = response.getEntity();
+			stringResponse = EntityUtils.toString(entity, "UTF-8");
+			logger.debug("Get Eligible Products for Dial "+dialNumber +" is "+stringResponse);
+			int responseStatusId = response.getStatusLine().getStatusCode();
+			if (responseStatusId == 200) {
+				resposeMap.put("status", String.valueOf(responseStatusId));
+				resposeMap.put("response", stringResponse);
+			} else {
+				resposeMap.put("status", String.valueOf(responseStatusId));
+				resposeMap.put("response", stringResponse);
+			}
+		} catch (IOException e) {
+			logger.error("Sender ID iS "+ senderId +"Dial is "+dialNumber+" Exceptoion is "+e.getMessage());			
+		}
+		try {
+			CacheResponseStatus responseStatus = context.getCacheResponseStatus();
+			switch (responseStatus) {
+			case CACHE_HIT:
+				System.out.println("A response was generated from the cache with " + "no requests sent upstream");
+				break;
+			case CACHE_MODULE_RESPONSE:
+				System.out.println("The response was generated directly by the " + "caching module");
+				break;
+			case CACHE_MISS:
+				System.out.println("The response came from an upstream server");
+				break;
+			case VALIDATED:
+				System.out.println("The response was generated from the cache "
+						+ "after validating the entry with the origin server");
+				break;
+			}
+		} finally {
+			try {
+				response.close();
+			} catch (IOException e) {
+				logger.error("Sender ID iS "+ senderId +"Dial is "+dialNumber+" Exceptoion is "+e.getMessage());
+			}
+		}
+		return resposeMap;
+
+	}
+
 	
+	public MessagePayload changeLanguageResponse(String locale , String senderId) {
+		String text = "";
+		if(locale.contains("ar")) {
+			text = "تم تغير اللغة الي اللغة العربيه ";
+		}else {
+			text = "Language has been changed to English language";
+		}
+		TextMessage textMSG = TextMessage.create(text);
+		return MessagePayload.create(senderId, MessagingType.RESPONSE, textMSG);
+	}
 	
 }

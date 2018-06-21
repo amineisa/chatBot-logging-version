@@ -118,6 +118,12 @@ public class BotInteraction implements Serializable {
 	public void setIsSecure(Boolean isSecure) {
 		this.isSecure = isSecure;
 	}
+
+
+	@Override
+	public String toString() {
+		return "Interaction payload is "+getPayload() +" and Interaction Name is "+getInteractionName();
+	}
 	
 	
 

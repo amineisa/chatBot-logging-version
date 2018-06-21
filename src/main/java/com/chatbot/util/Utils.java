@@ -1,10 +1,14 @@
 package com.chatbot.util;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
@@ -24,6 +28,8 @@ import org.apache.http.impl.client.cache.CachingHttpClient;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 
@@ -32,10 +38,16 @@ import com.chatbot.entity.BotInteraction;
 import com.chatbot.entity.CustomerProfile;
 import com.chatbot.entity.InteractionLogging;
 import com.chatbot.services.ChatBotService;
+import com.chatbot.services.UtilService;
+import com.github.messenger4j.Messenger;
+import com.github.messenger4j.exception.MessengerApiException;
+import com.github.messenger4j.exception.MessengerIOException;
+import com.github.messenger4j.send.SenderActionPayload;
+import com.github.messenger4j.send.senderaction.SenderAction;
 
 public class Utils {
 	
-	
+	private static final Logger logger = LoggerFactory.getLogger(UtilService.class); 
 	public  enum ButtonTypeEnum {
 		START(1L),POSTBACK(2l), URL(3l),NESTED(4L),LOGIN(5L),LOGOUT(6L),CALL(7L);
 		private final Long buttonTypeId;
@@ -83,8 +95,7 @@ public class Utils {
 				 try {
 					url = new URL(stringUrl);
 				} catch (MalformedURLException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					logger.error(e.getMessage() , e);
 				}
 				 
 				 return url ;
@@ -190,10 +201,10 @@ public class Utils {
 			        HttpResponse response = null;
 			        try {
 			            response = cachingClient.execute(httpget, localContext);
-			        } catch (ClientProtocolException e1) {
-			            e1.printStackTrace();
-			        } catch (IOException e1) {
-			            e1.printStackTrace();
+			        } catch (ClientProtocolException e) {
+			        	logger.error(e.getMessage() , e);
+			        } catch (IOException e) {
+			        	logger.error(e.getMessage() , e);
 			        }
 			        Header [] headers = response.getAllHeaders();
 			        for(Header headr : headers) {
@@ -204,8 +215,7 @@ public class Utils {
 			        try {
 			            EntityUtils.consume(entity);
 			        } catch (IOException e) {
-			            // TODO Auto-generated catch block
-			            e.printStackTrace();
+			        	logger.error(e.getMessage() , e);
 			        }
 
 			    }
@@ -254,4 +264,71 @@ public class Utils {
 			                CachingHttpClient.CACHE_RESPONSE_STATUS);
 			        checkResponse(responseStatus);
 			    }
+			  
+			  
+			  
+			  public static void markAsSeen(Messenger messenger , String userId) {
+				  final String recipientId = userId;
+				  final SenderAction senderAction = SenderAction.MARK_SEEN;
+
+				  final SenderActionPayload payload = SenderActionPayload.create(recipientId, senderAction);
+
+				  try {
+					messenger.send(payload);
+				} catch (MessengerApiException | MessengerIOException e) {
+					logger.error(e.getMessage() , e);
+				}
+			  }
+			  
+			  
+			  public static void markAsTypingOn(Messenger messenger , String userId) {
+				  final String recipientId = userId;
+				  final SenderAction senderAction = SenderAction.TYPING_ON;
+
+				  final SenderActionPayload payload = SenderActionPayload.create(recipientId, senderAction);
+
+				  try {
+					messenger.send(payload);
+				} catch (MessengerApiException | MessengerIOException e) {
+					logger.error(e.getMessage() , e);
+				}
+			  }
+			  
+			  
+			  public static void markAsTypingOff(Messenger messenger , String userId) {
+				  final String recipientId = userId;
+				  final SenderAction senderAction = SenderAction.TYPING_OFF;
+
+				  final SenderActionPayload payload = SenderActionPayload.create(recipientId, senderAction);
+
+				  try {
+					messenger.send(payload);
+				} catch (MessengerApiException | MessengerIOException e) {
+					logger.error(e.getMessage() , e);
+				}
+			  }
+			  
+			  
+			  
+			  
+
+				    public  List<String> getParameterNames(Method method) {
+				        Parameter[] parameters = method.getParameters();
+				        List<String> parameterNames = new ArrayList<>();
+
+				        for (Parameter parameter : parameters) {
+				            if(!parameter.isNamePresent()) {
+				                throw new IllegalArgumentException("Parameter names are not present!");
+				            }
+				            
+				            String parameterName = parameter.getName();
+				            parameterNames.add(parameterName);
+				        }
+
+				        return parameterNames;
+				    }
+
+				   			
+			  
+			  
 }
