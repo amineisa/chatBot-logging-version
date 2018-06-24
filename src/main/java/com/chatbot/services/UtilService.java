@@ -1057,9 +1057,9 @@ public class UtilService
 	 */
 	// @Override
 	public Map<String, String> callGetWebService(BotWebserviceMessage botWebserviceMessage, String senderId,
-			ChatBotService chatBotService) {
+			ChatBotService chatBotService,String phoneNumber) {
 		String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
-		logger.debug("Methoud Name Is "+methodName);
+		logger.debug("Dial is "+phoneNumber+" Methoud Name Is "+methodName);
 		return cachingResponse(botWebserviceMessage, senderId, chatBotService);
 	}
 
@@ -1567,7 +1567,9 @@ public class UtilService
 	}
 
 	public Map<String, String> getSubscriberProfile(BotWebserviceMessage botWebserviceMessage, String senderId,
-			ChatBotService chatBotService) {
+			ChatBotService chatBotService,String phoneNumber) {
+		String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
+		logger.debug("Dial is "+phoneNumber+" Methoud Name Is "+methodName + "Parameters are Sender ID ,and botWebServiceMessage values are "+senderId+" , "+botWebserviceMessage.getWsMsgId() );
 		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 		Map<String, String> resposeMap = new HashMap<String, String>();
 		String dialNumber = customerProfile.getMsisdn();
@@ -1583,7 +1585,7 @@ public class UtilService
 		try {
 			par = Utils.encryptDPIParam("time=1498033943505" + "&user=" + dialNumber + "&URL=facebook");
 		} catch (Exception e1) {
-			logger.error("Sender ID iS "+ senderId +"Dial is "+dialNumber+" Exceptoion is "+e1.getMessage());
+			logger.error("Dial is "+phoneNumber+" Methoud Name Is "+methodName + " Sender ID iS "+ senderId +"Dial is "+dialNumber+" Exceptoion is "+e1.getMessage());
 		}
 		CloseableHttpResponse response = null;
 		String realParameter = "param:" + par/* +",paramChannel:"+paramChannel */;
@@ -1592,9 +1594,9 @@ public class UtilService
 		URI uri = null;
 		try {
 			uri = new URIBuilder(httpGet.getURI()).addParameter("dial", realParameter).build();
-			logger.debug("Web Service URL is "+uri);
+			logger.debug("Dial is "+phoneNumber+" Methoud Name Is "+methodName + " Web Service URL is "+uri);
 		} catch (URISyntaxException e1) {
-			logger.error("Sender ID iS "+ senderId +"Dial is "+dialNumber+" Exceptoion is "+e1.getMessage());
+			logger.error("Dial is "+phoneNumber+" Methoud Name Is "+methodName + " Sender ID iS "+ senderId +"Dial is "+dialNumber+" Exceptoion is "+e1.getMessage());
 		}
 		httpGet.setURI(uri);
 		try {
@@ -1605,14 +1607,14 @@ public class UtilService
 			int responseStatusId = response.getStatusLine().getStatusCode();
 			if (responseStatusId == 200) {
 				resposeMap.put("status", String.valueOf(responseStatusId));
-				System.out.println(response);
 				resposeMap.put("response", stringResponse);
+				logger.debug("Dial is "+phoneNumber+" Methoud Name Is "+methodName + " RESPONSE IS "+stringResponse);
 			} else {
 				resposeMap.put("status", String.valueOf(responseStatusId));
 				resposeMap.put("response", stringResponse);
 			}
 		} catch (IOException e) {
-			logger.error("Sender ID iS "+ senderId +"Dial is "+dialNumber+" Exceptoion is "+e.getMessage());
+			logger.error("Dial is "+phoneNumber+" Methoud Name Is "+methodName + " Sender ID iS "+ senderId +" Exceptoion is "+e.getMessage());
 		}
 		try {
 			CacheResponseStatus responseStatus = context.getCacheResponseStatus();
@@ -1635,7 +1637,7 @@ public class UtilService
 			try {
 				response.close();
 			} catch (IOException e) {
-				logger.error("Sender ID iS "+ senderId +"Dial is "+dialNumber+" Exceptoion is "+e.getMessage());
+				logger.error("Dial is "+phoneNumber+" Methoud Name Is "+methodName + " Sender ID iS "+ senderId +" Exceptoion is "+e.getMessage());
 			}
 		}
 		return resposeMap;
@@ -1643,7 +1645,9 @@ public class UtilService
 	}
 
 	public Map<String, String> getEligibleProducts(BotWebserviceMessage botWebserviceMessage, String senderId,
-			ChatBotService chatBotService) {
+			ChatBotService chatBotService,String phoneNumber) {
+		String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
+		logger.debug("Dial is "+phoneNumber+" Methoud Name Is "+methodName+" Sender ID iS "+senderId);
 		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 		Map<String, String> resposeMap = new HashMap<String, String>();
 		String dialNumber = customerProfile.getMsisdn();
@@ -1659,7 +1663,7 @@ public class UtilService
 		try {
 			par = Utils.encryptDPIParam("time=1498033943505" + "&user=" + dialNumber + "&URL=facebook");
 		} catch (Exception e1) {
-			logger.error("Sender ID iS "+ senderId +" Exceptoion is "+e1.getMessage());
+			logger.error("Dial is "+phoneNumber+" Methoud Name Is "+methodName+" Sender ID iS "+ senderId +" Exceptoion is "+e1.getMessage());
 		}
 		CloseableHttpResponse response = null;
 		String realParameter = "param:" + par/* +",paramChannel:"+paramChannel */;
