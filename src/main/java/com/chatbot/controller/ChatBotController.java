@@ -176,7 +176,7 @@ public class ChatBotController {
 
 	private void handlePayload(String payload, Messenger messenger, String senderId) {
 		String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
-		logger.debug("Methoud Name Is "+methodName+" Parameters names Payload and sender ID values are  "+payload +" "+senderId);
+		logger.debug("Dial is "+phoneNumber+" Methoud Name Is "+methodName+" Parameters names Payload and sender ID values are  "+payload +" "+senderId);
 		Utils.markAsTypingOn(messenger, senderId);
 		payload = payLoadSettings(payload);
 		String parentPayLoad = null;
@@ -194,12 +194,12 @@ public class ChatBotController {
 				userLocale = getLocaleValue(senderId, userProfile);
 			} catch (NullPointerException nullPointerException) {
 				customer = new CustomerProfile();
-				logger.error("Sender ID is "+senderId +" Exceptoion is "+nullPointerException.getMessage());
+				logger.error("Dial is "+phoneNumber+" Sender ID is "+senderId +" Exceptoion is "+nullPointerException.getMessage());
 			}
 		} catch (MessengerApiException e1) {
-			logger.error("Sender ID is "+senderId +" Exceptoion is "+e1.getMessage());
+			logger.error("Dial is "+phoneNumber+" Sender ID is "+senderId +" Exceptoion is "+e1.getMessage());
 		} catch (MessengerIOException e1) {
-			logger.error("Sender ID is "+senderId +" Exceptoion is "+e1.getMessage());
+			logger.error("Dial is "+phoneNumber+" Sender ID is "+senderId +" Exceptoion is "+e1.getMessage());
 		}
 
 		try {
@@ -226,7 +226,7 @@ public class ChatBotController {
 						//System.out.println(botInteraction.toString());
 					} catch (NullPointerException e) {
 						phoneNumber = "";
-						logger.error("Sender ID is "+senderId +" Exceptoion is "+e.getMessage());
+						logger.error("Dial is "+phoneNumber+" Sender ID is "+senderId +" Exceptoion is "+e.getMessage());
 					}
 				}
 
@@ -252,7 +252,7 @@ public class ChatBotController {
 						// Dynamic Scenario
 						else {
 							dynamicScenarioController(payload, messenger, senderId, customerProfile, userLocale,
-									botInteraction, messagePayloadList, messageTypeId, messageId,parentPayLoad);
+									botInteraction, messagePayloadList, messageTypeId, messageId,parentPayLoad,phoneNumber);
 						}
 					}
 					sendMultipleMessages(messagePayloadList,senderId);
@@ -358,10 +358,10 @@ public class ChatBotController {
 
 	private void dynamicScenarioController(String payload, Messenger messenger, String senderId,
 			CustomerProfile customerProfile, String userLocale, BotInteraction botInteraction,
-			ArrayList<MessagePayload> messagePayloadList, Long messageTypeId, Long messageId,String parentPayLoad) throws JSONException {
+			ArrayList<MessagePayload> messagePayloadList, Long messageTypeId, Long messageId,String parentPayLoad,String phoneNumber) throws JSONException {
 		String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
-		logger.debug("Methoud Name Is "+methodName);
-		logger.debug("Parameters names Payload , senderID , user Locale and Interaction  values are  "+payload +" "+senderId+" "+botInteraction.toString());
+		
+		logger.debug("Dial is "+phoneNumber+" Methoud Name Is "+methodName+" Parameters names Payload , senderID , user Locale and Interaction  values are  "+payload +" "+senderId+" "+botInteraction.toString());
 		MessagePayload messagePayload;
 		CustomerProfile newCustomerProfile = Utils
 				.updateCustomerLastSeen(chatBotService.getCustomerProfileBySenderId(senderId));
@@ -377,12 +377,12 @@ public class ChatBotController {
 		Map<String, String> mapResponse = new HashMap<String, String>();
 		if (botWebserviceMessage.getBotMethodType().getMethodTypeId() == 1) {
 			if(payload.equalsIgnoreCase("change bundle")) {
-				mapResponse = utilService.getEligibleProducts(botWebserviceMessage, senderId, chatBotService);
+				mapResponse = utilService.getEligibleProducts(botWebserviceMessage, senderId, chatBotService,phoneNumber);
 			}else if(payload.equalsIgnoreCase("view connect details") || payload.equalsIgnoreCase("view rateplan and connect details")
 					|| payload.equalsIgnoreCase("view rateplan details") || payload.equalsIgnoreCase("rateplan details") || payload.equalsIgnoreCase("consumption")) {
-				mapResponse = utilService.getSubscriberProfile(botWebserviceMessage, senderId, chatBotService);
+				mapResponse = utilService.getSubscriberProfile(botWebserviceMessage, senderId, chatBotService,phoneNumber);
 			}else {
-				mapResponse = utilService.callGetWebService(botWebserviceMessage, senderId, chatBotService);
+				mapResponse = utilService.callGetWebService(botWebserviceMessage, senderId, chatBotService,phoneNumber);
 			}
 			if (mapResponse.get("status").equals("200")) {
 				response = mapResponse.get("response");
