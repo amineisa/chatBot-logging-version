@@ -1,9 +1,10 @@
 package com.chatbot.dao;
 
+import java.util.List;
+
 import org.springframework.data.repository.CrudRepository;
 
 import com.chatbot.entity.PersistenceMenuButton;
-import java.util.List;
 
 public interface PersistenceMenuButtonRepo extends CrudRepository<PersistenceMenuButton, Long>{
 		

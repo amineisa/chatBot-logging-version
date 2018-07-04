@@ -16,6 +16,7 @@ import com.chatbot.dao.BotTextResponseMappingRepo;
 import com.chatbot.dao.BotWebserviceMappingRepo;
 import com.chatbot.dao.BotWebserviceMessageRepo;
 import com.chatbot.dao.CustomerProfileRepo;
+import com.chatbot.dao.EnabledCategoryConfigurationRepo;
 import com.chatbot.dao.InteractionLoggingRepo;
 import com.chatbot.dao.InteractionMessageRepo;
 import com.chatbot.dao.PersistenceMenuButtonRepo;
@@ -36,7 +37,6 @@ import com.chatbot.entity.EnabledCategoryConfiguration;
 import com.chatbot.entity.InteractionLogging;
 import com.chatbot.entity.PersistenceMenuButton;
 import com.chatbot.entity.SubscribeWSBody;
-import com.chatbot.dao.EnabledCategoryConfigurationRepo;
 
 @Service
 public class ChatBotServiceImpl implements ChatBotService {
@@ -90,6 +90,10 @@ public class ChatBotServiceImpl implements ChatBotService {
 	
 	public List<BotInteractionMessage> findInteractionMessagesByInteractionId(Long interactionId) {
 		return interactionMessageRepo.findByBotInteractionInteractionIdOrderByMessagePriority(interactionId);
+	}
+	
+	public BotInteractionMessage findMessageByInteraction(BotInteraction botInteraction){
+		return interactionMessageRepo.findOneByBotInteraction(botInteraction);
 	}
 
 	public BotQuickReplyMessage findQuickReplyMessageByMessageId(Long messageId) {
@@ -181,6 +185,7 @@ public class ChatBotServiceImpl implements ChatBotService {
 		return botButtonTemplateMSGRepo.findBotButtonTemplateMSGByBotInteractionMessage(interactionMsg);
 	}
 
+	
 	@Override
 	public List<BotButton> findAllButtonsByWebserviceMessage(BotWebserviceMessage botWebserviceMessage) {
 		return botButtonRepo.findBotButtonByBotWebserviceMessage(botWebserviceMessage);
@@ -228,6 +233,11 @@ public class ChatBotServiceImpl implements ChatBotService {
 	@Override
 	public EnabledCategoryConfiguration getEnabledCategoryConfigurationDaoById(Long id) {
 		return enabledCategoryConfigurationRepo.findEnabledCategoryConfigurationById(id) ;
+	}
+
+	@Override
+	public BotButtonTemplateMSG findBotButtonTemplateByMessageId(BotInteractionMessage botInteractionMessage) {
+		return botButtonTemplateMSGRepo.findBotButtonTemplateMSGBybotInteractionMessage(botInteractionMessage) ;
 	}
 
 	

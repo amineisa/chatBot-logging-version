@@ -89,6 +89,13 @@ public class BotInteractionMessage implements Serializable {
 		this.isStatic = isStatic;
 	}
 
+	@Override
+	public String toString() {
+		return "BotInteractionMessage [messageId=" + messageId + ", messagePriority=" + messagePriority
+				+ ", botMessageType=" + botMessageType + ", botInteraction=" + botInteraction + ", isStatic=" + isStatic
+				+ "]";
+	}
+
 	
 	
 }

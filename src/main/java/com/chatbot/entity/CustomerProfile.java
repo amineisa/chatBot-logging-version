@@ -92,6 +92,13 @@ public class CustomerProfile {
 	public void setCustomerLastSeen(Date customerLastSeen) {
 		this.customerLastSeen = customerLastSeen;
 	}
+
+	@Override
+	public String toString() {
+		return "CustomerProfile [senderID=" + senderID + ", local=" + local + ", msisdn=" + msisdn + ", linkingDate="
+				+ linkingDate + ", firstInsertion=" + firstInsertion + ", lastGetProfileWSCall=" + lastGetProfileWSCall
+				+ ", customerLastSeen=" + customerLastSeen + "]";
+	}
 	
 		
 	

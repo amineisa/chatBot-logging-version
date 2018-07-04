@@ -1,18 +1,12 @@
 package com.chatbot.services;
 
 import static java.util.Optional.empty;
-import java.io.BufferedReader;
-import java.io.File;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,10 +15,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.cache.CacheResponseStatus;
 import org.apache.http.client.cache.HttpCacheContext;
 import org.apache.http.client.config.RequestConfig;
@@ -35,14 +28,14 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.cache.CacheConfig;
 import org.apache.http.impl.client.cache.CachingHttpClients;
 import org.apache.http.util.EntityUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.springframework.data.annotation.CreatedBy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.chatbot.controller.ChatBotController;
@@ -58,6 +51,7 @@ import com.chatbot.entity.BotTextResponseMapping;
 import com.chatbot.entity.BotWebserviceMessage;
 import com.chatbot.entity.CustomerProfile;
 import com.chatbot.entity.SubscribeWSBody;
+import com.chatbot.util.Constants;
 import com.chatbot.util.Utils;
 import com.github.messenger4j.Messenger;
 import com.github.messenger4j.exception.MessengerApiException;
@@ -78,17 +72,13 @@ import com.github.messenger4j.send.message.template.button.PostbackButton;
 import com.github.messenger4j.send.message.template.button.UrlButton;
 import com.github.messenger4j.send.message.template.common.Element;
 import com.github.messenger4j.userprofile.UserProfile;
-import org.apache.http.impl.client.cache.CacheConfig;
-import aj.org.objectweb.asm.Label;
-import sun.misc.BASE64Decoder;
 
 @Service
-public class UtilService
-{
+public class UtilService {
 
-	final static Logger logger = LogManager.getLogger(UtilService.class); 
+	private static final Logger logger = LoggerFactory.getLogger(ChatBotController.class);
+
 	// IN Case Zero Level JSONObject
-//	@Override
 	public Map<String, ArrayList<String>> inCaseZeroLevelJsonObject(String[] keys, JSONObject jsonObject, String msg,
 			String locale) {
 		Map<String, ArrayList<String>> mapValues = new HashMap<String, ArrayList<String>>();
@@ -110,7 +100,6 @@ public class UtilService
 	}
 
 	// IN Case Zero Level JSONArray
-//	@Override
 	public Map<String, ArrayList<String>> inCaseZeroLevelJsonArray(String[] keys, JSONArray rootArray, String msg,
 			String locale) {
 
@@ -127,7 +116,7 @@ public class UtilService
 				mapValues.put("title", titleList);
 				mapValues.put("msg", textMsgs);
 			} catch (JSONException e) {
-				logger.error("Exceptoion is "+e.getMessage());
+				logger.error("Exceptoion is " + e.getMessage());
 			}
 			// replace message missed values
 			String finalMsg = replaceValuesByMapping(values, msg, locale);
@@ -144,7 +133,6 @@ public class UtilService
 	}
 
 	// IN Case ONE Level JSONObject
-//	@Override
 	public Map<String, ArrayList<String>> inCaseOneLevelJsonObject(String[] paths, String[] keys, JSONObject jsonObject,
 			String msg, String locale) {
 		Map<String, ArrayList<String>> mapValues = new HashMap<String, ArrayList<String>>();
@@ -160,13 +148,13 @@ public class UtilService
 			try {
 				firstLevelArray = jsonObject.getJSONArray(paths[0]);
 			} catch (JSONException e) {
-				logger.error(" Exceptoion is "+e.getMessage());
+				logger.error(" Exceptoion is " + e.getMessage());
 			}
 			for (int i = 0; i < firstLevelArray.length(); i++) {
 				try {
 					firstLevelObject = firstLevelArray.getJSONObject(i);
 				} catch (JSONException e) {
-					logger.error(" Exceptoion is "+e.getMessage());
+					logger.error(" Exceptoion is " + e.getMessage());
 				}
 				values = getValuesFromJson(firstLevelObject, keys);
 				// replace message missed values
@@ -181,7 +169,7 @@ public class UtilService
 			try {
 				firstLevelObject = jsonObject.getJSONObject(paths[0]);
 			} catch (JSONException e) {
-				logger.error(" Exceptoion is "+e.getMessage());
+				logger.error(" Exceptoion is " + e.getMessage());
 			}
 			values = getValuesFromJson(firstLevelObject, keys);
 			// replace message missed values
@@ -197,7 +185,7 @@ public class UtilService
 	}
 
 	// IN Case ONE Level JSONOArray
-	// @Override
+
 	public Map<String, ArrayList<String>> inCaseOneLevelJsonArrayForTextMessage(String[] paths, String[] keys,
 			JSONArray rootArray, String msg, String locale) {
 		ArrayList<String> values = new ArrayList<String>();
@@ -239,7 +227,7 @@ public class UtilService
 					mapValues.put("msg", textMsgs);
 				}
 			} catch (Exception e) {
-				logger.error(" Exceptoion is "+e.getMessage());
+				logger.error(" Exceptoion is " + e.getMessage());
 			}
 		}
 
@@ -248,7 +236,7 @@ public class UtilService
 	}
 
 	// Tested and works well get values from json object by its keys
-	// @Override
+
 	public ArrayList<String> getValuesFromJson(JSONObject jsonObject, String[] keys) {
 		ArrayList<String> values = new ArrayList<String>();
 		for (int i = 0; i < keys.length; i++) {
@@ -273,7 +261,6 @@ public class UtilService
 	}
 
 	// Tested works well replace ? in String by its new values
-	// @Override
 	public String replaceValuesByMapping(ArrayList<String> values, String msg, String locale) {
 
 		String messages = "";
@@ -296,7 +283,6 @@ public class UtilService
 	}
 
 	// In case Two Level JSONObject
-	// @Override
 	public Map<String, ArrayList<String>> inCaseTwoLevelJsonObject(JSONObject jsonObject, String[] paths, String[] keys,
 			String msg, String locale) {
 		ArrayList<String> values = new ArrayList<String>();
@@ -311,7 +297,6 @@ public class UtilService
 			try {
 				path = path.substring(1, path.length());
 				firstLevelArray = jsonObject.getJSONArray(path);
-				System.out.println(firstLevelArray);
 				for (int i = 0; i < firstLevelArray.length(); i++) {
 					firstLevelObject = firstLevelArray.getJSONObject(i);
 					if (paths[1].startsWith("#")) {
@@ -351,7 +336,7 @@ public class UtilService
 					}
 				}
 			} catch (Exception e) {
-				logger.error(" Exceptoion is "+e.getMessage());
+				logger.error(" Exceptoion is " + e.getMessage());
 			}
 			// TODO: handle exception
 		} else if (!path.startsWith("#")) {
@@ -384,8 +369,8 @@ public class UtilService
 					mapValues.put("msg", textMsgs);
 				}
 			} catch (Exception e) {
-				logger.error(" Exceptoion is "+e.getMessage());
-				
+				logger.error(" Exceptoion is " + e.getMessage());
+
 			}
 		}
 		return mapValues;
@@ -393,7 +378,6 @@ public class UtilService
 	}
 
 	// In case Two Level JSONArray
-	// @Override
 	public Map<String, ArrayList<String>> inCaseTwoLevelJsonArrayForTextMessage(JSONArray rootArray, String[] paths,
 			String[] keys, String msg, String locale) {
 		ArrayList<String> titleList = new ArrayList<String>();
@@ -461,7 +445,7 @@ public class UtilService
 
 				}
 			} catch (Exception e) {
-				logger.error(" Exceptoion is "+e.getMessage());
+				logger.error(" Exceptoion is " + e.getMessage());
 			}
 		}
 
@@ -470,7 +454,6 @@ public class UtilService
 	}
 
 	// Method to get Path Details
-	// @Override
 	public String[] getPaths(String path) {
 		String[] paths = new String[0];
 		if (path.contains(",")) {
@@ -482,7 +465,6 @@ public class UtilService
 	}
 
 	// Method to get keys
-	// @Override
 	public String[] getKeys(String key) {
 		String[] keys = new String[0];
 		if (key.contains(",")) {
@@ -494,7 +476,6 @@ public class UtilService
 	}
 
 	// Switcher for JSONObject
-	// @Override
 	public Map<String, ArrayList<String>> switchToObjectMode(JSONObject jsonResponse, String[] paths, String[] keys,
 			String msg, String locale) {
 		ArrayList<String> values = new ArrayList<String>();
@@ -511,7 +492,6 @@ public class UtilService
 	}
 
 	// Switcher for JSONArray
-	// @Override
 	public Map<String, ArrayList<String>> switchToArrayMode(JSONArray jsonResponse, String[] paths, String[] keys,
 			String msg, String locale) {
 		Map<String, ArrayList<String>> mapValues = new HashMap<String, ArrayList<String>>();
@@ -527,7 +507,6 @@ public class UtilService
 	}
 
 	// Create Button
-	// @Override
 	public Button createButton(BotButton botButton, String locale, JSONObject jsonObject, String dialNumber) {
 		// PostBack
 		if (botButton.getButtonType().getId() == Utils.ButtonTypeEnum.POSTBACK.getValue()) {
@@ -537,7 +516,7 @@ public class UtilService
 				String finalPayLoad = getValuesFromJson(jsonObject, new String[] { payload }).get(0);
 				String finalText = getValuesFromJson(jsonObject, new String[] { lable }).get(0);
 				if (finalPayLoad.contains("_")) {
-					finalPayLoad = "sub_" + finalPayLoad;
+					finalPayLoad = Constants.PREFIX_RATEPLAN_SUBSCRIPTION + finalPayLoad;
 				}
 				return PostbackButton.create(finalText, finalPayLoad);
 			}
@@ -563,7 +542,7 @@ public class UtilService
 						return UrlButton.create(Utils.getTextValueForButtonLabel(locale, botButton), newUrl);
 					}
 				} catch (Exception e) {
-					logger.error(" Exceptoion is "+e.getMessage());
+					logger.error(" Exceptoion is " + e.getMessage());
 				}
 			} else {
 				try {
@@ -582,7 +561,7 @@ public class UtilService
 						return UrlButton.create(Utils.getTextValueForButtonLabel(locale, botButton), newUrl);
 					}
 				} catch (Exception e) {
-					logger.error(" Exceptoion is "+e.getMessage());
+					logger.error(" Exceptoion is " + e.getMessage());
 				}
 			}
 			return UrlButton.create(Utils.getTextValueForButtonLabel(locale, botButton), url);
@@ -602,7 +581,6 @@ public class UtilService
 	 * @param chatBotService
 	 * @return
 	 */
-	// @Override
 	public Template createGenericTemplate(Long messageId, ChatBotService chatBotService, String userlocale,
 			BotWebserviceMessage botWebserviceMessage, JSONObject jsonObject, String dialNumber,
 			ArrayList<String> consumptionNames) {
@@ -696,7 +674,6 @@ public class UtilService
 		return element;
 	}
 
-	// @Override
 	public String getTitletBotTemplateElement(BotTemplateElement botTemplateElement, String local) {
 		String title = "";
 		if (local.equalsIgnoreCase("ar")) {
@@ -707,7 +684,6 @@ public class UtilService
 		return title;
 	}
 
-	// @Override
 	public String getSubTitletBotTemplateElement(BotTemplateElement botTemplateElement, String local) {
 		String title = "";
 		if (local.equalsIgnoreCase("ar")) {
@@ -724,7 +700,6 @@ public class UtilService
 	 * @param chatBotService
 	 * @return
 	 */
-	// @Override
 	public ButtonTemplate createButtonTemplateInScenario(BotInteractionMessage botInteractionMessage,
 			ChatBotService chatBotService, String local, String dialNumber) {
 		String title = "";
@@ -743,7 +718,6 @@ public class UtilService
 
 	}
 
-	// @Override
 	public String getTextForButtonTemplate(String local, BotButtonTemplateMSG botButtonTemplateMSG) {
 		String text = "";
 		if (local.equalsIgnoreCase("ar")) {
@@ -754,7 +728,6 @@ public class UtilService
 		return text;
 	}
 
-	// @Override
 	public List<QuickReply> createQuickReply(ChatBotService chatBotService, Long messageId, String local) {
 		BotQuickReplyMessage botQuickReplyMessage = chatBotService.findQuickReplyMessageByMessageId(messageId);
 		List<QuickReply> quickReplies = new ArrayList<>();
@@ -780,7 +753,7 @@ public class UtilService
 	}
 
 	// This Method For call Parent MessagePayLoad again
-	// @Override
+
 	public MessagePayload createMessagePayload(String parentPayLoad, ChatBotService chatBotService, String senderId,
 			String userLocale, BotWebserviceMessage botWebserviceMessage, String dialNumber) {
 		MessagePayload messagePayload = null;
@@ -809,7 +782,7 @@ public class UtilService
 	 * @param jsonBodyString
 	 * @throws JSONException
 	 */
-	// @Override
+
 	public void getTextMessageIfResponseIsArray(String senderId, ArrayList<MessagePayload> messagePayloadList,
 			BotWebserviceMessage botWebserviceMessage, String jsonBodyString, ChatBotService chatBotService,
 			String local) throws JSONException {
@@ -826,14 +799,12 @@ public class UtilService
 			String[] keysArray = getKeys(keys);
 			ArrayList<String> values = switchToArrayMode(rootArray, paths, keysArray, msg, local).get(msg);
 			for (String val : values) {
-				System.out.println(val);
 				messagePayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TextMessage.create(val));
 				messagePayloadList.add(messagePayload);
 			}
 		}
 	}
 
-	// @Override
 	public String getTextForBotTextResponseMapping(String local, BotTextResponseMapping botTextResponseMapping) {
 		String text = "";
 		if (local.equalsIgnoreCase("ar")) {
@@ -851,7 +822,7 @@ public class UtilService
 	 * @param jsonBodyString
 	 * @throws JSONException
 	 */
-	// @Override
+
 	public void getTextMessageIfResponseIsObject(String senderId, ArrayList<MessagePayload> messagePayloadList,
 			BotWebserviceMessage botWebserviceMessage, String jsonBodyString, ChatBotService chatBotService,
 			String local) throws JSONException {
@@ -879,14 +850,13 @@ public class UtilService
 		}
 	}
 
-	// @Override
 	public MessagePayload getBundleCategories(JSONArray arrayResponse, String senderId, ChatBotService chatBotService,
 			String locale, String dial) {
 		ArrayList<Element> elements = new ArrayList<Element>();
 		List<QuickReply> quickReplies = new ArrayList<>();
 		ArrayList<String> categories = new ArrayList<String>();
-		String[] categoriesArray = chatBotService.getEnabledCategoryConfigurationDaoById(1l)
-				.getEnglishCategories().split(",");
+		String[] categoriesArray = chatBotService.getEnabledCategoryConfigurationDaoById(1l).getEnglishCategories()
+				.split(",");
 		categories = new ArrayList(Arrays.asList(categoriesArray));
 		for (int i = 0; i < arrayResponse.length(); i++) {
 			try {
@@ -904,7 +874,7 @@ public class UtilService
 						buttonLabel = categoryObject.getString("categoryNameEn");
 						name = "view";
 					}
-					String payLoad = "sub_" + categoryObject.getString("categoryId");
+					String payLoad = Constants.PREFIX_RATEPLAN_SUBSCRIPTION + categoryObject.getString("categoryId");
 
 					title = buttonLabel;
 					subTitle = "_ _ _";
@@ -917,7 +887,7 @@ public class UtilService
 				}
 
 			} catch (JSONException e) {
-				logger.error(" Exceptoion is "+e.getMessage());
+				logger.error(" Exceptoion is " + e.getMessage());
 			}
 		}
 		if (elements.size() > 0) {
@@ -932,7 +902,6 @@ public class UtilService
 		}
 	}
 
-	// @Override
 	public void getTextMessageIfResponseIsString(String senderId, ArrayList<MessagePayload> messagePayloadList,
 			BotWebserviceMessage botWebserviceMessage, String jsonBodyString, ChatBotService chatBotService,
 			String local) throws JSONException {
@@ -949,7 +918,7 @@ public class UtilService
 	}
 
 	// Return key As one String according to customer local
-	// @Override
+
 	public String getKeysString(BotTextResponseMapping botTextResponseMapping, String local) {
 		String keys = "";
 		if (local.equalsIgnoreCase("ar")) {
@@ -970,12 +939,16 @@ public class UtilService
 	 * @param messageTypeId
 	 * @param messageId
 	 */
-	// @Override
+
 	public MessagePayload responseInCaseStaticScenario(String payload, String senderId, String userFirstName,
 			BotInteraction botInteraction, BotInteractionMessage botInteractionMessage, Long messageTypeId,
 			Long messageId, ChatBotService chatBotService, String parentPayLoad, String locale, String userDial) {
 		String text;
 		MessagePayload messagePayload = null;
+		String methodName = new Object() {
+		}.getClass().getEnclosingMethod().getName();
+		logger.debug("Dial is " + userDial + "Method Name is " + methodName + "Message is "
+				+ botInteractionMessage.toString());
 		// text message
 		if (messageTypeId == Utils.MessageTypeEnum.TEXTMESSAGE.getValue()) {
 			BotTextMessage botTextMessage = chatBotService.findTextMessageByMessageId(messageId);
@@ -983,32 +956,7 @@ public class UtilService
 			text = getTextValueForBotTextMessage(botTextMessage, locale);
 			text = text + " " + userFirstName;
 			if (payload.equalsIgnoreCase("welcome")) {
-
-				CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
-				CustomerProfile newCustomerProfile = new CustomerProfile();
-				// Date insertionDate = customerProfile.getFirstInsertion();
-				if (customerProfile == null) {
-					Date date = new Date();
-					Timestamp timestamp = new Timestamp(date.getTime());
-					newCustomerProfile.setFirstInsertion(timestamp);
-					newCustomerProfile.setSenderID(senderId);
-					newCustomerProfile.setCustomerLastSeen(timestamp);
-					newCustomerProfile.setLocal(locale);
-					chatBotService.saveCustomerProfile(newCustomerProfile);
-				} else {
-					Date date = new Date();
-					Timestamp timestamp = new Timestamp(date.getTime());
-					newCustomerProfile.setSenderID(senderId);
-					newCustomerProfile.setCustomerLastSeen(timestamp);
-					newCustomerProfile.setLocal(locale);
-					newCustomerProfile.setCustomerLastSeen(customerProfile.getCustomerLastSeen());
-					newCustomerProfile.setFirstInsertion(customerProfile.getFirstInsertion());
-					newCustomerProfile.setLastGetProfileWSCall(customerProfile.getLastGetProfileWSCall());
-					newCustomerProfile.setMsisdn(customerProfile.getMsisdn());
-					newCustomerProfile.setLinkingDate(customerProfile.getLinkingDate());
-					chatBotService.saveCustomerProfile(newCustomerProfile);
-				}
-
+				CustomerProfile customerProfile = Utils.saveCustomerInformation(chatBotService, senderId, locale);				
 			}
 			messagePayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TextMessage.create(text));
 
@@ -1038,7 +986,7 @@ public class UtilService
 	}
 
 	// get text for BotTextMessage according to local
-	// @Override
+
 	public String getTextValueForBotTextMessage(BotTextMessage botTextMessage, String local) {
 		String text = "";
 		if (local.equalsIgnoreCase("ar")) {
@@ -1055,15 +1003,15 @@ public class UtilService
 	 * @return String response
 	 * @param botWebserviceMessage
 	 */
-	// @Override
+
 	public Map<String, String> callGetWebService(BotWebserviceMessage botWebserviceMessage, String senderId,
-			ChatBotService chatBotService) {
-		String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
-		logger.debug("Methoud Name Is "+methodName);
+			ChatBotService chatBotService, String phoneNumber) {
+		String methodName = new Object() {
+		}.getClass().getEnclosingMethod().getName();
+		logger.debug("Dial is " + phoneNumber + " Methoud Name Is " + methodName);
 		return cachingResponse(botWebserviceMessage, senderId, chatBotService);
 	}
 
-	// @Override
 	public Map<String, String> callPostWebService(BotWebserviceMessage botWebserviceMessage, String jsonParam,
 			ChatBotService chatBotService, String senderId, ArrayList<String> paramList) {
 		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
@@ -1076,7 +1024,7 @@ public class UtilService
 		try {
 			par = Utils.encryptDPIParam("time=1498033943505" + "&user=" + dialNumber + "&URL=facebook");
 		} catch (Exception e1) {
-			logger.error("Sender ID iS "+ senderId +" Exceptoion is "+e1.getMessage());
+			logger.error("Sender ID iS " + senderId + " Exceptoion is " + e1.getMessage());
 		}
 
 		String realParameter = "param:" + par + ",paramChannel:" + paramChannel;
@@ -1086,7 +1034,7 @@ public class UtilService
 			URI uri = new URIBuilder(httpPost.getURI()).addParameter("dial", realParameter).build();
 			httpPost.setURI(uri);
 		} catch (URISyntaxException e1) {
-			logger.error("Sender ID iS "+ senderId +" Exceptoion is "+e1.getMessage());
+			logger.error("Sender ID iS " + senderId + " Exceptoion is " + e1.getMessage());
 		}
 
 		String stringResponse = "";
@@ -1103,11 +1051,11 @@ public class UtilService
 			stringResponse = EntityUtils.toString(responseEntity, "UTF-8");
 			client.close();
 		} catch (UnsupportedEncodingException e) {
-			logger.error("Sender ID iS "+ senderId +" Exceptoion is "+e.getMessage());
+			logger.error("Sender ID iS " + senderId + " Exceptoion is " + e.getMessage());
 		} catch (ClientProtocolException e) {
-			logger.error("Sender ID iS "+ senderId +" Exceptoion is "+e.getMessage());
+			logger.error("Sender ID iS " + senderId + " Exceptoion is " + e.getMessage());
 		} catch (IOException e) {
-			logger.error("Sender ID iS "+ senderId +" Exceptoion is "+e.getMessage());
+			logger.error("Sender ID iS " + senderId + " Exceptoion is " + e.getMessage());
 		}
 		if (responseStatusId == 200) {
 			mapResponse.put("status", String.valueOf(responseStatusId));
@@ -1126,12 +1074,11 @@ public class UtilService
 	 * @param jsonBodyString
 	 * @throws JSONException
 	 */
-	// @Override
+
 	public void createTextMessageInDynamicScenario(String senderId, ArrayList<MessagePayload> messagePayloadList,
 			BotWebserviceMessage botWebserviceMessage, String jsonBodyString, ChatBotService chatBotService,
 			String local) throws JSONException {
 		// string
-		System.out.println("doing");
 		if (botWebserviceMessage.getOutType().getInOutTypeId() == 1) {
 			getTextMessageIfResponseIsString(senderId, messagePayloadList, botWebserviceMessage, jsonBodyString,
 					chatBotService, local);
@@ -1146,7 +1093,6 @@ public class UtilService
 		}
 	}
 
-	// @Override
 	public String getTextForQuickReply(String local, BotQuickReplyMessage botQuickReplyMessage, String userDial) {
 		String text = "";
 		if (local.equalsIgnoreCase("ar")) {
@@ -1157,16 +1103,15 @@ public class UtilService
 		return text;
 	}
 
-	// @Override
-	public CustomerProfile setLinkingInfoForCustomer(String senderId, Messenger messenger, String customerDial,
+	public void setLinkingInfoForCustomer(String senderId, Messenger messenger, String customerDial,
 			ChatBotService chatBotService) {
 		UserProfile userProfile = null;
 		try {
 			userProfile = messenger.queryUserProfile(senderId);
 		} catch (MessengerApiException e) {
-			logger.error("Sender ID is "+senderId +" Exceptoion is "+e.getMessage());
+			logger.error("Sender ID is " + senderId + " Exceptoion is " + e.getMessage());
 		} catch (MessengerIOException e) {
-			logger.error("Sender ID is "+senderId +" Exceptoion is "+e.getMessage());
+			logger.error("Sender ID is " + senderId + " Exceptoion is " + e.getMessage());
 		}
 		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 		CustomerProfile newCustomerProfile = new CustomerProfile();
@@ -1183,10 +1128,9 @@ public class UtilService
 		}
 		newCustomerProfile.setSenderID(senderId);
 
-		return newCustomerProfile;
+		chatBotService.saveCustomerProfile(newCustomerProfile);
 	}
 
-	// @Override
 	public void setCustomerProfileLocalAsArabic(CustomerProfile customerProfile, ChatBotService chatBotService) {
 		CustomerProfile customerProfileForLocal = new CustomerProfile();
 		Date date = new Date();
@@ -1201,7 +1145,6 @@ public class UtilService
 		chatBotService.saveCustomerProfile(customerProfileForLocal);
 	}
 
-	// @Override
 	public void setCustomerProfileLocalAsEnglish(CustomerProfile customerProfile, ChatBotService chatBotService) {
 		CustomerProfile customerProfileForLocal = new CustomerProfile();
 		Date date = new Date();
@@ -1216,7 +1159,6 @@ public class UtilService
 		chatBotService.saveCustomerProfile(customerProfileForLocal);
 	}
 
-	// @Override
 	public MessagePayload getProductsFromJsonByCategory(JSONArray arrayResponse, String category, String senderId,
 			ChatBotService chatBotService, String locale) {
 		MessagePayload fmsg = null;
@@ -1238,8 +1180,8 @@ public class UtilService
 							String payload = categoryObject.getString("categoryId");
 							String title = "LEGO Bundles";
 							String subTitle = "LEGO Bundles";
-							PostbackButton button = PostbackButton.create(label, "sub_" + payload);
-							Button backButton = PostbackButton.create("Back", "change bundle");
+							PostbackButton button = PostbackButton.create(label, Constants.PREFIX_RATEPLAN_SUBSCRIPTION + payload);
+							Button backButton = PostbackButton.create("Back", Constants.PAYLOAD_CHANGE_BUNDLE);
 							buttons.add(backButton);
 							buttons.add(button);
 
@@ -1257,14 +1199,13 @@ public class UtilService
 
 				}
 			} catch (JSONException e) {
-				logger.error("Sender ID iS "+ senderId +" Exceptoion is "+e.getMessage());
+				logger.error("Sender ID iS " + senderId + " Exceptoion is " + e.getMessage());
 			}
 		}
 		return fmsg;
 
 	}
 
-	// @Override
 	public MessagePayload getProductsByCategoryNotLego(String senderId, String locale, JSONArray products)
 			throws JSONException {
 		MessagePayload fmsg;
@@ -1289,14 +1230,14 @@ public class UtilService
 			}
 			if (relatedProducts.length() > 0) {
 				Button button = PostbackButton.create(getLabelForSubscriptionButton(locale),
-						"related" + "," + name + "," + operationName);
+						Constants.PREFIX_RELATED_PRODUCTS + "," + name + "," + operationName);
 				buttons.add(button);
 			} else {
 				Button button = PostbackButton.create(getLabelForSubscriptionButton(locale),
 						name + "," + operationName);
 				buttons.add(button);
 			}
-			Button backButton = PostbackButton.create("Back", "change bundle");
+			Button backButton = PostbackButton.create("Back", Constants.PAYLOAD_CHANGE_BUNDLE);
 			buttons.add(backButton);
 			Element element = Element.create(title, Optional.of(subtitle), empty(), empty(), Optional.of(buttons));
 			elements.add(element);
@@ -1307,7 +1248,6 @@ public class UtilService
 		return fmsg;
 	}
 
-	// @Override
 	public MessagePayload getProductsByCategoryIfLego(String senderId, String locale, JSONArray products)
 			throws JSONException {
 		MessagePayload fmsg;
@@ -1331,14 +1271,14 @@ public class UtilService
 			}
 			if (relatedProducts.length() > 0) {
 				Button button = PostbackButton.create(getLabelForSubscriptionButton(locale),
-						"related" + "," + name + "," + operationName);
+						Constants.PREFIX_RELATED_PRODUCTS + "," + name + "," + operationName);
 				buttons.add(button);
 			} else {
 				Button button = PostbackButton.create(getLabelForSubscriptionButton(locale),
 						name + "," + operationName);
 				buttons.add(button);
 			}
-			Button backButton = PostbackButton.create("Back", "change bundle");
+			Button backButton = PostbackButton.create("Back", Constants.PAYLOAD_CHANGE_BUNDLE);
 			buttons.add(backButton);
 			Element element = Element.create(title, Optional.of(subtitle), empty(), empty(), Optional.of(buttons));
 			elements.add(element);
@@ -1348,7 +1288,6 @@ public class UtilService
 		return fmsg;
 	}
 
-	// @Override
 	public MessagePayload getRelatedProductFromJsonByBundleId(JSONArray arrayResponse, String productId,
 			String senderId, ChatBotService chatBotService, String locale) {
 		MessagePayload fmsg = null;
@@ -1372,9 +1311,9 @@ public class UtilService
 							String title = relatedObject.getString("englishName");
 							String subtitle = relatedObject.getString("englishDescription");
 							Button button = PostbackButton.create(getLabelForSubscriptionButton(locale),
-									relatedProductName + "," + "relatedproductsubscription");
+									relatedProductName + "," + Constants.PREFIX_RELATED_PRODUCTS_SUBSCRIPTION);
 							buttons.add(button);
-							Button backButton = PostbackButton.create("Back", "change bundle");
+							Button backButton = PostbackButton.create("Back", Constants.PAYLOAD_CHANGE_BUNDLE);
 							buttons.add(backButton);
 							Element element = Element.create(title, Optional.of(subtitle), empty(), empty(),
 									Optional.of(buttons));
@@ -1386,13 +1325,12 @@ public class UtilService
 					}
 				}
 			} catch (JSONException e) {
-				logger.error("Sender ID iS "+ senderId +" Exceptoion is "+e.getMessage());
+				logger.error("Sender ID iS " + senderId + " Exceptoion is " + e.getMessage());
 			}
 		}
 		return fmsg;
 	}
 
-	// @Override
 	public MessagePayload getExtraMobileInternetAddonsByCategory(JSONArray arrayResponse, String senderId,
 			ChatBotService chatBotService, String locale, String addonId) {
 		ArrayList<Element> elements = new ArrayList<Element>();
@@ -1405,7 +1343,7 @@ public class UtilService
 				JSONObject object = arrayResponse.getJSONObject(i);
 				JSONArray retrievedCategoriesArray = object.getJSONArray("productCategories");
 				String id = object.getString("id");
-				for (int o = 0 ; o < retrievedCategoriesArray.length(); o++) {
+				for (int o = 0; o < retrievedCategoriesArray.length(); o++) {
 					if (retrievedCategoriesArray.getString(o).equalsIgnoreCase(addonId)) {
 						if (locale.equalsIgnoreCase("ar")) {
 							title = object.getString("arabicName");
@@ -1414,7 +1352,7 @@ public class UtilService
 							title = object.getString("englishName");
 							buttonLabel = "Subscribe";
 						}
-						String payLoad = "subaddon_" + id;
+						String payLoad = Constants.PREFIX_ADDONSUBSCRIPE + id;
 						PostbackButton bundleButton = PostbackButton.create(buttonLabel, payLoad);
 						buttonsList.add(bundleButton);
 						Element element = Element.create(title, Optional.of(subTitle), empty(), empty(),
@@ -1423,7 +1361,8 @@ public class UtilService
 					}
 				}
 			} catch (JSONException e) {
-				logger.error("Sender ID iS "+ senderId +" Exceptoion is "+e.getMessage());;
+				logger.error("Sender ID iS " + senderId + " Exceptoion is " + e.getMessage());
+				;
 			}
 
 		}
@@ -1436,8 +1375,9 @@ public class UtilService
 			ChatBotService chatBotService, String locale) {
 		Map<String, String> categoriesMap = new HashMap<String, String>();
 		ArrayList<Element> elements = new ArrayList<Element>();
-		String[] categoriesArrayLabels = chatBotService.getEnabledCategoryConfigurationDaoById(2l).getEnglishCategories().split(",");
-		
+		String[] categoriesArrayLabels = chatBotService.getEnabledCategoryConfigurationDaoById(2l)
+				.getEnglishCategories().split(",");
+
 		String title = "";
 		String subTitle = "_ _ _";
 		String buttonLabel = "";
@@ -1452,13 +1392,13 @@ public class UtilService
 				for (int o = 0; retrievedCategoriesArray.length() > o; o++) {
 					if (categoriesLabels.contains(retrievedCategoriesArray.get(o))) {
 						categoriesMap.put(retrievedCategoriesArray.getString(o), retrievedCategoriesArray.getString(o));
-											
+
 					}
-					
+
 				}
 
 			} catch (JSONException e) {
-				logger.error("Sender ID iS "+ senderId +" Exceptoion is "+e.getMessage());
+				logger.error("Sender ID iS " + senderId + " Exceptoion is " + e.getMessage());
 			}
 
 		}
@@ -1470,7 +1410,7 @@ public class UtilService
 					buttonLabel = "View";
 				}
 				List<Button> buttonsList = new ArrayList<Button>();
-				PostbackButton bundleButton = PostbackButton.create(buttonLabel, "MIAddon" + categoriesMap.get(key));
+				PostbackButton bundleButton = PostbackButton.create(buttonLabel, Constants.PREFIX_MOBILEINTERNET_ADDON + categoriesMap.get(key));
 				buttonsList.add(bundleButton);
 				Element element = Element.create(key, Optional.of(subTitle), empty(), empty(),
 						Optional.of(buttonsList));
@@ -1517,8 +1457,9 @@ public class UtilService
 
 	public Map<String, String> cachingResponse(BotWebserviceMessage botWebserviceMessage, String senderId,
 			ChatBotService chatBotService) {
-		String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
-		logger.debug("Methoud Name Is "+methodName);
+		String methodName = new Object() {
+		}.getClass().getEnclosingMethod().getName();
+		logger.debug("Methoud Name Is " + methodName);
 		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 		Map<String, String> resposeMap = new HashMap<String, String>();
 		String dialNumber = customerProfile.getMsisdn();
@@ -1534,7 +1475,7 @@ public class UtilService
 		try {
 			par = Utils.encryptDPIParam("time=1498033943505" + "&user=" + dialNumber + "&URL=facebook");
 		} catch (Exception e1) {
-			logger.error("Sender ID iS "+ senderId +"Dial is "+dialNumber+" Exceptoion is "+e1.getMessage());
+			logger.error("Sender ID iS " + senderId + "Dial is " + dialNumber + " Exceptoion is " + e1.getMessage());
 		}
 		CloseableHttpResponse response = null;
 		String realParameter = "param:" + par/* +",paramChannel:"+paramChannel */;
@@ -1544,7 +1485,7 @@ public class UtilService
 		try {
 			uri = new URIBuilder(httpGet.getURI()).addParameter("dial", realParameter).build();
 		} catch (URISyntaxException e1) {
-			logger.error("Sender ID iS "+ senderId +"Dial is "+dialNumber+" Exceptoion is "+e1.getMessage());
+			logger.error("Sender ID iS " + senderId + "Dial is " + dialNumber + " Exceptoion is " + e1.getMessage());
 		}
 		httpGet.setURI(uri);
 		try {
@@ -1554,20 +1495,24 @@ public class UtilService
 			int responseStatusId = response.getStatusLine().getStatusCode();
 			if (responseStatusId == 200) {
 				resposeMap.put("status", String.valueOf(responseStatusId));
-				System.out.println(response);
 				resposeMap.put("response", stringResponse);
 			} else {
 				resposeMap.put("status", String.valueOf(responseStatusId));
 				resposeMap.put("response", stringResponse);
 			}
 		} catch (IOException e) {
-			logger.error("Sender ID iS "+ senderId +"Dial is "+dialNumber+" Exceptoion is "+e.getMessage());
+			logger.error("Sender ID iS " + senderId + "Dial is " + dialNumber + " Exceptoion is " + e.getMessage());
 		}
 		return resposeMap;
 	}
 
 	public Map<String, String> getSubscriberProfile(BotWebserviceMessage botWebserviceMessage, String senderId,
-			ChatBotService chatBotService) {
+			ChatBotService chatBotService, String phoneNumber) {
+		String methodName = new Object() {
+		}.getClass().getEnclosingMethod().getName();
+		logger.debug("Dial is " + phoneNumber + " Methoud Name Is " + methodName
+				+ "Parameters are Sender ID ,and botWebServiceMessage values are " + senderId + " , "
+				+ botWebserviceMessage.getWsMsgId());
 		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 		Map<String, String> resposeMap = new HashMap<String, String>();
 		String dialNumber = customerProfile.getMsisdn();
@@ -1583,7 +1528,8 @@ public class UtilService
 		try {
 			par = Utils.encryptDPIParam("time=1498033943505" + "&user=" + dialNumber + "&URL=facebook");
 		} catch (Exception e1) {
-			logger.error("Sender ID iS "+ senderId +"Dial is "+dialNumber+" Exceptoion is "+e1.getMessage());
+			logger.error("Dial is " + phoneNumber + " Methoud Name Is " + methodName + " Sender ID iS " + senderId
+					+ "Dial is " + dialNumber + " Exceptoion is " + e1.getMessage());
 		}
 		CloseableHttpResponse response = null;
 		String realParameter = "param:" + par/* +",paramChannel:"+paramChannel */;
@@ -1592,27 +1538,30 @@ public class UtilService
 		URI uri = null;
 		try {
 			uri = new URIBuilder(httpGet.getURI()).addParameter("dial", realParameter).build();
-			logger.debug("Web Service URL is "+uri);
+			logger.debug("Dial is " + phoneNumber + " Methoud Name Is " + methodName + " Web Service URL is " + uri);
 		} catch (URISyntaxException e1) {
-			logger.error("Sender ID iS "+ senderId +"Dial is "+dialNumber+" Exceptoion is "+e1.getMessage());
+			logger.error("Dial is " + phoneNumber + " Methoud Name Is " + methodName + " Sender ID iS " + senderId
+					+ "Dial is " + dialNumber + " Exceptoion is " + e1.getMessage());
 		}
 		httpGet.setURI(uri);
 		try {
 			response = cachingClient.execute(httpGet, context);
 			HttpEntity entity = response.getEntity();
 			stringResponse = EntityUtils.toString(entity, "UTF-8");
-			logger.debug("Get Subscriber profile for dial "+dialNumber+ "is "+stringResponse);
+			logger.debug("Get Subscriber profile for dial " + dialNumber + "is " + stringResponse);
 			int responseStatusId = response.getStatusLine().getStatusCode();
 			if (responseStatusId == 200) {
 				resposeMap.put("status", String.valueOf(responseStatusId));
-				System.out.println(response);
 				resposeMap.put("response", stringResponse);
+				logger.debug(
+						"Dial is " + phoneNumber + " Methoud Name Is " + methodName + " RESPONSE IS " + stringResponse);
 			} else {
 				resposeMap.put("status", String.valueOf(responseStatusId));
 				resposeMap.put("response", stringResponse);
 			}
 		} catch (IOException e) {
-			logger.error("Sender ID iS "+ senderId +"Dial is "+dialNumber+" Exceptoion is "+e.getMessage());
+			logger.error("Dial is " + phoneNumber + " Methoud Name Is " + methodName + " Sender ID iS " + senderId
+					+ " Exceptoion is " + e.getMessage());
 		}
 		try {
 			CacheResponseStatus responseStatus = context.getCacheResponseStatus();
@@ -1635,7 +1584,8 @@ public class UtilService
 			try {
 				response.close();
 			} catch (IOException e) {
-				logger.error("Sender ID iS "+ senderId +"Dial is "+dialNumber+" Exceptoion is "+e.getMessage());
+				logger.error("Dial is " + phoneNumber + " Methoud Name Is " + methodName + " Sender ID iS " + senderId
+						+ " Exceptoion is " + e.getMessage());
 			}
 		}
 		return resposeMap;
@@ -1643,7 +1593,10 @@ public class UtilService
 	}
 
 	public Map<String, String> getEligibleProducts(BotWebserviceMessage botWebserviceMessage, String senderId,
-			ChatBotService chatBotService) {
+			ChatBotService chatBotService, String phoneNumber) {
+		String methodName = new Object() {
+		}.getClass().getEnclosingMethod().getName();
+		logger.debug("Dial is " + phoneNumber + " Methoud Name Is " + methodName + " Sender ID iS " + senderId);
 		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 		Map<String, String> resposeMap = new HashMap<String, String>();
 		String dialNumber = customerProfile.getMsisdn();
@@ -1659,7 +1612,8 @@ public class UtilService
 		try {
 			par = Utils.encryptDPIParam("time=1498033943505" + "&user=" + dialNumber + "&URL=facebook");
 		} catch (Exception e1) {
-			logger.error("Sender ID iS "+ senderId +" Exceptoion is "+e1.getMessage());
+			logger.error("Dial is " + phoneNumber + " Methoud Name Is " + methodName + " Sender ID iS " + senderId
+					+ " Exceptoion is " + e1.getMessage());
 		}
 		CloseableHttpResponse response = null;
 		String realParameter = "param:" + par/* +",paramChannel:"+paramChannel */;
@@ -1669,14 +1623,14 @@ public class UtilService
 		try {
 			uri = new URIBuilder(httpGet.getURI()).addParameter("dial", realParameter).build();
 		} catch (URISyntaxException e1) {
-			logger.error("Sender ID iS "+ senderId +" Exceptoion is "+e1.getMessage());
+			logger.error("Sender ID iS " + senderId + " Exceptoion is " + e1.getMessage());
 		}
 		httpGet.setURI(uri);
 		try {
 			response = cachingClient.execute(httpGet, context);
 			HttpEntity entity = response.getEntity();
 			stringResponse = EntityUtils.toString(entity, "UTF-8");
-			logger.debug("Get Eligible Products for Dial "+dialNumber +" is "+stringResponse);
+			logger.debug("Get Eligible Products for Dial " + dialNumber + " is " + stringResponse);
 			int responseStatusId = response.getStatusLine().getStatusCode();
 			if (responseStatusId == 200) {
 				resposeMap.put("status", String.valueOf(responseStatusId));
@@ -1686,7 +1640,7 @@ public class UtilService
 				resposeMap.put("response", stringResponse);
 			}
 		} catch (IOException e) {
-			logger.error("Sender ID iS "+ senderId +"Dial is "+dialNumber+" Exceptoion is "+e.getMessage());			
+			logger.error("Sender ID iS " + senderId + "Dial is " + dialNumber + " Exceptoion is " + e.getMessage());
 		}
 		try {
 			CacheResponseStatus responseStatus = context.getCacheResponseStatus();
@@ -1709,23 +1663,22 @@ public class UtilService
 			try {
 				response.close();
 			} catch (IOException e) {
-				logger.error("Sender ID iS "+ senderId +"Dial is "+dialNumber+" Exceptoion is "+e.getMessage());
+				logger.error("Sender ID iS " + senderId + "Dial is " + dialNumber + " Exceptoion is " + e.getMessage());
 			}
 		}
 		return resposeMap;
 
 	}
 
-	
-	public MessagePayload changeLanguageResponse(String locale , String senderId) {
+	public MessagePayload changeLanguageResponse(String locale, String senderId) {
 		String text = "";
-		if(locale.contains("ar")) {
+		if (locale.contains("ar")) {
 			text = "تم تغير اللغة الي اللغة العربيه ";
-		}else {
+		} else {
 			text = "Language has been changed to English language";
 		}
 		TextMessage textMSG = TextMessage.create(text);
 		return MessagePayload.create(senderId, MessagingType.RESPONSE, textMSG);
 	}
-	
+
 }

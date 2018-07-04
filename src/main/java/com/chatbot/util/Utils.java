@@ -16,7 +16,6 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
@@ -117,7 +116,9 @@ public class Utils {
 			
 			
 			
-			public static CustomerProfile updateCustomerLastSeen(CustomerProfile customerProfile) {
+			public static void updateCustomerLastSeen(CustomerProfile customerProfile , String phoneNumber ,ChatBotService chatBotService) {
+				String methodName = new Object() {}.getClass().getEnclosingMethod().getName();
+				logger.debug("Dial is "+phoneNumber+" Method Name is "+ methodName + " Parameter is "+customerProfile.toString());
 				Date date = new Date();
 				CustomerProfile updatedCustomerProfile = new CustomerProfile();
 				updatedCustomerProfile.setFirstInsertion(customerProfile.getFirstInsertion());
@@ -128,7 +129,7 @@ public class Utils {
 				updatedCustomerProfile.setSenderID(customerProfile.getSenderID());
 				Timestamp timeStamp = new Timestamp(date.getTime());
 				updatedCustomerProfile.setCustomerLastSeen(timeStamp);
-				return updatedCustomerProfile;
+				chatBotService.saveCustomerProfile(updatedCustomerProfile);
 			}
 			
 			
@@ -169,7 +170,10 @@ public class Utils {
 			 * @param customerProfile
 			 * @param botInteraction
 			 */
-			public static void interactionLogginghandling(CustomerProfile customerProfile, BotInteraction botInteraction , ChatBotService chatBotService) {
+			public static void interactionLogginghandling(CustomerProfile customerProfile, BotInteraction botInteraction , ChatBotService chatBotService,String phoneNumber) {
+				String methodName = new Object() {}.getClass().getEnclosingMethod().getName();
+				logger.debug("Dial is "+phoneNumber +" Method Name is "+methodName + " Parameters are Customer Profile "+ customerProfile.toString()+""
+						+ "Interaction "+ botInteraction.toString());
 				Date date = new Date();
 				Timestamp timeStamp = new Timestamp(date.getTime());
 				InteractionLogging interactionLogging = new InteractionLogging();
@@ -194,6 +198,32 @@ public class Utils {
 				chatBotService.saveCustomerProfile(logoutCustomerProfile);
 			}
 			
+			public static CustomerProfile saveCustomerInformation(ChatBotService chatBotService ,String senderId,String locale) {
+				CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
+				CustomerProfile newCustomerProfile = new CustomerProfile();
+				if (customerProfile == null) {
+					Date date = new Date();
+					Timestamp timestamp = new Timestamp(date.getTime());
+					newCustomerProfile.setFirstInsertion(timestamp);
+					newCustomerProfile.setSenderID(senderId);
+					newCustomerProfile.setCustomerLastSeen(timestamp);
+					newCustomerProfile.setLocal(locale);
+					return chatBotService.saveCustomerProfile(newCustomerProfile);
+				} else {
+					Date date = new Date();
+					Timestamp timestamp = new Timestamp(date.getTime());
+					newCustomerProfile.setSenderID(senderId);
+					newCustomerProfile.setCustomerLastSeen(timestamp);
+					newCustomerProfile.setLocal(locale);
+					newCustomerProfile.setCustomerLastSeen(customerProfile.getCustomerLastSeen());
+					newCustomerProfile.setFirstInsertion(customerProfile.getFirstInsertion());
+					newCustomerProfile.setLastGetProfileWSCall(customerProfile.getLastGetProfileWSCall());
+					newCustomerProfile.setMsisdn(customerProfile.getMsisdn());
+					newCustomerProfile.setLinkingDate(customerProfile.getLinkingDate());
+					return chatBotService.saveCustomerProfile(newCustomerProfile);
+				}
+
+			}
 			
 			
 		public static void sendRequest(HttpClient cachingClient, HttpContext localContext) {

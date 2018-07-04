@@ -13,4 +13,6 @@ public interface BotButtonTemplateMSGRepo extends CrudRepository<BotButtonTempla
 	BotButtonTemplateMSG findBotButtonTemplateMSGByButtonTempMsgId(Long id);
 	
 	List<BotButtonTemplateMSG> findBotButtonTemplateMSGByBotInteractionMessage(BotInteractionMessage interactionMsg);
+
+	BotButtonTemplateMSG findBotButtonTemplateMSGBybotInteractionMessage(BotInteractionMessage botInteractionMessage);
 }

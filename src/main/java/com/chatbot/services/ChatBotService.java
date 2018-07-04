@@ -65,6 +65,8 @@ public interface ChatBotService {
 	
 	public BotButtonTemplateMSG findBotButtonTemplate(Long id);
 	
+	public BotButtonTemplateMSG findBotButtonTemplateByMessageId(BotInteractionMessage botInteractionMessage);
+	
 	public List<BotButtonTemplateMSG> findBotButtonTemplateMSGByBotInteractionMessage(BotInteractionMessage interactionMSG);
 	
 	
@@ -95,6 +97,10 @@ public interface ChatBotService {
 	// EnabledCategoryConfigurationDao
 	
 	public EnabledCategoryConfiguration getEnabledCategoryConfigurationDaoById(Long id);
+
 	
+	// Message
+	
+	public BotInteractionMessage findMessageByInteraction(BotInteraction botInteraction);
 	
 }

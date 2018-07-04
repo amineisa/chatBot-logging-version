@@ -16,11 +16,12 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
-import com.chatbot.util.Utils;
+
 import com.chatbot.dao.BotButtonRepo;
 import com.chatbot.entity.BotButton;
 import com.chatbot.entity.PersistenceMenuButton;
 import com.chatbot.services.ChatBotService;
+import com.chatbot.util.Utils;
 import com.github.messenger4j.Messenger;
 import com.github.messenger4j.common.SupportedLocale;
 import com.github.messenger4j.common.WebviewHeightRatio;
@@ -37,21 +38,20 @@ import com.github.messenger4j.messengerprofile.persistentmenu.action.CallToActio
 import com.github.messenger4j.messengerprofile.persistentmenu.action.NestedCallToAction;
 import com.github.messenger4j.messengerprofile.persistentmenu.action.PostbackCallToAction;
 import com.github.messenger4j.messengerprofile.persistentmenu.action.UrlCallToAction;
-import com.github.messenger4j.send.message.template.button.LogOutButton;
 
 
 @SpringBootApplication
 @ComponentScan("com.chatbot.*")
-public class MessengerChatBotMysqlApplication {
+public class MessengerChatBot {
 	@Autowired
 	private ChatBotService chatBotService;
 	
 	@Autowired
 	private BotButtonRepo botButtonRepo;
 
-	private static final Logger logger = LoggerFactory.getLogger(MessengerChatBotMysqlApplication.class);
+	private static final Logger logger = LoggerFactory.getLogger(MessengerChatBot.class);
 	public static void main(String[] args) {
-		SpringApplication.run(MessengerChatBotMysqlApplication.class, args);
+		SpringApplication.run(MessengerChatBot.class, args);
 	}
 
 	@Bean
