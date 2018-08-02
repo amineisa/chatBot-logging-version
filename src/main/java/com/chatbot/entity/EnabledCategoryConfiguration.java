@@ -20,7 +20,7 @@ public class EnabledCategoryConfiguration {
 
 	@Column(name="Arabic_Categories")
 	private String arabicCategories;
-	
+
 	
 	@OneToOne()
 	@JoinColumn(name = "category_label" , referencedColumnName="TEXT_ID" , nullable=true)

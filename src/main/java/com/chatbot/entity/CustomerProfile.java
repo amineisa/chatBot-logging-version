@@ -20,7 +20,7 @@ public class CustomerProfile {
 	private String senderID;
 	
 	@Column(name = "LOCAL")
-	private String local;
+	private String locale;
 	
 	@Column(name = "MSISDN")
 	private String msisdn;
@@ -45,12 +45,12 @@ public class CustomerProfile {
 		this.senderID = senderID;
 	}
 
-	public String getLocal() {
-		return local;
+	public String getLocale() {
+		return locale;
 	}
 
-	public void setLocal(String local) {
-		this.local = local;
+	public void setLocale(String locale) {
+		this.locale = locale;
 	}
 
 	public String getMsisdn() {
@@ -95,7 +95,7 @@ public class CustomerProfile {
 
 	@Override
 	public String toString() {
-		return "CustomerProfile [senderID=" + senderID + ", local=" + local + ", msisdn=" + msisdn + ", linkingDate="
+		return "CustomerProfile [senderID=" + senderID + ", local=" + locale + ", msisdn=" + msisdn + ", linkingDate="
 				+ linkingDate + ", firstInsertion=" + firstInsertion + ", lastGetProfileWSCall=" + lastGetProfileWSCall
 				+ ", customerLastSeen=" + customerLastSeen + "]";
 	}

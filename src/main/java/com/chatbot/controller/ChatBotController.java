@@ -2,10 +2,13 @@ package com.chatbot.controller;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import javax.servlet.http.HttpSession;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -13,6 +16,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,6 +25,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.annotation.SessionScope;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.chatbot.entity.BotButton;
 import com.chatbot.entity.BotButtonTemplateMSG;
@@ -36,6 +43,8 @@ import com.github.messenger4j.Messenger;
 import com.github.messenger4j.exception.MessengerApiException;
 import com.github.messenger4j.exception.MessengerIOException;
 import com.github.messenger4j.exception.MessengerVerificationException;
+import com.github.messenger4j.send.HandoverAction;
+import com.github.messenger4j.send.HandoverPayload;
 import com.github.messenger4j.send.MessagePayload;
 import com.github.messenger4j.send.MessagingType;
 import com.github.messenger4j.send.message.TemplateMessage;
@@ -52,14 +61,10 @@ import com.github.messenger4j.webhook.event.TextMessageEvent;
 
 @RestController
 @RequestMapping("/callback")
-// @CrossOrigin(origins = { "http://stg.etisalat.eg" })
 public class ChatBotController {
-
-
+	
 	private String originalPayLoad = "";
-
-	// private String parentPayLoad = "";
-
+	
 	private String phoneNumber = "";
 
 	@Autowired
@@ -72,16 +77,18 @@ public class ChatBotController {
 	private UtilService utilService;
 	// This used for bundle which does not has related Products
 	private String productIdAndOperationName;
+	
+	private String addonId;
 
+	private String lastPayLoad = "";
+	
+	String parentPayLoad;
+
+	private ArrayList<String> consumptionNames = new ArrayList<String>();
 	private String productIdForRenew;
 	// This used for bundle which has related Products
 	private ArrayList<String> parametersListForRelatedProducts;
 
-	private String addonId;
-
-	private String lastPayLoad = "";
-
-	private ArrayList<String> consumptionNames = new ArrayList<String>();
 
 	private static final Logger logger = LoggerFactory.getLogger(ChatBotController.class);
 
@@ -93,8 +100,7 @@ public class ChatBotController {
 
 	@RequestMapping(method = RequestMethod.GET)
 	public ResponseEntity<String> verifyWebhook(@RequestParam("hub.mode") final String mode, @RequestParam("hub.verify_token") final String verifyToken,
-			@RequestParam("hub.challenge") final String challenge) {
-
+			@RequestParam("hub.challenge") final String challenge) {	     
 		logger.debug("Received Webhook verification request - mode: {} | verifyToken: {} | challenge: {}", mode, verifyToken, challenge);
 		try {
 			this.messenger.verifyWebhook(mode, verifyToken);
@@ -107,24 +113,32 @@ public class ChatBotController {
 
 	@RequestMapping(method = RequestMethod.POST)
 	public ResponseEntity<Void> handleCallback(@RequestBody final String payload, @RequestHeader("X-Hub-Signature") final String signature) {
-
+		
 		logger.debug("Received Messenger Platform callback - payload: {} | signature: {}", payload, signature);
 		try {
 			messenger.onReceiveEvents(payload, Optional.of(signature), event -> {
 				String methodName = new Object() {
 				}.getClass().getEnclosingMethod().getName();
+				
 				final String senderId = event.senderId();
+				
+				String attr =  RequestContextHolder.currentRequestAttributes().getSessionId();
+			    // Enumeration<String>  sessionAttrs = attr.getRequest().getSession().getAttributeNames();
+				
+				String sessionId = RequestContextHolder.currentRequestAttributes().getSessionId();
+				System.out.println("session ids "+attr +"      "+sessionId);
+				chatBotService.getCustomerProfileBySenderId(senderId);
+				
 				Utils.markAsSeen(messenger, senderId);
+				logger.debug("Sender ID is " + senderId + " Method Name " + methodName + " Event is POSTBACK");	
 				// add text received
-				if (event.isQuickReplyMessageEvent()) {
-					logger.debug("Sender ID is " + senderId + " Method Name " + methodName + " Event is QUICK REPLY");
-					final QuickReplyMessageEvent quickReplyMessageEvent = event.asQuickReplyMessageEvent();
-					handlePayload(quickReplyMessageEvent.payload(), messenger, senderId);
-
-				} else if (event.isPostbackEvent()) {
-					logger.debug("Sender ID is " + senderId + " Method Name " + methodName + " Event is POSTBACK");
+				 if (event.isPostbackEvent()) {
 					PostbackEvent postbackEvent = event.asPostbackEvent();
-					handlePayload(postbackEvent.payload().get(), messenger, senderId);
+					String pLoad = postbackEvent.payload().get();
+					if(pLoad.equalsIgnoreCase("handover")) {
+						callSecondryHandover(senderId);
+					}else {
+					handlePayload(postbackEvent.payload().get(), messenger, senderId);}
 				} else if (event.isAccountLinkingEvent()) {
 					AccountLinkingEvent accountLinkingEvent = event.asAccountLinkingEvent();
 					if ((accountLinkingEvent.status().equals(AccountLinkingEvent.Status.LINKED))) {
@@ -140,8 +154,12 @@ public class ChatBotController {
 					final TextMessageEvent textMessageEvent = event.asTextMessageEvent();
 					String text = textMessageEvent.text();
 					handlePayload(text, messenger, senderId);
-				}
+				}else if (event.isQuickReplyMessageEvent()) {
+					logger.debug("Sender ID is " + senderId + " Method Name " + methodName + " Event is QUICK REPLY");
+					final QuickReplyMessageEvent quickReplyMessageEvent = event.asQuickReplyMessageEvent();
+					handlePayload(quickReplyMessageEvent.payload(), messenger, senderId);
 
+				}
 			});
 			logger.debug(" Processed callback payload successfully");// add customer id
 			return ResponseEntity.status(HttpStatus.OK).build();
@@ -151,14 +169,46 @@ public class ChatBotController {
 		}
 	}
 
+	/**
+	 * @param senderId
+	 */
+	public void callPrimaryAppAgainHandover(final String senderId) {
+		HandoverPayload handoverPayload = HandoverPayload.create(senderId, HandoverAction.take_thread_control, "355908691547294", "information");
+		try {
+			messenger.handover(handoverPayload);
+		} catch (MessengerApiException e) {
+			logger.error("Sender ID is " + senderId + " Exception " +e.getMessage()); 
+		} catch (MessengerIOException e) {
+			logger.error("Sender ID is " + senderId + " Exception " +e.getMessage());							
+		}
+	}
+	
+	
+	public void callSecondryHandover(final String senderId) {
+		String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
+		HandoverPayload handoverPayload = HandoverPayload.create(senderId, HandoverAction.pass_thread_control, "145475779439555", "information");
+		try {
+			messenger.handover(handoverPayload);
+		} catch (MessengerApiException e) {
+			logger.error("Method Name "+methodName+" Sender ID is " + senderId + " Exception " +e.getMessage()); 
+		} catch (MessengerIOException e) {
+			logger.error("Method Name "+methodName+" Sender ID is " + senderId + " Exception " +e.getMessage());							
+		}
+	}
+
 	private void handlePayload(String payload, Messenger messenger, String senderId) {
 		String methodName = new Object() {
 		}.getClass().getEnclosingMethod().getName();
 		logger.debug("Dial is " + phoneNumber + " Methoud Name Is " + methodName + " Parameters names Payload and sender ID values are  " + payload + " " + senderId);
 		Utils.markAsTypingOn(messenger, senderId);
-		Utils.updateCustomerLastSeen(chatBotService.getCustomerProfileBySenderId(senderId), phoneNumber, chatBotService);
+		CustomerProfile customerprofile = chatBotService.getCustomerProfileBySenderId(senderId);
+		if(customerprofile == null) {
+			Utils.saveCustomerInformation(chatBotService, senderId, "en_us");
+		}else {
+			Utils.updateCustomerLastSeen(chatBotService.getCustomerProfileBySenderId(senderId), phoneNumber, chatBotService);	
+		}
 		payload = payLoadSettings(payload);
-		String parentPayLoad = null;
+		//String parentPayLoad = null;
 		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 		if (customerProfile == null)
 			customerProfile = new CustomerProfile();
@@ -220,17 +270,15 @@ public class ChatBotController {
 						}
 					}
 					sendMultipleMessages(messagePayloadList, senderId);
-					
-					// TODO
 					if (payload.equalsIgnoreCase(Constants.PAYLOAD_CHANGE_BUNDLE)) {
 						parentPayLoad = null;
 						lastPayLoad = payload;
 					}
-					if (parentPayLoad != null && lastPayLoad == "") {
-						handlePayload(parentPayLoad, messenger, senderId); 
+					if (parentPayLoad != null) {
+						handlePayload(parentPayLoad, messenger, senderId);
 					}
 				} else {
-					originalPayLoad = payload;//For return payload state after login
+					originalPayLoad = payload;// For return payload state after login
 					MessagePayload messagePayload = null;
 					BotInteraction loginInteraction = chatBotService.findInteractionByPayload("login");
 					String title = "";
@@ -240,7 +288,7 @@ public class ChatBotController {
 					title = utilService.getTextForButtonTemplate(userLocale, botButtonTemplate);
 					List<BotButton> botButtons = chatBotService.findAllByBotButtonTemplateMSGId(botButtonTemplate);
 
-					//messenger4j
+					// messenger4j
 					ArrayList<Button> buttons = new ArrayList<Button>();
 					for (BotButton botButton : botButtons) {
 						Button button = utilService.createButton(botButton, userLocale, new JSONObject(), phoneNumber);
@@ -253,16 +301,15 @@ public class ChatBotController {
 					sendMultipleMessages(messagePayloadList, senderId);
 				}
 			}
-		} catch (Exception e) {
+		} catch (Exception e) {			
 			logger.error("Sender ID is " + senderId + " Exceptoion is " + e.getMessage() + " Method Name " + methodName);
+			handlePayload(Constants.PAYLOAD_FAULT_MSG, messenger, senderId);
 		}
 
 	}
 
-	//special handling payload
+	// special handling payload
 	private String payLoadSettings(String payload) {
-		//TODO test again 
-		// TODO change to constants 
 		if (payload.startsWith(Constants.PREFIX_ADDONSUBSCRIPE)) {
 			addonId = payload.substring(10, payload.length()) + "," + "ACTIVATE";
 			payload = Constants.PAYLOAD_ADDON_SUBSCRIPTION;
@@ -277,11 +324,12 @@ public class ChatBotController {
 			productIdAndOperationName = payload;
 			payload = Constants.PAYLOAD_RELATED_PRODUCTS;
 		} else if (payload.equalsIgnoreCase(Constants.PREFIX_CONFIRM_MOBILEINTERNET_SUBSCRIPTION)) {
-			if (parametersListForRelatedProducts.size() == 3) {
-				payload = Constants.PREFIX_CONFIRM_MOBILEINTERNET_SUBSCRIPTION+"_related_product";
-			} else if (parametersListForRelatedProducts.size() == 2) {
+			if (parametersListForRelatedProducts != null && parametersListForRelatedProducts.size() == 3) {
+				payload = Constants.PREFIX_CONFIRM_MOBILEINTERNET_SUBSCRIPTION + "_related_product";
+			} else if (parametersListForRelatedProducts != null && parametersListForRelatedProducts.size() == 2) {
 				payload = Constants.PREFIX_CONFIRM_MOBILEINTERNET_SUBSCRIPTION;
 			}
+			// MObile Internet subscription in case not has related products
 		} else if (payload.contains(",") && !payload.contains(Constants.PREFIX_RELATED_PRODUCTS_SUBSCRIPTION)) {
 			productIdAndOperationName = payload;
 			String[] parameters = productIdAndOperationName.split(",");
@@ -314,9 +362,9 @@ public class ChatBotController {
 		BotWebserviceMessage botWebserviceMessage = chatBotService.findWebserviceMessageByMessageId(messageId);
 		String response = "";
 		Map<String, String> mapResponse = new HashMap<String, String>();
-		if (botWebserviceMessage.getBotMethodType().getMethodTypeId() == 1) { //GET
-			String [] profilePayloads = Constants.profilePayloads.split(",");
-			List<String> payloadsList = new ArrayList<String>(Arrays.asList(profilePayloads)); 
+		if (botWebserviceMessage.getBotMethodType().getMethodTypeId() == 1) { // GET
+			String[] profilePayloads = Constants.profilePayloads.split(",");
+			List<String> payloadsList = new ArrayList<String>(Arrays.asList(profilePayloads));
 			if (payload.equalsIgnoreCase(Constants.PAYLOAD_CHANGE_BUNDLE)) {
 				mapResponse = utilService.getEligibleProducts(botWebserviceMessage, senderId, chatBotService, phoneNumber);
 			} else if (payloadsList.contains(payload)) {
@@ -329,7 +377,7 @@ public class ChatBotController {
 			} else {
 				handlePayload(Constants.PAYLOAD_FAULT_MSG, messenger, senderId);
 			}
-		} else if (botWebserviceMessage.getBotMethodType().getMethodTypeId() == 2) { //POST
+		} else if (botWebserviceMessage.getBotMethodType().getMethodTypeId() == 2) { // POST
 			JSONObject jsonParam = new JSONObject();
 			ArrayList<String> paramValuesList = new ArrayList<String>();
 			if (productIdAndOperationName != null && !productIdAndOperationName.isEmpty()) {
@@ -444,6 +492,9 @@ public class ChatBotController {
 						MessagePayload mPayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(template));
 						messagePayloadList.add(mPayload);
 					} else if (payload.equalsIgnoreCase(Constants.PAYLOAD_VIEW_CONNECT_DETAILS) && connect.length() == 0) {
+						if(parentPayLoad.length()>0) {
+							parentPayLoad = null;
+						}
 						handlePayload(Constants.PAYLOAD_CHANGE_BUNDLE, messenger, senderId);
 					} else if (payload.equalsIgnoreCase(Constants.PAYLOAD_VIEW_CONNECT_DETAILS)) {
 						for (int i = 0; i < connect.length(); i++) {
@@ -456,7 +507,7 @@ public class ChatBotController {
 						Template template = utilService.createGenericTemplate(messageId, chatBotService, userLocale, botWebserviceMessage, jsonResponse, phoneNumber, consumptionNames);
 						MessagePayload mPayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(template));
 						messagePayloadList.add(mPayload);
-					} else if (payload.equals(Constants.PAYLOAD_RATEPLAN_ADDONS_CONSUMPTION )) {
+					} else if (payload.equals(Constants.PAYLOAD_RATEPLAN_ADDONS_CONSUMPTION)) {
 						Template template = utilService.createGenericTemplate(messageId, chatBotService, userLocale, botWebserviceMessage, jsonResponse, phoneNumber, consumptionNames);
 						MessagePayload mPayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(template));
 						messagePayloadList.add(mPayload);
@@ -486,7 +537,7 @@ public class ChatBotController {
 					} else {
 						// additon
 						parentPayLoad = null;
-						GenericTemplate gtemplate = utilService.CreateGenericTemplateForNotEligiblBundleDials(userLocale, new ArrayList<Button>(), new ArrayList<Element>(), phoneNumber);
+						GenericTemplate gtemplate = utilService.createGenericTemplateForNotEligiblBundleDials(userLocale, new ArrayList<Button>(), new ArrayList<Element>(), phoneNumber);
 						messagePayloadList.add(MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(gtemplate)));
 					}
 				} else if (payload.equalsIgnoreCase(Constants.PAYLOAD_BUY_ADDONS_ROOT)) {
@@ -508,7 +559,7 @@ public class ChatBotController {
 
 	private String getLocaleValue(CustomerProfile customer, UserProfile userProfile) {
 		String userLocale;
-		userLocale = customer.getLocal() == null ? userProfile.locale() : customer.getLocal();
+		userLocale = customer.getLocale() == null ? userProfile.locale() : customer.getLocale();
 		return userLocale;
 	}
 

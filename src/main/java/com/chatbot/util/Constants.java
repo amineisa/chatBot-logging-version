@@ -1,8 +1,11 @@
 package com.chatbot.util;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class Constants {
 
-	
+	public static final String CHANEL_PARAM="CHATBOT";
 	public static final String PREFIX_ADDONSUBSCRIPE ="subaddon_";
 	public static final String PREFIX_RATEPLAN_SUBSCRIPTION="sub_";
 	public static final String PREFIX_MOBILEINTERNET_ADDON = "MIAddon";
@@ -37,5 +40,19 @@ public class Constants {
 	public static final String PAYLOAD_BUY_ADDONS_ROOT = "buy addons root";
 	public static final String PAYLOAD_UNEXPECTED_PAYLOAD = "unexpected";
 	
-	public static String profilePayloads = PAYLOAD_VIEW_CONNECT_DETAILS+","+PAYLOAD_RATEPLAN_AND_CONNECT+","+PAYLOAD_VIEW_RATEPLAN_DETAILS+","+PAYLOAD_RATEPLAN_DETAILS+","+PAYLOAD_CONSUMPTION; 
+	public static final String BACK_BUTTON_LABEL_EN = "BACK";
+	public static final String BACK_BUTTON_LABEL_AR= "عودة";
+	
+	public static final String NOTELIGIBLE_ELEMENT_TITLE_EN = "Sorry !";
+	public static final String NOTELIGIBLE_ELEMENT_TITLE_AR = "! عفوا"; 
+	
+	public static final String NOTELIGIBLE_ELEMENT_SUBTITLE_EN = " Your Dial Not Eligible to any addons ";
+	public static final String NOTELIGIBLE_ELEMENT_SUBTITLE_AR = " عفوا رقمك ليس له اي اضافات";
+	
+	
+	public static String profilePayloads = PAYLOAD_VIEW_CONNECT_DETAILS+","+PAYLOAD_RATEPLAN_AND_CONNECT+","+PAYLOAD_VIEW_RATEPLAN_DETAILS+","+PAYLOAD_RATEPLAN_DETAILS+","+PAYLOAD_CONSUMPTION;
+	
+	
+	
+	
 }

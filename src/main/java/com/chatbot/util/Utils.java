@@ -1,36 +1,32 @@
 package com.chatbot.util;
 
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.cache.CacheResponseStatus;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.client.cache.CacheConfig;
-import org.apache.http.impl.client.cache.CachingHttpClient;
-import org.apache.http.protocol.BasicHttpContext;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.chatbot.entity.BotButton;
 import com.chatbot.entity.BotInteraction;
@@ -45,10 +41,11 @@ import com.github.messenger4j.send.SenderActionPayload;
 import com.github.messenger4j.send.senderaction.SenderAction;
 
 public class Utils {
-	
-	private static final Logger logger = LoggerFactory.getLogger(UtilService.class); 
-	public  enum ButtonTypeEnum {
-		START(1L),POSTBACK(2l), URL(3l),NESTED(4L),LOGIN(5L),LOGOUT(6L),CALL(7L);
+
+	private static final Logger logger = LoggerFactory.getLogger(UtilService.class);
+
+	public enum ButtonTypeEnum {
+		START(1L), POSTBACK(2l), URL(3l), NESTED(4L), LOGIN(5L), LOGOUT(6L), CALL(7L);
 		private final Long buttonTypeId;
 
 		private ButtonTypeEnum(Long typeId) {
@@ -59,10 +56,9 @@ public class Utils {
 			return buttonTypeId;
 		}
 	}
-	
-	
+
 	public enum MessageTypeEnum {
-		TEXTMESSAGE(1l), QUICKREPLYMESSAGE(2l), GENERICTEMPLATEMESSAGE(3l),ButtonTemplate(4l);
+		TEXTMESSAGE(1l), QUICKREPLYMESSAGE(2l), GENERICTEMPLATEMESSAGE(3l), ButtonTemplate(4l);
 		private final Long messageTypeId;
 
 		private MessageTypeEnum(Long messageTypeId) {
@@ -73,292 +69,283 @@ public class Utils {
 			return messageTypeId;
 		}
 	}
-	
-	
+
 	// Get Text Value
-			public static String getTextValueForButtonLabel(String local , BotButton botButton) {
-				String text = "";
-				if(local.equalsIgnoreCase("ar")) {
-					text = botButton.getBotText().getArabicText();
-				}else {
-					text =  botButton.getBotText().getEnglishText();
-				}
-				return text;
-			}
-			
-			
-			// Create Url Method 
-			public static URL createUrl(String stringUrl){
-				URL url = null;
-				
-				 try {
-					url = new URL(stringUrl);
-				} catch (MalformedURLException e) {
-					logger.error(e.getMessage() , e);
-				}
-				 
-				 return url ;
-				
-			}
-			
-			
+	public static String getTextValueForButtonLabel(String local, BotButton botButton) {
+		String text = "";
+		if (local.equalsIgnoreCase("ar")) {
+			text = botButton.getBotText().getArabicText();
+		} else {
+			text = botButton.getBotText().getEnglishText();
+		}
+		return text;
+	}
+
+	// Create Url Method
+	public static URL createUrl(String stringUrl) {
+		URL url = null;
+
+		try {
+			url = new URL(stringUrl);
+		} catch (MalformedURLException e) {
+			logger.error(e.getMessage(), e);
+		}
+
+		return url;
+
+	}
+
 	// DashBoard Utils
-			
-			public static String encryptDPIParam(String encryptedString) throws Exception {
-		        byte[] decryptionKey = new byte[]{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
-		        Cipher c = Cipher.getInstance("AES");
-		        SecretKeySpec k = new SecretKeySpec(decryptionKey, "AES");
-		        c.init(Cipher.ENCRYPT_MODE, k);
-		        byte[] utf8 = encryptedString.getBytes("UTF8");
-		        byte[] enc = c.doFinal(utf8);
-		        return DatatypeConverter.printBase64Binary(enc);
-		    }
-			
-			
-			
-			public static void updateCustomerLastSeen(CustomerProfile customerProfile , String phoneNumber ,ChatBotService chatBotService) {
-				String methodName = new Object() {}.getClass().getEnclosingMethod().getName();
-				logger.debug("Dial is "+phoneNumber+" Method Name is "+ methodName + " Parameter is "+customerProfile.toString());
-				Date date = new Date();
-				CustomerProfile updatedCustomerProfile = new CustomerProfile();
-				updatedCustomerProfile.setFirstInsertion(customerProfile.getFirstInsertion());
-				updatedCustomerProfile.setLastGetProfileWSCall(customerProfile.getLastGetProfileWSCall());
-				updatedCustomerProfile.setLinkingDate(customerProfile.getLinkingDate());
-				updatedCustomerProfile.setLocal(customerProfile.getLocal());
-				updatedCustomerProfile.setMsisdn(customerProfile.getMsisdn());
-				updatedCustomerProfile.setSenderID(customerProfile.getSenderID());
-				Timestamp timeStamp = new Timestamp(date.getTime());
-				updatedCustomerProfile.setCustomerLastSeen(timeStamp);
-				chatBotService.saveCustomerProfile(updatedCustomerProfile);
-			}
-			
-			
-			public static boolean isNotEmpty(String obj) {
-				return obj != null && obj.length() != 0;
-			}
-			
-			
-			public static MediaType getMediaType(Long mediaTypeId) {
-				switch (mediaTypeId.intValue()) {
-					case 1:
-						return MediaType.APPLICATION_JSON;
-					case 2:
-						return MediaType.APPLICATION_XML;
-					default:
-						return MediaType.APPLICATION_JSON;
-				}
 
-			}
-			
-			
-			public static HttpMethod getHttpMethod(int httpMethodId) {
-				switch (httpMethodId) {
-					case 1:
-						return HttpMethod.GET;
+	public static String encryptDPIParam(String encryptedString) throws Exception {
+		byte[] decryptionKey = new byte[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+		Cipher c = Cipher.getInstance("AES");
+		SecretKeySpec k = new SecretKeySpec(decryptionKey, "AES");
+		c.init(Cipher.ENCRYPT_MODE, k);
+		byte[] utf8 = encryptedString.getBytes("UTF8");
+		byte[] enc = c.doFinal(utf8);
+		return DatatypeConverter.printBase64Binary(enc);
+	}
 
-					case 2:
-						return HttpMethod.POST;
+	public static void updateCustomerLastSeen(CustomerProfile customerProfile, String phoneNumber, ChatBotService chatBotService) {
+		String methodName = new Object() {
+		}.getClass().getEnclosingMethod().getName();
+		if (phoneNumber != null && !phoneNumber.equals("")) {
+			// logger.debug("Dial is " + phoneNumber + " Method Name is " + methodName + "
+			// Parameter is " + customerProfile.toString());
+		}
+		Date date = new Date();
+		CustomerProfile updatedCustomerProfile = new CustomerProfile();
+		updatedCustomerProfile.setFirstInsertion(customerProfile.getFirstInsertion());
+		updatedCustomerProfile.setLastGetProfileWSCall(customerProfile.getLastGetProfileWSCall());
+		updatedCustomerProfile.setLinkingDate(customerProfile.getLinkingDate());
+		updatedCustomerProfile.setLocale(customerProfile.getLocale());
+		updatedCustomerProfile.setMsisdn(customerProfile.getMsisdn());
+		updatedCustomerProfile.setSenderID(customerProfile.getSenderID());
+		Timestamp timeStamp = new Timestamp(date.getTime());
+		updatedCustomerProfile.setCustomerLastSeen(timeStamp);
+		chatBotService.saveCustomerProfile(updatedCustomerProfile);
+	}
 
-					default:
-						return HttpMethod.GET;
-				}
+	public static boolean isNotEmpty(String obj) {
+		return obj != null && obj.length() != 0;
+	}
 
-			}
-			
-			
-			/**
-			 * @param customerProfile
-			 * @param botInteraction
-			 */
-			public static void interactionLogginghandling(CustomerProfile customerProfile, BotInteraction botInteraction , ChatBotService chatBotService,String phoneNumber) {
-				String methodName = new Object() {}.getClass().getEnclosingMethod().getName();
-				logger.debug("Dial is "+phoneNumber +" Method Name is "+methodName + " Parameters are Customer Profile "+ customerProfile.toString()+""
-						+ "Interaction "+ botInteraction.toString());
-				Date date = new Date();
-				Timestamp timeStamp = new Timestamp(date.getTime());
-				InteractionLogging interactionLogging = new InteractionLogging();
-				interactionLogging.setBotInteraction(botInteraction);
-				interactionLogging.setInteractionCallingDate(timeStamp);
-				interactionLogging.setCustomerProfile(customerProfile);
-				chatBotService.saveInteractionLogging(interactionLogging);
-				InteractionLogging interactionlogging = chatBotService.saveInteractionLogging(interactionLogging);
-			}
-			
-			
-			public static  void userLogout(final String senderId , ChatBotService chatBotService) {
-				CustomerProfile storedCustomerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
-				CustomerProfile logoutCustomerProfile = new CustomerProfile();
-				logoutCustomerProfile.setCustomerLastSeen(storedCustomerProfile.getCustomerLastSeen());
-				logoutCustomerProfile.setFirstInsertion(storedCustomerProfile.getFirstInsertion());
-				logoutCustomerProfile.setLastGetProfileWSCall(storedCustomerProfile.getLastGetProfileWSCall());
-				logoutCustomerProfile.setLinkingDate(storedCustomerProfile.getLinkingDate());
-				logoutCustomerProfile.setLocal(storedCustomerProfile.getLocal());
-				logoutCustomerProfile.setMsisdn("");
-				logoutCustomerProfile.setSenderID(storedCustomerProfile.getSenderID());
-				chatBotService.saveCustomerProfile(logoutCustomerProfile);
-			}
-			
-			public static CustomerProfile saveCustomerInformation(ChatBotService chatBotService ,String senderId,String locale) {
-				CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
-				CustomerProfile newCustomerProfile = new CustomerProfile();
-				if (customerProfile == null) {
-					Date date = new Date();
-					Timestamp timestamp = new Timestamp(date.getTime());
-					newCustomerProfile.setFirstInsertion(timestamp);
-					newCustomerProfile.setSenderID(senderId);
-					newCustomerProfile.setCustomerLastSeen(timestamp);
-					newCustomerProfile.setLocal(locale);
-					return chatBotService.saveCustomerProfile(newCustomerProfile);
-				} else {
-					Date date = new Date();
-					Timestamp timestamp = new Timestamp(date.getTime());
-					newCustomerProfile.setSenderID(senderId);
-					newCustomerProfile.setCustomerLastSeen(timestamp);
-					newCustomerProfile.setLocal(locale);
-					newCustomerProfile.setCustomerLastSeen(customerProfile.getCustomerLastSeen());
-					newCustomerProfile.setFirstInsertion(customerProfile.getFirstInsertion());
-					newCustomerProfile.setLastGetProfileWSCall(customerProfile.getLastGetProfileWSCall());
-					newCustomerProfile.setMsisdn(customerProfile.getMsisdn());
-					newCustomerProfile.setLinkingDate(customerProfile.getLinkingDate());
-					return chatBotService.saveCustomerProfile(newCustomerProfile);
-				}
+	public static MediaType getMediaType(Long mediaTypeId) {
+		switch (mediaTypeId.intValue()) {
+		case 1:
+			return MediaType.APPLICATION_JSON;
+		case 2:
+			return MediaType.APPLICATION_XML;
+		default:
+			return MediaType.APPLICATION_JSON;
+		}
 
-			}
-			
-			
-		public static void sendRequest(HttpClient cachingClient, HttpContext localContext) {
-			        HttpGet httpget = new HttpGet("http://10.195.5.179:7777/dashboard/user/profile?dial=param%3AJZRuLMFnPNW6CDaD71SqZV2dVn7xfe4asOcXTVBHIAzM7Ct%2FwSZZrYvHJB3Pjl%2BAN3Ii4GGpJMWRzZwn6hY%2B1A%3D%3D%2CparamChannel%3A4e47684968446e4e7067726d3968507a4f77585273684d3152647046703752454c6d4a4b59533978484557636750357151644c487154544370445343414d7252");
-			        HttpResponse response = null;
-			        try {
-			            response = cachingClient.execute(httpget, localContext);
-			        } catch (ClientProtocolException e) {
-			        	logger.error(e.getMessage() , e);
-			        } catch (IOException e) {
-			        	logger.error(e.getMessage() , e);
-			        }
-			        Header [] headers = response.getAllHeaders();
-			        for(Header headr : headers) {
-			        	System.out.println("Header is "+headr.getName() +"   "+headr.getValue());
-			        }
-			        
-			        HttpEntity entity = response.getEntity();
-			        try {
-			            EntityUtils.consume(entity);
-			        } catch (IOException e) {
-			        	logger.error(e.getMessage() , e);
-			        }
+	}
 
-			    }
-			 
-			 
-			  public static void checkResponse(CacheResponseStatus responseStatus) {
-			        switch (responseStatus) {
-			            case CACHE_HIT:
-			                System.out.println("A response was generated from the cache with no requests "
-			                        + "sent upstream");
-			                break;
-			            case CACHE_MODULE_RESPONSE:
-			                System.out.println("The response was generated directly by the caching module");
-			                break;
-			            case CACHE_MISS:
-			                System.out.println("The response came from an upstream server");
-			                break;
-			            case VALIDATED:
-			                System.out.println("The response was generated from the cache after validating "
-			                        + "the entry with the origin server");
-			                break;
-			        }
-			    }
+	public static HttpMethod getHttpMethod(int httpMethodId) {
+		switch (httpMethodId) {
+		case 1:
+			return HttpMethod.GET;
+
+		case 2:
+			return HttpMethod.POST;
+
+		default:
+			return HttpMethod.GET;
+		}
+
+	}
+
+	/**
+	 * @param customerProfile
+	 * @param botInteraction
+	 */
+	public static void interactionLogginghandling(CustomerProfile customerProfile, BotInteraction botInteraction, ChatBotService chatBotService, String phoneNumber) {
+		String methodName = new Object() {
+		}.getClass().getEnclosingMethod().getName();
+		logger.debug("Dial is " + phoneNumber + " Method Name is " + methodName + " Parameters are Customer Profile " + customerProfile.toString() + "" + "Interaction " + botInteraction.toString());
+		Date date = new Date();
+		Timestamp timeStamp = new Timestamp(date.getTime());
+		InteractionLogging interactionLogging = new InteractionLogging();
+		interactionLogging.setBotInteraction(botInteraction);
+		interactionLogging.setInteractionCallingDate(timeStamp);
+		interactionLogging.setCustomerProfile(customerProfile);
+		chatBotService.saveInteractionLogging(interactionLogging);
+	    chatBotService.saveInteractionLogging(interactionLogging);
+	}
+
+	public static void userLogout(final String senderId, ChatBotService chatBotService) {
+		CustomerProfile storedCustomerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
+		CustomerProfile logoutCustomerProfile = new CustomerProfile();
+		logoutCustomerProfile.setCustomerLastSeen(storedCustomerProfile.getCustomerLastSeen());
+		logoutCustomerProfile.setFirstInsertion(storedCustomerProfile.getFirstInsertion());
+		logoutCustomerProfile.setLastGetProfileWSCall(storedCustomerProfile.getLastGetProfileWSCall());
+		logoutCustomerProfile.setLinkingDate(storedCustomerProfile.getLinkingDate());
+		logoutCustomerProfile.setLocale(storedCustomerProfile.getLocale());
+		logoutCustomerProfile.setMsisdn("");
+		logoutCustomerProfile.setSenderID(storedCustomerProfile.getSenderID());
+		chatBotService.saveCustomerProfile(logoutCustomerProfile);
+	}
+
+	public static void saveCustomerInformation(ChatBotService chatBotService, String senderId, String locale) {
+		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
+		CustomerProfile newCustomerProfile = new CustomerProfile();
+		if (customerProfile == null) {
+			Date date = new Date();
+			Timestamp timestamp = new Timestamp(date.getTime());
+			newCustomerProfile.setFirstInsertion(timestamp);
+			newCustomerProfile.setSenderID(senderId);
+			newCustomerProfile.setCustomerLastSeen(timestamp);
+			newCustomerProfile.setLocale(locale);
+			chatBotService.saveCustomerProfile(newCustomerProfile);
+		} else {
+			Date date = new Date();
+			Timestamp timestamp = new Timestamp(date.getTime());
+			newCustomerProfile.setSenderID(senderId);
+			newCustomerProfile.setCustomerLastSeen(timestamp);
+			newCustomerProfile.setLocale(locale);
+			newCustomerProfile.setCustomerLastSeen(customerProfile.getCustomerLastSeen());
+			newCustomerProfile.setFirstInsertion(customerProfile.getFirstInsertion());
+			newCustomerProfile.setLastGetProfileWSCall(customerProfile.getLastGetProfileWSCall());
+			newCustomerProfile.setMsisdn(customerProfile.getMsisdn());
+			newCustomerProfile.setLinkingDate(customerProfile.getLinkingDate());
+			chatBotService.saveCustomerProfile(newCustomerProfile);
+		}
+
+	}
+
+	public static void updateCustomerlastCalling(ChatBotService chatBotService, String senderId, String locale) {
+		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
+		CustomerProfile newCustomerProfile = new CustomerProfile();
+		if (customerProfile == null) {
+			Date date = new Date();
+			Timestamp timestamp = new Timestamp(date.getTime());
+			newCustomerProfile.setFirstInsertion(timestamp);
+			newCustomerProfile.setSenderID(senderId);
+			newCustomerProfile.setCustomerLastSeen(timestamp);
+			newCustomerProfile.setLocale(locale);
+			newCustomerProfile.setLastGetProfileWSCall(timestamp);
+			chatBotService.saveCustomerProfile(newCustomerProfile);
+		} else {
+			Date date = new Date();
+			Timestamp timestamp = new Timestamp(date.getTime());
+			newCustomerProfile.setSenderID(senderId);
+			newCustomerProfile.setCustomerLastSeen(timestamp);
+			newCustomerProfile.setLocale(locale);
+			newCustomerProfile.setCustomerLastSeen(customerProfile.getCustomerLastSeen());
+			newCustomerProfile.setFirstInsertion(customerProfile.getFirstInsertion());
+			newCustomerProfile.setLastGetProfileWSCall(timestamp);
+			newCustomerProfile.setMsisdn(customerProfile.getMsisdn());
+			newCustomerProfile.setLinkingDate(customerProfile.getLinkingDate());
+			chatBotService.saveCustomerProfile(newCustomerProfile);
+		}
+
+	}
+
 	
-	
-	
-			  
-			  public static void cachingResponse() {
-				  CacheConfig cacheConfig = CacheConfig.custom()
-					        .setMaxCacheEntries(1000)
-					        .setMaxObjectSize(8192)
-					        .build();
 
-			        HttpClient cachingClient = new CachingHttpClient(new DefaultHttpClient(), cacheConfig);
+	public static void markAsSeen(Messenger messenger, String userId) {
+		final String recipientId = userId;
+		final SenderAction senderAction = SenderAction.MARK_SEEN;
 
-			        HttpContext localContext = new BasicHttpContext();
+		final SenderActionPayload payload = SenderActionPayload.create(recipientId, senderAction);
 
-			        sendRequest(cachingClient, localContext);
-			        CacheResponseStatus responseStatus = (CacheResponseStatus) localContext.getAttribute(
-			                CachingHttpClient.CACHE_RESPONSE_STATUS);
-			        checkResponse(responseStatus);
+		try {
+			messenger.send(payload);
+		} catch (MessengerApiException | MessengerIOException e) {
+			logger.error(e.getMessage(), e);
+		}
+	}
 
+	public static void markAsTypingOn(Messenger messenger, String userId) {
+		final String recipientId = userId;
+		final SenderAction senderAction = SenderAction.TYPING_ON;
 
-			        sendRequest(cachingClient, localContext);
-			        responseStatus = (CacheResponseStatus) localContext.getAttribute(
-			                CachingHttpClient.CACHE_RESPONSE_STATUS);
-			        checkResponse(responseStatus);
-			    }
-			  
-			  
-			  
-			  public static void markAsSeen(Messenger messenger , String userId) {
-				  final String recipientId = userId;
-				  final SenderAction senderAction = SenderAction.MARK_SEEN;
+		final SenderActionPayload payload = SenderActionPayload.create(recipientId, senderAction);
 
-				  final SenderActionPayload payload = SenderActionPayload.create(recipientId, senderAction);
+		try {
+			messenger.send(payload);
+		} catch (MessengerApiException | MessengerIOException e) {
+			logger.error(e.getMessage(), e);
+		}
+	}
 
-				  try {
-					messenger.send(payload);
-				} catch (MessengerApiException | MessengerIOException e) {
-					logger.error(e.getMessage() , e);
-				}
-			  }
-			  
-			  
-			  public static void markAsTypingOn(Messenger messenger , String userId) {
-				  final String recipientId = userId;
-				  final SenderAction senderAction = SenderAction.TYPING_ON;
+	public static void markAsTypingOff(Messenger messenger, String userId) {
+		final String recipientId = userId;
+		final SenderAction senderAction = SenderAction.TYPING_OFF;
 
-				  final SenderActionPayload payload = SenderActionPayload.create(recipientId, senderAction);
+		final SenderActionPayload payload = SenderActionPayload.create(recipientId, senderAction);
 
-				  try {
-					messenger.send(payload);
-				} catch (MessengerApiException | MessengerIOException e) {
-					logger.error(e.getMessage() , e);
-				}
-			  }
-			  
-			  
-			  public static void markAsTypingOff(Messenger messenger , String userId) {
-				  final String recipientId = userId;
-				  final SenderAction senderAction = SenderAction.TYPING_OFF;
+		try {
+			messenger.send(payload);
+		} catch (MessengerApiException | MessengerIOException e) {
+			logger.error(e.getMessage(), e);
+		}
+	}
 
-				  final SenderActionPayload payload = SenderActionPayload.create(recipientId, senderAction);
+	/*public List<String> getParameterNames(Method method) {
+		Parameter[] parameters = method.getParameters();
+		List<String> parameterNames = new ArrayList<>();
 
-				  try {
-					messenger.send(payload);
-				} catch (MessengerApiException | MessengerIOException e) {
-					logger.error(e.getMessage() , e);
-				}
-			  }
-			  
-			  
-			  
-			  
+		for (Parameter parameter : parameters) {
+			if (!parameter.isNamePresent()) {
+				throw new IllegalArgumentException("Parameter names are not present!");
+			}
 
-				    public  List<String> getParameterNames(Method method) {
-				        Parameter[] parameters = method.getParameters();
-				        List<String> parameterNames = new ArrayList<>();
+			String parameterName = parameter.getName();
+			parameterNames.add(parameterName);
+		}
 
-				        for (Parameter parameter : parameters) {
-				            if(!parameter.isNamePresent()) {
-				                throw new IllegalArgumentException("Parameter names are not present!");
-				            }
-				            
-				            String parameterName = parameter.getName();
-				            parameterNames.add(parameterName);
-				        }
+		return parameterNames;
+	}*/
 
-				        return parameterNames;
-				    }
+	public static String encryptChannelParam(String url)
+			throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, UnsupportedEncodingException {
+		String key = "etisalatetisalat";
+		byte keyBytes[] = key.getBytes();
+		SecretKeySpec secretKey = new SecretKeySpec(keyBytes, "AES");
+		Cipher ecipher = Cipher.getInstance("AES");
+		ecipher.init(Cipher.ENCRYPT_MODE, secretKey);
+		byte[] utf8 = url.getBytes("UTF8");
+		byte[] enc = ecipher.doFinal(utf8);
+		String encryptedParams = new sun.misc.BASE64Encoder().encode(enc);
+		byte[] encryptedBytes = encryptedParams.getBytes();
+		StringBuilder strbuf = new StringBuilder(encryptedBytes.length * 2);
+		for (int i = 0; i < encryptedBytes.length; i++) {
+			if (((int) encryptedBytes[i] & 0xff) < 0x10) {
+				strbuf.append("0");
+			}
+			strbuf.append(Long.toString((int) encryptedBytes[i] & 0xff, 16));
+		}
+		String toBeSentParams = strbuf.toString();
+		return toBeSentParams;
+	}
 
-				   			
-			  
-			  
+	public static Map<String,String> callGetWebServiceByRestTemplate(URI uri) {
+		Map<String, String> responseMap = new HashMap<String, String>();
+		HttpHeaders headers = new HttpHeaders();
+		headers.set("Accept", MediaType.APPLICATION_JSON_UTF8_VALUE);
+		try {
+		ResponseEntity<String> response = null;	
+		HttpEntity entity = new HttpEntity<>(headers);
+		RestTemplate restTemplate = new RestTemplate();
+		response = restTemplate.exchange(uri, 
+		        HttpMethod.GET, 
+		        entity, 
+		        String.class);
+		int statusId = response.getStatusCodeValue();
+		if(statusId == 200) {
+			responseMap.put("status", String.valueOf(statusId));
+			responseMap.put("response", response.getBody());
+		}else {
+			responseMap.put("status", String.valueOf(statusId));
+			responseMap.put("response", response.getBody());
+		}
+		}catch(Exception e){
+			logger.error(e.getMessage());
+		}
+		return responseMap;
+	}
+
 }
