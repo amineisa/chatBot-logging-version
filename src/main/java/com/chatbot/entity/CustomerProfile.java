@@ -8,34 +8,34 @@ import javax.persistence.Id;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 
-
 @Entity
-@Table(name="CUSTOMER_PROFILE")
+@Table(name = "CUSTOMER_PROFILE")
 @NamedQuery(name = "CustomerProfile.findAll", query = "SELECT c FROM CustomerProfile c")
 public class CustomerProfile {
 	private static final long serialVersionUID = 1L;
-	
+
 	@Id
-	@Column(name = "SENDER_ID" ,nullable=false)
+	@Column(name = "SENDER_ID", nullable = false)
 	private String senderID;
-	
+
 	@Column(name = "LOCAL")
 	private String locale;
-	
+
 	@Column(name = "MSISDN")
 	private String msisdn;
-	
-	@Column(name="LINKING_Date")
+
+	@Column(name = "LINKING_Date")
 	private Date linkingDate;
-	
-	@Column(name="FIRST_INSERTION")
+
+	@Column(name = "FIRST_INSERTION")
 	private Date firstInsertion;
-	
-	@Column(name="LAST_GET_PROFILE_DATE")
+
+	@Column(name = "LAST_GET_PROFILE_DATE")
 	private Date lastGetProfileWSCall;
-	
-	@Column(name="CUSTOMER_LAST_SEEN")
+
+	@Column(name = "CUSTOMER_LAST_SEEN")
 	private Date customerLastSeen;
+
 
 	public String getSenderID() {
 		return senderID;
@@ -93,13 +93,11 @@ public class CustomerProfile {
 		this.customerLastSeen = customerLastSeen;
 	}
 
+
 	@Override
 	public String toString() {
-		return "CustomerProfile [senderID=" + senderID + ", local=" + locale + ", msisdn=" + msisdn + ", linkingDate="
-				+ linkingDate + ", firstInsertion=" + firstInsertion + ", lastGetProfileWSCall=" + lastGetProfileWSCall
-				+ ", customerLastSeen=" + customerLastSeen + "]";
+		return "CustomerProfile [senderID=" + senderID + ", local=" + locale + ", msisdn=" + msisdn + ", linkingDate=" + linkingDate + ", firstInsertion=" + firstInsertion + ", lastGetProfileWSCall="
+				+ lastGetProfileWSCall + ", customerLastSeen=" + customerLastSeen + "]";
 	}
-	
-		
-	
+
 }

@@ -20,7 +20,6 @@ import com.chatbot.dao.EnabledCategoryConfigurationRepo;
 import com.chatbot.dao.InteractionLoggingRepo;
 import com.chatbot.dao.InteractionMessageRepo;
 import com.chatbot.dao.PersistenceMenuButtonRepo;
-import com.chatbot.dao.SubscribeWSBodyRepo;
 import com.chatbot.entity.BotButton;
 import com.chatbot.entity.BotButtonTemplateMSG;
 import com.chatbot.entity.BotGTemplateMessage;
@@ -36,7 +35,6 @@ import com.chatbot.entity.CustomerProfile;
 import com.chatbot.entity.EnabledCategoryConfiguration;
 import com.chatbot.entity.InteractionLogging;
 import com.chatbot.entity.PersistenceMenuButton;
-import com.chatbot.entity.SubscribeWSBody;
 
 @Service
 public class ChatBotServiceImpl implements ChatBotService {
@@ -82,8 +80,7 @@ public class ChatBotServiceImpl implements ChatBotService {
 	@Autowired
 	private InteractionLoggingRepo interactionLoggingRepo;
 	
-	@Autowired
-	private SubscribeWSBodyRepo subscribeWSBodyRepo;
+	
 	
 	@Autowired
 	private EnabledCategoryConfigurationRepo  enabledCategoryConfigurationRepo;
@@ -220,16 +217,7 @@ public class ChatBotServiceImpl implements ChatBotService {
 	public InteractionLogging saveInteractionLogging(InteractionLogging interactionLogging) {
 		return interactionLoggingRepo.save(interactionLogging);
 	}
-	@Override
-	public SubscribeWSBody getSubscribeWSBodyById(String id) {
-		return subscribeWSBodyRepo.findSubscribeWSBodyByBundleId(id);
-	}
-
-	@Override
-	public SubscribeWSBody saveSubscribeWSBody(SubscribeWSBody subscribeWSBody) {
-		return subscribeWSBodyRepo.save(subscribeWSBody);
-	}
-
+	
 	@Override
 	public EnabledCategoryConfiguration getEnabledCategoryConfigurationDaoById(Long id) {
 		return enabledCategoryConfigurationRepo.findEnabledCategoryConfigurationById(id) ;

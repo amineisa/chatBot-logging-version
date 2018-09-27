@@ -17,7 +17,6 @@ import com.chatbot.entity.CustomerProfile;
 import com.chatbot.entity.EnabledCategoryConfiguration;
 import com.chatbot.entity.InteractionLogging;
 import com.chatbot.entity.PersistenceMenuButton;
-import com.chatbot.entity.SubscribeWSBody;
 
 
 public interface ChatBotService {
@@ -86,15 +85,7 @@ public interface ChatBotService {
 	
 	public InteractionLogging saveInteractionLogging(InteractionLogging interactionLogging);
 	
-	
-	// SubscribeWSBody
-	
-	public SubscribeWSBody getSubscribeWSBodyById(String id);
-	
-	public SubscribeWSBody saveSubscribeWSBody(SubscribeWSBody subscribeWSBody);
-	
-	
-	// EnabledCategoryConfigurationDao
+
 	
 	public EnabledCategoryConfiguration getEnabledCategoryConfigurationDaoById(Long id);
 

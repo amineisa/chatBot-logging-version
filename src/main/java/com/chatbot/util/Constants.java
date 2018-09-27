@@ -1,8 +1,5 @@
 package com.chatbot.util;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class Constants {
 
 	public static final String CHANEL_PARAM="CHATBOT";
@@ -40,9 +37,7 @@ public class Constants {
 	public static final String PAYLOAD_BUY_ADDONS_ROOT = "buy addons root";
 	public static final String PAYLOAD_UNEXPECTED_PAYLOAD = "unexpected";
 	
-	public static final String BACK_BUTTON_LABEL_EN = "BACK";
-	public static final String BACK_BUTTON_LABEL_AR= "عودة";
-	
+		
 	public static final String NOTELIGIBLE_ELEMENT_TITLE_EN = "Sorry !";
 	public static final String NOTELIGIBLE_ELEMENT_TITLE_AR = "! عفوا"; 
 	
@@ -50,9 +45,29 @@ public class Constants {
 	public static final String NOTELIGIBLE_ELEMENT_SUBTITLE_AR = " عفوا رقمك ليس له اي اضافات";
 	
 	
-	public static String profilePayloads = PAYLOAD_VIEW_CONNECT_DETAILS+","+PAYLOAD_RATEPLAN_AND_CONNECT+","+PAYLOAD_VIEW_RATEPLAN_DETAILS+","+PAYLOAD_RATEPLAN_DETAILS+","+PAYLOAD_CONSUMPTION;
+	public static String profilePayloads = PAYLOAD_VIEW_CONNECT_DETAILS+","+PAYLOAD_RATEPLAN_AND_CONNECT+","+PAYLOAD_VIEW_RATEPLAN_DETAILS+","+PAYLOAD_RATEPLAN_DETAILS+","+PAYLOAD_CONSUMPTION;	public static final String RESPOSE_MSG_CHANGE_LOCALE_AR = "تم تغير اللغة الي اللغة العربيه ";
+	public static final String RESPOSE_MSG_CHANGE_LOCALE_EN = "Language has been changed to English language";
+	
+	//logger prefixes 
+	public static final String LOGGER_SENDER_ID = " SENDER ID IS ";
+	public static final String LOGGER_METHOD_NAME = " METHOD NAME IS ";
+	public static final String LOGGER_DIAL_IS = " DIAL IS ";
+	public static final String LOGGER_EXCEPTION_MESSAGE = " EXCEPTION MESSAGE IS ";
+	public static final String LOGGER_CUSTOMER_PROFILE = "Customer Profile ";
+	public static final String LOGGER_SUBSCROBER_PROFILE = " Get Subscriber profile Response is ";
+	public static final String LOGGER_BUNDLE_SUPSCRIPTION =" Bundle Subscription Details ";
+	public static final String LOGGER_ELIGIBLE_PRODUCT = " Eligible Products are ";
+	public static final String LOGGER_CACHED_RESPONSE = " Response retrieved from caching";
+	public static final String LOGGER_SERVER_RESPONSE = " Response retrieved from server";
+	
+	//json response keys 
+	public static final String IS_ARRAY_KEY_IN_JSON_RESPONSE = "#";	
+	public static final String CACHED_MAP_PROFILE_KEY_SUFFIX = "_PROFILE";
+	public static final String CACHED_MAP_ELIGIPLE_PRODUCT_KEY_SUFFIX = "_PRODUCT";
+	public static final String CACHED_MAP_ELIGIPLE_EXTRA_KEY_SUFFIX = "_EXTRA";
 	
 	
-	
-	
+	public static final String SOCIAL_CONSUMPTION = "socialConsumption";
+	 
+	 
 }

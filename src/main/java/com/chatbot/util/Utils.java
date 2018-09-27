@@ -3,6 +3,7 @@ package com.chatbot.util;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -26,10 +27,10 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import com.chatbot.entity.BotButton;
 import com.chatbot.entity.BotInteraction;
+import com.chatbot.entity.BotWebserviceMessage;
 import com.chatbot.entity.CustomerProfile;
 import com.chatbot.entity.InteractionLogging;
 import com.chatbot.services.ChatBotService;
@@ -39,6 +40,7 @@ import com.github.messenger4j.exception.MessengerApiException;
 import com.github.messenger4j.exception.MessengerIOException;
 import com.github.messenger4j.send.SenderActionPayload;
 import com.github.messenger4j.send.senderaction.SenderAction;
+import com.github.messenger4j.userprofile.UserProfile;
 
 public class Utils {
 
@@ -58,6 +60,7 @@ public class Utils {
 	}
 
 	public enum MessageTypeEnum {
+
 		TEXTMESSAGE(1l), QUICKREPLYMESSAGE(2l), GENERICTEMPLATEMESSAGE(3l), ButtonTemplate(4l);
 		private final Long messageTypeId;
 
@@ -84,7 +87,6 @@ public class Utils {
 	// Create Url Method
 	public static URL createUrl(String stringUrl) {
 		URL url = null;
-
 		try {
 			url = new URL(stringUrl);
 		} catch (MalformedURLException e) {
@@ -95,8 +97,7 @@ public class Utils {
 
 	}
 
-	// DashBoard Utils
-
+	// DashBoard encryption Utils
 	public static String encryptDPIParam(String encryptedString) throws Exception {
 		byte[] decryptionKey = new byte[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 		Cipher c = Cipher.getInstance("AES");
@@ -108,12 +109,6 @@ public class Utils {
 	}
 
 	public static void updateCustomerLastSeen(CustomerProfile customerProfile, String phoneNumber, ChatBotService chatBotService) {
-		String methodName = new Object() {
-		}.getClass().getEnclosingMethod().getName();
-		if (phoneNumber != null && !phoneNumber.equals("")) {
-			// logger.debug("Dial is " + phoneNumber + " Method Name is " + methodName + "
-			// Parameter is " + customerProfile.toString());
-		}
 		Date date = new Date();
 		CustomerProfile updatedCustomerProfile = new CustomerProfile();
 		updatedCustomerProfile.setFirstInsertion(customerProfile.getFirstInsertion());
@@ -127,44 +122,11 @@ public class Utils {
 		chatBotService.saveCustomerProfile(updatedCustomerProfile);
 	}
 
-	public static boolean isNotEmpty(String obj) {
-		return obj != null && obj.length() != 0;
-	}
-
-	public static MediaType getMediaType(Long mediaTypeId) {
-		switch (mediaTypeId.intValue()) {
-		case 1:
-			return MediaType.APPLICATION_JSON;
-		case 2:
-			return MediaType.APPLICATION_XML;
-		default:
-			return MediaType.APPLICATION_JSON;
-		}
-
-	}
-
-	public static HttpMethod getHttpMethod(int httpMethodId) {
-		switch (httpMethodId) {
-		case 1:
-			return HttpMethod.GET;
-
-		case 2:
-			return HttpMethod.POST;
-
-		default:
-			return HttpMethod.GET;
-		}
-
-	}
-
 	/**
 	 * @param customerProfile
 	 * @param botInteraction
 	 */
 	public static void interactionLogginghandling(CustomerProfile customerProfile, BotInteraction botInteraction, ChatBotService chatBotService, String phoneNumber) {
-		String methodName = new Object() {
-		}.getClass().getEnclosingMethod().getName();
-		logger.debug("Dial is " + phoneNumber + " Method Name is " + methodName + " Parameters are Customer Profile " + customerProfile.toString() + "" + "Interaction " + botInteraction.toString());
 		Date date = new Date();
 		Timestamp timeStamp = new Timestamp(date.getTime());
 		InteractionLogging interactionLogging = new InteractionLogging();
@@ -172,7 +134,7 @@ public class Utils {
 		interactionLogging.setInteractionCallingDate(timeStamp);
 		interactionLogging.setCustomerProfile(customerProfile);
 		chatBotService.saveInteractionLogging(interactionLogging);
-	    chatBotService.saveInteractionLogging(interactionLogging);
+		chatBotService.saveInteractionLogging(interactionLogging);
 	}
 
 	public static void userLogout(final String senderId, ChatBotService chatBotService) {
@@ -188,23 +150,26 @@ public class Utils {
 		chatBotService.saveCustomerProfile(logoutCustomerProfile);
 	}
 
-	public static void saveCustomerInformation(ChatBotService chatBotService, String senderId, String locale) {
+	public static void saveCustomerInformation(ChatBotService chatBotService, String senderId, Messenger messenger) {
 		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 		CustomerProfile newCustomerProfile = new CustomerProfile();
+		
+		UserProfile userProfile = Utils.getUserProfile(senderId, messenger);
+		String userLocale = userProfile.locale();
 		if (customerProfile == null) {
 			Date date = new Date();
 			Timestamp timestamp = new Timestamp(date.getTime());
 			newCustomerProfile.setFirstInsertion(timestamp);
 			newCustomerProfile.setSenderID(senderId);
 			newCustomerProfile.setCustomerLastSeen(timestamp);
-			newCustomerProfile.setLocale(locale);
+			newCustomerProfile.setLocale(userLocale);
 			chatBotService.saveCustomerProfile(newCustomerProfile);
 		} else {
 			Date date = new Date();
 			Timestamp timestamp = new Timestamp(date.getTime());
 			newCustomerProfile.setSenderID(senderId);
 			newCustomerProfile.setCustomerLastSeen(timestamp);
-			newCustomerProfile.setLocale(locale);
+			newCustomerProfile.setLocale(userLocale);
 			newCustomerProfile.setCustomerLastSeen(customerProfile.getCustomerLastSeen());
 			newCustomerProfile.setFirstInsertion(customerProfile.getFirstInsertion());
 			newCustomerProfile.setLastGetProfileWSCall(customerProfile.getLastGetProfileWSCall());
@@ -215,90 +180,46 @@ public class Utils {
 
 	}
 
-	public static void updateCustomerlastCalling(ChatBotService chatBotService, String senderId, String locale) {
-		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
-		CustomerProfile newCustomerProfile = new CustomerProfile();
-		if (customerProfile == null) {
-			Date date = new Date();
-			Timestamp timestamp = new Timestamp(date.getTime());
-			newCustomerProfile.setFirstInsertion(timestamp);
-			newCustomerProfile.setSenderID(senderId);
-			newCustomerProfile.setCustomerLastSeen(timestamp);
-			newCustomerProfile.setLocale(locale);
-			newCustomerProfile.setLastGetProfileWSCall(timestamp);
-			chatBotService.saveCustomerProfile(newCustomerProfile);
-		} else {
-			Date date = new Date();
-			Timestamp timestamp = new Timestamp(date.getTime());
-			newCustomerProfile.setSenderID(senderId);
-			newCustomerProfile.setCustomerLastSeen(timestamp);
-			newCustomerProfile.setLocale(locale);
-			newCustomerProfile.setCustomerLastSeen(customerProfile.getCustomerLastSeen());
-			newCustomerProfile.setFirstInsertion(customerProfile.getFirstInsertion());
-			newCustomerProfile.setLastGetProfileWSCall(timestamp);
-			newCustomerProfile.setMsisdn(customerProfile.getMsisdn());
-			newCustomerProfile.setLinkingDate(customerProfile.getLinkingDate());
-			chatBotService.saveCustomerProfile(newCustomerProfile);
-		}
-
-	}
-
-	
-
 	public static void markAsSeen(Messenger messenger, String userId) {
-		final String recipientId = userId;
-		final SenderAction senderAction = SenderAction.MARK_SEEN;
-
-		final SenderActionPayload payload = SenderActionPayload.create(recipientId, senderAction);
-
 		try {
+			String recipientId = userId;
+			SenderAction senderAction = SenderAction.MARK_SEEN;
+
+			SenderActionPayload payload = SenderActionPayload.create(recipientId, senderAction);
+
 			messenger.send(payload);
 		} catch (MessengerApiException | MessengerIOException e) {
-			logger.error(e.getMessage(), e);
+			logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
+			e.printStackTrace();
 		}
 	}
 
 	public static void markAsTypingOn(Messenger messenger, String userId) {
-		final String recipientId = userId;
-		final SenderAction senderAction = SenderAction.TYPING_ON;
-
-		final SenderActionPayload payload = SenderActionPayload.create(recipientId, senderAction);
-
 		try {
+			String recipientId = userId;
+			SenderAction senderAction = SenderAction.TYPING_ON;
+
+			SenderActionPayload payload = SenderActionPayload.create(recipientId, senderAction);
+
 			messenger.send(payload);
 		} catch (MessengerApiException | MessengerIOException e) {
-			logger.error(e.getMessage(), e);
+			logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
+			e.printStackTrace();
 		}
 	}
 
 	public static void markAsTypingOff(Messenger messenger, String userId) {
-		final String recipientId = userId;
-		final SenderAction senderAction = SenderAction.TYPING_OFF;
-
-		final SenderActionPayload payload = SenderActionPayload.create(recipientId, senderAction);
-
 		try {
+			String recipientId = userId;
+			SenderAction senderAction = SenderAction.TYPING_OFF;
+			SenderActionPayload payload = SenderActionPayload.create(recipientId, senderAction);
+
 			messenger.send(payload);
 		} catch (MessengerApiException | MessengerIOException e) {
-			logger.error(e.getMessage(), e);
+			logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
+			e.printStackTrace();
 		}
 	}
-
-	/*public List<String> getParameterNames(Method method) {
-		Parameter[] parameters = method.getParameters();
-		List<String> parameterNames = new ArrayList<>();
-
-		for (Parameter parameter : parameters) {
-			if (!parameter.isNamePresent()) {
-				throw new IllegalArgumentException("Parameter names are not present!");
-			}
-
-			String parameterName = parameter.getName();
-			parameterNames.add(parameterName);
-		}
-
-		return parameterNames;
-	}*/
 
 	public static String encryptChannelParam(String url)
 			throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, UnsupportedEncodingException {
@@ -322,30 +243,83 @@ public class Utils {
 		return toBeSentParams;
 	}
 
-	public static Map<String,String> callGetWebServiceByRestTemplate(URI uri) {
+	public static Map<String, String> callGetWebServiceByRestTemplate(URI uri) {
 		Map<String, String> responseMap = new HashMap<String, String>();
 		HttpHeaders headers = new HttpHeaders();
 		headers.set("Accept", MediaType.APPLICATION_JSON_UTF8_VALUE);
+		int statusId = 0;
 		try {
-		ResponseEntity<String> response = null;	
-		HttpEntity entity = new HttpEntity<>(headers);
-		RestTemplate restTemplate = new RestTemplate();
-		response = restTemplate.exchange(uri, 
-		        HttpMethod.GET, 
-		        entity, 
-		        String.class);
-		int statusId = response.getStatusCodeValue();
-		if(statusId == 200) {
+			HttpEntity entity = new HttpEntity<>(headers);
+			RestTemplate restTemplate = new RestTemplate();
+			ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.GET, entity, String.class);
+			statusId = response.getStatusCodeValue();
+			if (statusId == 200) {
+				responseMap.put("status", String.valueOf(statusId));
+				responseMap.put("response", response.getBody());
+			} else {
+				responseMap.put("status", String.valueOf(statusId));
+				responseMap.put("response", response.getBody());
+			}
+		} catch (Exception e) {
 			responseMap.put("status", String.valueOf(statusId));
-			responseMap.put("response", response.getBody());
-		}else {
-			responseMap.put("status", String.valueOf(statusId));
-			responseMap.put("response", response.getBody());
-		}
-		}catch(Exception e){
-			logger.error(e.getMessage());
+			logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
+			e.printStackTrace();
 		}
 		return responseMap;
 	}
 
+	public static URI createURI(BotWebserviceMessage botWebserviceMessage, String senderId, ChatBotService chatBotService, String phoneNumber) {
+		URI uri = null;
+		try {
+			CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
+			String dialNumber = customerProfile.getMsisdn();
+
+			String paramChannel = Utils.encryptChannelParam("msisdn=" + dialNumber + "&time=1525328875649" + "&channel=" + Constants.CHANEL_PARAM);
+			String realParameter = "paramChannel:" + paramChannel;
+			uri = new URI(botWebserviceMessage.getWsUrl() + "?dial=" + realParameter);
+			logger.debug(Constants.LOGGER_DIAL_IS + phoneNumber + " Web Service URL is " + uri);
+		} catch (URISyntaxException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException | UnsupportedEncodingException e1) {
+			logger.error(Constants.LOGGER_DIAL_IS + phoneNumber + Constants.LOGGER_SENDER_ID + senderId + Constants.LOGGER_EXCEPTION_MESSAGE + e1);
+			e1.printStackTrace();
+		}
+		return uri;
+	}
+
+	public static String getLabelForViewButton(String locale) {
+		if (locale.contains("ar")) {
+			return "عرض";
+		}
+		return "View";
+	}
+
+	public static String getLabelForBackButton(String locale) {
+		if (locale.contains("ar")) {
+			return "عودة";
+		}
+		return "Back";
+	}
+
+	public static String getLabelForٍSubscribeButton(String locale) {
+		if (locale.contains("ar")) {
+			return "اشترك";
+		}
+		return "Subscribe";
+	}
+
+	public static String informUserThatHeDoesnotSubscribeAtAnyMIBundle(String locale) {
+		if (locale.contains("ar")) {
+			return "نأسف أنت غير مشترك بأي من باقات الأنترنت و هذة هي الباقات المتاحة لرقمك";
+		}
+		return "Sorry ,You are not subscribe to any MI Bundle here are list of the available MI bundle for your dial";
+	}
+	
+	public static UserProfile getUserProfile(String senderId,Messenger messenger) { 
+	UserProfile userProfile = null;
+	try {
+		userProfile = messenger.queryUserProfile(senderId);
+	} catch (MessengerApiException | MessengerIOException e) {
+		e.printStackTrace();
+	}
+	return userProfile;
+	}
 }

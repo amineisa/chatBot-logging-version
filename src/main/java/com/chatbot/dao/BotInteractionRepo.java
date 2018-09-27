@@ -6,4 +6,5 @@ import com.chatbot.entity.BotInteraction;
 
 public interface BotInteractionRepo extends CrudRepository<BotInteraction, Long> {
 	public BotInteraction findByPayload(String payload);
+
 }

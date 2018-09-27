@@ -14,10 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.scheduling.annotation.EnableScheduling;
 
 import com.chatbot.dao.BotButtonRepo;
 import com.chatbot.entity.BotButton;
@@ -43,20 +40,19 @@ import com.github.messenger4j.messengerprofile.persistentmenu.action.UrlCallToAc
 
 
 @SpringBootApplication
-@ComponentScan("com.chatbot.*")
-@EnableCaching
 public class MessengerChatBot {
 	@Autowired
 	private ChatBotService chatBotService;
 	
 	@Autowired
 	private BotButtonRepo botButtonRepo;
-
+	
 	private static final Logger logger = LoggerFactory.getLogger(MessengerChatBot.class);
+	
 	public static void main(String[] args) {
 		SpringApplication.run(MessengerChatBot.class, args);
 	}
-
+	
 	@Bean
 	public Messenger messengerSendClient(@Value("${messenger4j.appSecret}") final String appSecret,
 			@Value("${messenger4j.pageAccessToken}") final String pageAccessToken,
@@ -67,47 +63,41 @@ public class MessengerChatBot {
 
 		try {
 			messenger.updateSettings(initSendPersistenceMenu());
-		} catch (MessengerApiException e) {
+		} catch (MessengerApiException  | MessengerIOException e) {
 			logger.error(e.getMessage());
-		} catch (MessengerIOException e) {
-			logger.error(e.getMessage());
-		}
+		} 
 		return messenger;
 	}
 
 	private MessengerSettings initSendPersistenceMenu() {
-		//List<PersistenceMenuButton> masterButtons = getMasterButtons();
 		List<CallToAction> callToActions = getMasterButtons();
 
 		// supported Local as English Language
 		SupportedLocale local = SupportedLocale.en_US;
 		// Optional of call To Action list
-		Optional<List<CallToAction>> OtipnalPersistenceBtns = Optional.of(callToActions);
+		Optional<List<CallToAction>> otipnalPerBtns = Optional.of(callToActions);
 		// LocalizedPersistentMenu
 		LocalizedPersistentMenu localizedPersistentMenu = LocalizedPersistentMenu.create(local, false,
-				OtipnalPersistenceBtns);
-		final PersistentMenu persistentMenu = PersistentMenu.create(false, OtipnalPersistenceBtns,
+				otipnalPerBtns);
+		final PersistentMenu persistentMenu = PersistentMenu.create(false, otipnalPerBtns,
 				localizedPersistentMenu);
 		Optional<PersistentMenu> persistentMenus = Optional.of(persistentMenu);
 		// Start Button
-		//BotButton btn = chatBotService.findStartButton(3l);
-	//	String msg = btn.getBotText().getArabicText();
 		BotButton startBtn = botButtonRepo.findButtonByButtonTypeId(Utils.ButtonTypeEnum.START.getValue());
 		StartButton startButton = StartButton.create(startBtn.getButtonPayload());
 		Optional<StartButton> opStartButton = Optional.of(startButton);
 		// Greeting Section
-		String GreetingMsg = startBtn.getBotText().getEnglishText(); 
-		LocalizedGreeting localizedGreeting = LocalizedGreeting.create(local,GreetingMsg);
+		String greetingMessage = startBtn.getBotText().getEnglishText(); 
+		LocalizedGreeting localizedGreeting = LocalizedGreeting.create(local,greetingMessage);
 		Greeting greeting = Greeting.create("",new LocalizedGreeting[] { localizedGreeting });
 		Optional<Greeting> optionalGreeting = Optional.of(greeting);
-		MessengerSettings messemgerSettings = MessengerSettings.create(opStartButton, optionalGreeting, persistentMenus,
+		return  MessengerSettings.create(opStartButton, optionalGreeting, persistentMenus,
 				empty(), empty(), empty(), empty());
-		return messemgerSettings;
 	}
 
 	private List<CallToAction> getMasterButtons() {
 		List<PersistenceMenuButton> masterButtons = chatBotService.findMasterButtonInPersistenceMenu();
-		List<CallToAction> callToActions = new ArrayList<CallToAction>();
+		List<CallToAction> callToActions = new ArrayList<>();
 		BotButton realButton = new BotButton();
 		for (PersistenceMenuButton buttonRef : masterButtons) {
 			realButton = buttonRef.getButton();
@@ -140,14 +130,11 @@ public class MessengerChatBot {
 	}
 
 	
-	
-
-	
 
 	public NestedCallToAction ifNestedButton(PersistenceMenuButton perButton) {
 		Long id = perButton.getID();
 		List<PersistenceMenuButton> subButtons = chatBotService.findSubButtonsByItsParentId(id);
-		List<CallToAction> subNestedButton = new ArrayList<CallToAction>();
+		List<CallToAction> subNestedButton = new ArrayList<>();
 		for (PersistenceMenuButton subButton : subButtons) {
 			if (subButton.getButton().getButtonType().getId() == Utils.ButtonTypeEnum.NESTED.getValue())  {
 			    NestedCallToAction nested =  ifNestedButton(subButton);

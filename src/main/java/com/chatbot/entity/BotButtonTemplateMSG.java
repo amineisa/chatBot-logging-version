@@ -1,5 +1,7 @@
 package com.chatbot.entity;
 
+import java.io.Serializable;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -14,7 +16,7 @@ import org.hibernate.annotations.Type;
 @Entity
 @Table(name = "Button_Temp_MSG")
 @NamedQuery(name = "BotButtonTemplateMSG.findAll", query = "SELECT b FROM BotButtonTemplateMSG b")
-public class BotButtonTemplateMSG {
+public class BotButtonTemplateMSG implements Serializable{
 	
 
 	private static final long serialVersionUID = 1L;
@@ -37,10 +39,7 @@ public class BotButtonTemplateMSG {
 	@JoinColumn(name = "MESSAGE_ID")
 	private BotInteractionMessage botInteractionMessage;
 
-	public BotButtonTemplateMSG() {
-		
-	}
-
+	
 	public Long getButtonTempMsgId() {
 		return buttonTempMsgId;
 	}

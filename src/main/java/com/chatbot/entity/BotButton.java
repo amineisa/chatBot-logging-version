@@ -70,8 +70,6 @@ public class BotButton implements Serializable {
 	@Column(name = "BUTTON_IMAGE_URL")
 	private String buttonImageUrl;
 
-	public BotButton() {
-	}
 
 	public Long getButtonId() {
 		return this.buttonId;

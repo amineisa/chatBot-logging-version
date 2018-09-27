@@ -1,0 +1,370 @@
+package com.chatbot.services;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import com.chatbot.util.Constants;
+
+@Service
+public class JsonUtilsService {
+	
+	private static final Logger logger = LoggerFactory.getLogger(JsonUtilsService.class);
+
+	// IN Case Zero Level JSONObject
+	public Map<String, ArrayList<String>> inCaseZeroLevelJsonObject(String[] keys, JSONObject jsonObject, String msg, String locale) {
+		Map<String, ArrayList<String>> mapValues = new HashMap<String, ArrayList<String>>();
+		ArrayList<String> titleList = new ArrayList<String>();
+		ArrayList<String> values = new ArrayList<String>();
+		ArrayList<String> textMsgs = new ArrayList<String>();
+		values = getValuesFromJson(jsonObject, keys);
+		String finalMsg = replaceValuesByMapping(values, msg, locale);
+		textMsgs.add(finalMsg);
+		titleList.add(values.get(0));
+		textMsgs.add(finalMsg);
+		mapValues.put("title", titleList);
+		textMsgs.add(finalMsg);
+		mapValues.put("msg", textMsgs);
+		return mapValues;
+
+	}
+
+	// IN Case Zero Level JSONArray
+	public Map<String, ArrayList<String>> inCaseZeroLevelJsonArray(String[] keys, JSONArray rootArray, String msg, String locale) {
+
+		Map<String, ArrayList<String>> mapValues = new HashMap<String, ArrayList<String>>();
+		ArrayList<String> titleList = new ArrayList<String>();
+		ArrayList<String> values = new ArrayList<String>();
+		ArrayList<String> textMsgs = new ArrayList<String>();
+		for (int i = 0; i < rootArray.length(); i++) {
+
+			try {
+				JSONObject childObject = rootArray.getJSONObject(i);
+				values = getValuesFromJson(childObject, keys);
+				titleList.add(values.get(0));
+				mapValues.put("title", titleList);
+				mapValues.put("msg", textMsgs);
+			} catch (JSONException e) {
+				logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
+				e.printStackTrace();
+			}
+			String finalMsg = replaceValuesByMapping(values, msg, locale);
+			textMsgs.add(finalMsg);
+			titleList.add(values.get(0));
+			textMsgs.add(finalMsg);
+			mapValues.put("title", titleList);
+			textMsgs.add(finalMsg);
+			mapValues.put("msg", textMsgs);
+		}
+		return mapValues;
+	}
+
+	// IN Case ONE Level JSONObject
+	public Map<String, ArrayList<String>> inCaseOneLevelJsonObject(String[] paths, String[] keys, JSONObject jsonObject, String msg, String locale) {
+		Map<String, ArrayList<String>> mapValues = new HashMap<String, ArrayList<String>>();
+		ArrayList<String> titleList = new ArrayList<String>();
+		ArrayList<String> values = new ArrayList<String>();
+		ArrayList<String> textMsgs = new ArrayList<String>();
+		JSONArray firstLevelArray = new JSONArray();
+		JSONObject firstLevelObject = new JSONObject();
+
+		if (paths[0].startsWith(Constants.IS_ARRAY_KEY_IN_JSON_RESPONSE)) {
+			paths[0] = paths[0].substring(1, paths[0].length());
+
+			try {
+				firstLevelArray = jsonObject.getJSONArray(paths[0]);
+			} catch (JSONException e) {
+				logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
+				e.printStackTrace();
+			}
+			for (int i = 0; i < firstLevelArray.length(); i++) {
+				try {
+					firstLevelObject = firstLevelArray.getJSONObject(i);
+				} catch (JSONException e) {
+					logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
+					e.printStackTrace();
+				}
+				values = getValuesFromJson(firstLevelObject, keys);
+				String finalMsg = replaceValuesByMapping(values, msg, locale);
+				titleList.add(values.get(0));
+				textMsgs.add(finalMsg);
+				mapValues.put("title", titleList);
+				textMsgs.add(finalMsg);
+				mapValues.put("msg", textMsgs);
+			}
+		} else if (!paths[0].startsWith(Constants.IS_ARRAY_KEY_IN_JSON_RESPONSE)) {
+			try {
+				firstLevelObject = jsonObject.getJSONObject(paths[0]);
+			} catch (JSONException e) {
+				logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
+				e.printStackTrace();
+			}
+			values = getValuesFromJson(firstLevelObject, keys);
+			String finalMsg = replaceValuesByMapping(values, msg, locale);
+			titleList.add(values.get(0));
+			textMsgs.add(finalMsg);
+			mapValues.put("title", titleList);
+			mapValues.put("msg", textMsgs);
+		}
+		return mapValues;
+	}
+
+	// IN Case ONE Level JSONOArray
+	public Map<String, ArrayList<String>> inCaseOneLevelJsonArrayForTextMessage(String[] paths, String[] keys, JSONArray rootArray, String msg, String locale) {
+		ArrayList<String> values = new ArrayList<String>();
+		Map<String, ArrayList<String>> mapValuse = new HashMap<String, ArrayList<String>>();
+		ArrayList<String> textMsgs = new ArrayList<String>();
+		ArrayList<String> titleList = new ArrayList<String>();
+		Map<String, ArrayList<String>> mapValues = new HashMap<String, ArrayList<String>>();
+		for (int i = 0; i < rootArray.length(); i++) {
+			try {
+				JSONObject childObject = rootArray.getJSONObject(i);
+				if (paths[0].startsWith(Constants.IS_ARRAY_KEY_IN_JSON_RESPONSE)) {
+					JSONArray childArray = childObject.getJSONArray(paths[0].substring(1, paths[0].length()));
+					for (int j = 0; j < childArray.length(); j++) {
+						JSONObject subChild = childArray.getJSONObject(0);
+						values = getValuesFromJson(subChild, keys);
+						String finalMsg = replaceValuesByMapping(values, msg, locale);
+						titleList.add(values.get(0));
+						mapValuse.put("title", titleList);
+						textMsgs.add(finalMsg);
+						mapValuse.put("msg", textMsgs);
+						mapValues.put("title", titleList);
+						textMsgs.add(finalMsg);
+						mapValues.put("msg", textMsgs);
+
+					}
+				} else if (!paths[0].startsWith(Constants.IS_ARRAY_KEY_IN_JSON_RESPONSE)) {
+					JSONObject child = childObject.getJSONObject(paths[0]);
+					values = getValuesFromJson(child, keys);
+					titleList.add(values.get(0));
+					String finalMsg = replaceValuesByMapping(values, msg, locale);
+					textMsgs.add(finalMsg);
+					mapValuse.put("title", titleList);
+					textMsgs.add(finalMsg);
+					mapValuse.put("msg", textMsgs);
+					mapValues.put("title", titleList);
+					textMsgs.add(finalMsg);
+					mapValues.put("msg", textMsgs);
+				}
+			} catch (Exception e) {
+				logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
+				e.printStackTrace();
+			}
+		}
+		return mapValues;
+	}
+
+	// In case Two Level JSONObject
+	public Map<String, ArrayList<String>> inCaseTwoLevelJsonObject(JSONObject jsonObject, String[] paths, String[] keys, String msg, String locale) {
+		ArrayList<String> values = new ArrayList<String>();
+		Map<String, ArrayList<String>> mapValues = new HashMap<String, ArrayList<String>>();
+		ArrayList<String> titleList = new ArrayList<String>();
+		ArrayList<String> textMsgs = new ArrayList<String>();
+		ArrayList<String> percentageList = new ArrayList<String>();
+		JSONObject firstLevelObject = new JSONObject();
+		JSONArray firstLevelArray = new JSONArray();
+		String path = paths[0];
+		if (path.startsWith(Constants.IS_ARRAY_KEY_IN_JSON_RESPONSE)) {
+			try {
+				path = path.substring(1, path.length());
+				firstLevelArray = jsonObject.getJSONArray(path);
+				for (int i = 0; i < firstLevelArray.length(); i++) {
+					firstLevelObject = firstLevelArray.getJSONObject(i);
+					if (paths[1].startsWith(Constants.IS_ARRAY_KEY_IN_JSON_RESPONSE)) {
+						String finalPath = paths[1].substring(1, paths[1].length());
+						JSONArray finalJsonArray = firstLevelObject.getJSONArray(finalPath);
+						for (int j = 0; j < finalJsonArray.length(); j++) {
+							JSONObject finalJsonObject = finalJsonArray.getJSONObject(j);
+							double consumed, total, percentage = 0;
+							values = getValuesFromJson(finalJsonObject, keys);
+							titleList.add(values.get(0));
+							values.remove(0);
+							consumed = Double.parseDouble(values.get(0));
+							if (consumed == 0.0) {
+								percentage = 0;
+							} else {
+								total = Double.parseDouble(values.get(2));
+								percentage = (consumed / total) * 100;
+							}
+							percentageList.add(String.valueOf(percentage));
+							String finalMsg = replaceValuesByMapping(values, msg, locale);
+							textMsgs.add(finalMsg);
+						}
+						mapValues.put("msg", textMsgs);
+						mapValues.put("title", titleList);
+						mapValues.put("percentage", percentageList);
+					} else if (!paths[1].startsWith(Constants.IS_ARRAY_KEY_IN_JSON_RESPONSE)) {
+						JSONObject firstParent = firstLevelObject.getJSONObject(paths[1]);
+						values = getValuesFromJson(firstParent, keys);
+						titleList.add(values.get(0));
+						mapValues.put("title", titleList);
+						String finalMsg = replaceValuesByMapping(values, msg, locale);
+						textMsgs.add(finalMsg);
+						mapValues.put("msg", values);
+					}
+				}
+			} catch (Exception e) {
+				logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
+				e.printStackTrace();
+			}
+		} else if (!path.startsWith(Constants.IS_ARRAY_KEY_IN_JSON_RESPONSE)) {
+			try {
+				firstLevelObject = jsonObject.getJSONObject(path);
+				if (paths[1].startsWith(Constants.IS_ARRAY_KEY_IN_JSON_RESPONSE)) {
+					JSONArray array = firstLevelObject.getJSONArray(paths[1].substring(1, paths[1].length()));
+					for (int i = 0; i < array.length(); i++) {
+						JSONObject tempObject = array.getJSONObject(i);
+						values = getValuesFromJson(tempObject, keys);
+						titleList.add(values.get(0));
+						String finalMsg = replaceValuesByMapping(values, msg, locale);
+						textMsgs.add(finalMsg);
+						textMsgs.add(finalMsg);
+						textMsgs.add(finalMsg);
+					}
+					mapValues.put("msg", textMsgs);
+					mapValues.put("title", titleList);
+				} else if (!paths[1].startsWith(Constants.IS_ARRAY_KEY_IN_JSON_RESPONSE)) {
+					JSONObject lastObject = firstLevelObject.getJSONObject(paths[1]);
+					values = getValuesFromJson(lastObject, keys);
+					String finalMsg = replaceValuesByMapping(values, msg, locale);
+					textMsgs.add(finalMsg);
+					titleList.add(values.get(0));
+					textMsgs.add(finalMsg);
+					mapValues.put("title", titleList);
+					textMsgs.add(finalMsg);
+					mapValues.put("msg", textMsgs);
+				}
+			} catch (Exception e) {
+				logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
+				e.printStackTrace();
+			}
+		}
+		return mapValues;
+
+	}
+
+	// In case Two Level JSONArray
+	public Map<String, ArrayList<String>> inCaseTwoLevelJsonArrayForTextMessage(JSONArray rootArray, String[] paths, String[] keys, String msg, String locale) {
+		ArrayList<String> titleList = new ArrayList<String>();
+		Map<String, ArrayList<String>> mapValues = new HashMap<String, ArrayList<String>>();
+		ArrayList<String> values = new ArrayList<String>();
+		ArrayList<String> textMsgs = new ArrayList<String>();
+		for (int i = 0; i < rootArray.length(); i++) {
+			try {
+				JSONObject firstLevel = rootArray.getJSONObject(i);
+				if (paths[0].startsWith(Constants.IS_ARRAY_KEY_IN_JSON_RESPONSE)) {
+					JSONArray subArray = firstLevel.getJSONArray(paths[0].substring(1, paths[0].length()));
+					for (int j = 0; j < subArray.length(); j++) {
+						JSONObject subObject = subArray.getJSONObject(j);
+						if (paths[1].startsWith(Constants.IS_ARRAY_KEY_IN_JSON_RESPONSE)) {
+							JSONArray subChildArray = subObject.getJSONArray(paths[1].substring(1, paths[1].length()));
+							for (int k = 0; k < subChildArray.length(); k++) {
+								JSONObject subChildObject = subChildArray.getJSONObject(k);
+								values = getValuesFromJson(subChildObject, keys);
+								String finalMsg = replaceValuesByMapping(values, msg, locale);
+								textMsgs.add(finalMsg);
+							}
+						} else if (!paths[1].startsWith(Constants.IS_ARRAY_KEY_IN_JSON_RESPONSE)) {
+							JSONObject childObject = subObject.getJSONObject(paths[1]);
+							values = getValuesFromJson(childObject, keys);
+							String finalMsg = replaceValuesByMapping(values, msg, locale);
+							textMsgs.add(finalMsg);
+							titleList.add(values.get(0));
+							textMsgs.add(finalMsg);
+							mapValues.put("title", titleList);
+							textMsgs.add(finalMsg);
+							mapValues.put("msg", textMsgs);
+						}
+					}
+				} else if (!paths[0].startsWith(Constants.IS_ARRAY_KEY_IN_JSON_RESPONSE)) {
+					JSONObject firstLevelObject = firstLevel.getJSONObject(paths[0]);
+					if (paths[1].startsWith(Constants.IS_ARRAY_KEY_IN_JSON_RESPONSE)) {
+						JSONArray secondLevelArray = firstLevelObject.getJSONArray(paths[1].substring(1, paths[1].length()));
+						for (int j = 0; j < secondLevelArray.length(); j++) {
+							JSONObject subChildObject = secondLevelArray.getJSONObject(j);
+							values = getValuesFromJson(subChildObject, keys);
+							String finalMsg = replaceValuesByMapping(values, msg, locale);
+							textMsgs.add(finalMsg);
+							titleList.add(values.get(0));
+							textMsgs.add(finalMsg);
+							mapValues.put("title", titleList);
+							textMsgs.add(finalMsg);
+							mapValues.put("msg", textMsgs);
+						}
+					} else if (!paths[1].startsWith(Constants.IS_ARRAY_KEY_IN_JSON_RESPONSE)) {
+						JSONObject secondlevelObject = firstLevelObject.getJSONObject(paths[1]);
+						values = getValuesFromJson(secondlevelObject, keys);
+						String finalMsg = replaceValuesByMapping(values, msg, locale);
+						textMsgs.add(finalMsg);
+						titleList.add(values.get(0));
+						textMsgs.add(finalMsg);
+						mapValues.put("title", titleList);
+						textMsgs.add(finalMsg);
+						mapValues.put("msg", textMsgs);
+					}
+
+				}
+			} catch (Exception e) {
+				logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
+				e.printStackTrace();
+			}
+		}
+		return mapValues;
+	}
+	
+	
+	// Tested and works well get values from json object by its keys
+		public ArrayList<String> getValuesFromJson(JSONObject jsonObject, String[] keys) {
+			ArrayList<String> values = new ArrayList<String>();
+			for (int i = 0; i < keys.length; i++) {
+				String key = keys[i];
+				String value = "";
+				try {
+					if (key.contains(".")) {
+						String jsonKey = key.substring(0, key.indexOf("."));
+						String valueKey = key.substring(key.indexOf(".") + 1, key.length());
+						JSONObject finalObject = jsonObject.getJSONObject(jsonKey);
+						value = finalObject.getString(valueKey);
+					} else {
+						value = jsonObject.getString(key);
+					}
+				} catch (JSONException e) {
+					value = "_";
+				}
+				values.add(value);
+			}
+			return values;
+		}
+		
+		
+		// Tested works well replace ? in String by its new values
+		public String replaceValuesByMapping(ArrayList<String> values, String msg, String locale) {
+			String finalMsg = "";
+			for (int i = 0; i < values.size(); i++) {
+				String flag = "";
+				if (locale.equals("ar")) {
+					flag = i + "?";
+				} else {
+					flag = i + "?";
+				}
+				if (i == 0) {
+					finalMsg = msg.replace(flag, values.get(i));
+				} else {
+					finalMsg = finalMsg.replace(flag, values.get(i));
+				}
+			}
+			return finalMsg;
+
+		}
+		
+	
+
+}
