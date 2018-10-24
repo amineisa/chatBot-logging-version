@@ -20,18 +20,18 @@ public class JsonUtilsService {
 
 	// IN Case Zero Level JSONObject
 	public Map<String, ArrayList<String>> inCaseZeroLevelJsonObject(String[] keys, JSONObject jsonObject, String msg, String locale) {
-		Map<String, ArrayList<String>> mapValues = new HashMap<String, ArrayList<String>>();
-		ArrayList<String> titleList = new ArrayList<String>();
-		ArrayList<String> values = new ArrayList<String>();
-		ArrayList<String> textMsgs = new ArrayList<String>();
-		values = getValuesFromJson(jsonObject, keys);
+		Map<String, ArrayList<String>> mapValues = new HashMap<>();
+		ArrayList<String> titleList = new ArrayList<>();
+		ArrayList<String> values = new ArrayList<>();
+		ArrayList<String> textMsgs = new ArrayList<>();
+		values =  getValuesFromJson(jsonObject, keys);
 		String finalMsg = replaceValuesByMapping(values, msg, locale);
 		textMsgs.add(finalMsg);
 		titleList.add(values.get(0));
 		textMsgs.add(finalMsg);
-		mapValues.put("title", titleList);
+		mapValues.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
 		textMsgs.add(finalMsg);
-		mapValues.put("msg", textMsgs);
+		mapValues.put(Constants.RESPONSE_MAP_MESSAGE_KEY, textMsgs);
 		return mapValues;
 
 	}
@@ -39,18 +39,18 @@ public class JsonUtilsService {
 	// IN Case Zero Level JSONArray
 	public Map<String, ArrayList<String>> inCaseZeroLevelJsonArray(String[] keys, JSONArray rootArray, String msg, String locale) {
 
-		Map<String, ArrayList<String>> mapValues = new HashMap<String, ArrayList<String>>();
-		ArrayList<String> titleList = new ArrayList<String>();
-		ArrayList<String> values = new ArrayList<String>();
-		ArrayList<String> textMsgs = new ArrayList<String>();
+		Map<String, ArrayList<String>> mapValues = new HashMap<>();
+		ArrayList<String> titleList = new ArrayList<>();
+		ArrayList<String> values = new ArrayList<>();
+		ArrayList<String> textMsgs = new ArrayList<>();
 		for (int i = 0; i < rootArray.length(); i++) {
 
 			try {
 				JSONObject childObject = rootArray.getJSONObject(i);
 				values = getValuesFromJson(childObject, keys);
 				titleList.add(values.get(0));
-				mapValues.put("title", titleList);
-				mapValues.put("msg", textMsgs);
+				mapValues.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
+				mapValues.put(Constants.RESPONSE_MAP_MESSAGE_KEY, textMsgs);
 			} catch (JSONException e) {
 				logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
 				e.printStackTrace();
@@ -59,19 +59,19 @@ public class JsonUtilsService {
 			textMsgs.add(finalMsg);
 			titleList.add(values.get(0));
 			textMsgs.add(finalMsg);
-			mapValues.put("title", titleList);
+			mapValues.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
 			textMsgs.add(finalMsg);
-			mapValues.put("msg", textMsgs);
+			mapValues.put(Constants.RESPONSE_MAP_MESSAGE_KEY, textMsgs);
 		}
 		return mapValues;
 	}
 
 	// IN Case ONE Level JSONObject
 	public Map<String, ArrayList<String>> inCaseOneLevelJsonObject(String[] paths, String[] keys, JSONObject jsonObject, String msg, String locale) {
-		Map<String, ArrayList<String>> mapValues = new HashMap<String, ArrayList<String>>();
-		ArrayList<String> titleList = new ArrayList<String>();
-		ArrayList<String> values = new ArrayList<String>();
-		ArrayList<String> textMsgs = new ArrayList<String>();
+		Map<String, ArrayList<String>> mapValues = new HashMap<>();
+		ArrayList<String> titleList = new ArrayList<>();
+		ArrayList<String> values = new ArrayList<>();
+		ArrayList<String> textMsgs = new ArrayList<>();
 		JSONArray firstLevelArray = new JSONArray();
 		JSONObject firstLevelObject = new JSONObject();
 
@@ -95,9 +95,9 @@ public class JsonUtilsService {
 				String finalMsg = replaceValuesByMapping(values, msg, locale);
 				titleList.add(values.get(0));
 				textMsgs.add(finalMsg);
-				mapValues.put("title", titleList);
+				mapValues.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
 				textMsgs.add(finalMsg);
-				mapValues.put("msg", textMsgs);
+				mapValues.put(Constants.RESPONSE_MAP_MESSAGE_KEY, textMsgs);
 			}
 		} else if (!paths[0].startsWith(Constants.IS_ARRAY_KEY_IN_JSON_RESPONSE)) {
 			try {
@@ -110,19 +110,19 @@ public class JsonUtilsService {
 			String finalMsg = replaceValuesByMapping(values, msg, locale);
 			titleList.add(values.get(0));
 			textMsgs.add(finalMsg);
-			mapValues.put("title", titleList);
-			mapValues.put("msg", textMsgs);
+			mapValues.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
+			mapValues.put(Constants.RESPONSE_MAP_MESSAGE_KEY, textMsgs);
 		}
 		return mapValues;
 	}
 
 	// IN Case ONE Level JSONOArray
 	public Map<String, ArrayList<String>> inCaseOneLevelJsonArrayForTextMessage(String[] paths, String[] keys, JSONArray rootArray, String msg, String locale) {
-		ArrayList<String> values = new ArrayList<String>();
-		Map<String, ArrayList<String>> mapValuse = new HashMap<String, ArrayList<String>>();
-		ArrayList<String> textMsgs = new ArrayList<String>();
-		ArrayList<String> titleList = new ArrayList<String>();
-		Map<String, ArrayList<String>> mapValues = new HashMap<String, ArrayList<String>>();
+		ArrayList<String> values = new ArrayList<>();
+		Map<String, ArrayList<String>> mapValuse = new HashMap<>();
+		ArrayList<String> textMsgs = new ArrayList<>();
+		ArrayList<String> titleList = new ArrayList<>();
+		Map<String, ArrayList<String>> mapValues = new HashMap<>();
 		for (int i = 0; i < rootArray.length(); i++) {
 			try {
 				JSONObject childObject = rootArray.getJSONObject(i);
@@ -133,12 +133,12 @@ public class JsonUtilsService {
 						values = getValuesFromJson(subChild, keys);
 						String finalMsg = replaceValuesByMapping(values, msg, locale);
 						titleList.add(values.get(0));
-						mapValuse.put("title", titleList);
+						mapValuse.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
 						textMsgs.add(finalMsg);
-						mapValuse.put("msg", textMsgs);
-						mapValues.put("title", titleList);
+						mapValuse.put(Constants.RESPONSE_MAP_MESSAGE_KEY, textMsgs);
+						mapValues.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
 						textMsgs.add(finalMsg);
-						mapValues.put("msg", textMsgs);
+						mapValues.put(Constants.RESPONSE_MAP_MESSAGE_KEY, textMsgs);
 
 					}
 				} else if (!paths[0].startsWith(Constants.IS_ARRAY_KEY_IN_JSON_RESPONSE)) {
@@ -147,12 +147,12 @@ public class JsonUtilsService {
 					titleList.add(values.get(0));
 					String finalMsg = replaceValuesByMapping(values, msg, locale);
 					textMsgs.add(finalMsg);
-					mapValuse.put("title", titleList);
+					mapValuse.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
 					textMsgs.add(finalMsg);
-					mapValuse.put("msg", textMsgs);
-					mapValues.put("title", titleList);
+					mapValuse.put(Constants.RESPONSE_MAP_MESSAGE_KEY, textMsgs);
+					mapValues.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
 					textMsgs.add(finalMsg);
-					mapValues.put("msg", textMsgs);
+					mapValues.put(Constants.RESPONSE_MAP_MESSAGE_KEY, textMsgs);
 				}
 			} catch (Exception e) {
 				logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
@@ -164,11 +164,11 @@ public class JsonUtilsService {
 
 	// In case Two Level JSONObject
 	public Map<String, ArrayList<String>> inCaseTwoLevelJsonObject(JSONObject jsonObject, String[] paths, String[] keys, String msg, String locale) {
-		ArrayList<String> values = new ArrayList<String>();
-		Map<String, ArrayList<String>> mapValues = new HashMap<String, ArrayList<String>>();
-		ArrayList<String> titleList = new ArrayList<String>();
-		ArrayList<String> textMsgs = new ArrayList<String>();
-		ArrayList<String> percentageList = new ArrayList<String>();
+		ArrayList<String> values = new ArrayList<>();
+		Map<String, ArrayList<String>> mapValues = new HashMap<>();
+		ArrayList<String> titleList = new ArrayList<>();
+		ArrayList<String> textMsgs = new ArrayList<>();
+		ArrayList<String> percentageList = new ArrayList<>();
 		JSONObject firstLevelObject = new JSONObject();
 		JSONArray firstLevelArray = new JSONArray();
 		String path = paths[0];
@@ -198,17 +198,17 @@ public class JsonUtilsService {
 							String finalMsg = replaceValuesByMapping(values, msg, locale);
 							textMsgs.add(finalMsg);
 						}
-						mapValues.put("msg", textMsgs);
-						mapValues.put("title", titleList);
-						mapValues.put("percentage", percentageList);
+						mapValues.put(Constants.RESPONSE_MAP_MESSAGE_KEY, textMsgs);
+						mapValues.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
+						mapValues.put(Constants.RESPONSE_PERCENTAGE_KEY, percentageList);
 					} else if (!paths[1].startsWith(Constants.IS_ARRAY_KEY_IN_JSON_RESPONSE)) {
 						JSONObject firstParent = firstLevelObject.getJSONObject(paths[1]);
 						values = getValuesFromJson(firstParent, keys);
 						titleList.add(values.get(0));
-						mapValues.put("title", titleList);
+						mapValues.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
 						String finalMsg = replaceValuesByMapping(values, msg, locale);
 						textMsgs.add(finalMsg);
-						mapValues.put("msg", values);
+						mapValues.put(Constants.RESPONSE_MAP_MESSAGE_KEY, values);
 					}
 				}
 			} catch (Exception e) {
@@ -229,8 +229,8 @@ public class JsonUtilsService {
 						textMsgs.add(finalMsg);
 						textMsgs.add(finalMsg);
 					}
-					mapValues.put("msg", textMsgs);
-					mapValues.put("title", titleList);
+					mapValues.put(Constants.RESPONSE_MAP_MESSAGE_KEY, textMsgs);
+					mapValues.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
 				} else if (!paths[1].startsWith(Constants.IS_ARRAY_KEY_IN_JSON_RESPONSE)) {
 					JSONObject lastObject = firstLevelObject.getJSONObject(paths[1]);
 					values = getValuesFromJson(lastObject, keys);
@@ -238,9 +238,9 @@ public class JsonUtilsService {
 					textMsgs.add(finalMsg);
 					titleList.add(values.get(0));
 					textMsgs.add(finalMsg);
-					mapValues.put("title", titleList);
+					mapValues.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
 					textMsgs.add(finalMsg);
-					mapValues.put("msg", textMsgs);
+					mapValues.put(Constants.RESPONSE_MAP_MESSAGE_KEY, textMsgs);
 				}
 			} catch (Exception e) {
 				logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
@@ -253,10 +253,10 @@ public class JsonUtilsService {
 
 	// In case Two Level JSONArray
 	public Map<String, ArrayList<String>> inCaseTwoLevelJsonArrayForTextMessage(JSONArray rootArray, String[] paths, String[] keys, String msg, String locale) {
-		ArrayList<String> titleList = new ArrayList<String>();
-		Map<String, ArrayList<String>> mapValues = new HashMap<String, ArrayList<String>>();
-		ArrayList<String> values = new ArrayList<String>();
-		ArrayList<String> textMsgs = new ArrayList<String>();
+		ArrayList<String> titleList = new ArrayList<>();
+		Map<String, ArrayList<String>> mapValues = new HashMap<>();
+		ArrayList<String> values = new ArrayList<>();
+		ArrayList<String> textMsgs = new ArrayList<>();
 		for (int i = 0; i < rootArray.length(); i++) {
 			try {
 				JSONObject firstLevel = rootArray.getJSONObject(i);
@@ -279,9 +279,9 @@ public class JsonUtilsService {
 							textMsgs.add(finalMsg);
 							titleList.add(values.get(0));
 							textMsgs.add(finalMsg);
-							mapValues.put("title", titleList);
+							mapValues.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
 							textMsgs.add(finalMsg);
-							mapValues.put("msg", textMsgs);
+							mapValues.put(Constants.RESPONSE_MAP_MESSAGE_KEY, textMsgs);
 						}
 					}
 				} else if (!paths[0].startsWith(Constants.IS_ARRAY_KEY_IN_JSON_RESPONSE)) {
@@ -295,9 +295,9 @@ public class JsonUtilsService {
 							textMsgs.add(finalMsg);
 							titleList.add(values.get(0));
 							textMsgs.add(finalMsg);
-							mapValues.put("title", titleList);
+							mapValues.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
 							textMsgs.add(finalMsg);
-							mapValues.put("msg", textMsgs);
+							mapValues.put(Constants.RESPONSE_MAP_MESSAGE_KEY, textMsgs);
 						}
 					} else if (!paths[1].startsWith(Constants.IS_ARRAY_KEY_IN_JSON_RESPONSE)) {
 						JSONObject secondlevelObject = firstLevelObject.getJSONObject(paths[1]);
@@ -306,9 +306,9 @@ public class JsonUtilsService {
 						textMsgs.add(finalMsg);
 						titleList.add(values.get(0));
 						textMsgs.add(finalMsg);
-						mapValues.put("title", titleList);
+						mapValues.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
 						textMsgs.add(finalMsg);
-						mapValues.put("msg", textMsgs);
+						mapValues.put(Constants.RESPONSE_MAP_MESSAGE_KEY, textMsgs);
 					}
 
 				}
@@ -323,21 +323,21 @@ public class JsonUtilsService {
 	
 	// Tested and works well get values from json object by its keys
 		public ArrayList<String> getValuesFromJson(JSONObject jsonObject, String[] keys) {
-			ArrayList<String> values = new ArrayList<String>();
+			ArrayList<String> values = new ArrayList<>();
 			for (int i = 0; i < keys.length; i++) {
 				String key = keys[i];
-				String value = "";
+				String value = Constants.EMPTY_STRING;
 				try {
-					if (key.contains(".")) {
-						String jsonKey = key.substring(0, key.indexOf("."));
-						String valueKey = key.substring(key.indexOf(".") + 1, key.length());
+					if (key.contains(Constants.IS_KEY_HAS_DOT)) {
+						String jsonKey = key.substring(0, key.indexOf(Constants.IS_KEY_HAS_DOT));
+						String valueKey = key.substring(key.indexOf(Constants.IS_KEY_HAS_DOT) + 1, key.length());
 						JSONObject finalObject = jsonObject.getJSONObject(jsonKey);
 						value = finalObject.getString(valueKey);
 					} else {
 						value = jsonObject.getString(key);
 					}
 				} catch (JSONException e) {
-					value = "_";
+					value = Constants.UNDERSCORE;
 				}
 				values.add(value);
 			}
@@ -347,14 +347,9 @@ public class JsonUtilsService {
 		
 		// Tested works well replace ? in String by its new values
 		public String replaceValuesByMapping(ArrayList<String> values, String msg, String locale) {
-			String finalMsg = "";
+			String finalMsg = Constants.EMPTY_STRING;
 			for (int i = 0; i < values.size(); i++) {
-				String flag = "";
-				if (locale.equals("ar")) {
-					flag = i + "?";
-				} else {
-					flag = i + "?";
-				}
+				String flag = i+"?";
 				if (i == 0) {
 					finalMsg = msg.replace(flag, values.get(i));
 				} else {

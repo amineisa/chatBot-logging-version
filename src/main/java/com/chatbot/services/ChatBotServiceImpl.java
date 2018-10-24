@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.chatbot.dao.BotButtonRepo;
 import com.chatbot.dao.BotButtonTemplateMSGRepo;
+import com.chatbot.dao.BotConfigurationRepo;
 import com.chatbot.dao.BotGTemplateMessageRepo;
 import com.chatbot.dao.BotInteractionRepo;
 import com.chatbot.dao.BotQuickReplyMessageRepo;
@@ -22,6 +23,7 @@ import com.chatbot.dao.InteractionMessageRepo;
 import com.chatbot.dao.PersistenceMenuButtonRepo;
 import com.chatbot.entity.BotButton;
 import com.chatbot.entity.BotButtonTemplateMSG;
+import com.chatbot.entity.BotConfiguration;
 import com.chatbot.entity.BotGTemplateMessage;
 import com.chatbot.entity.BotInteraction;
 import com.chatbot.entity.BotInteractionMessage;
@@ -79,6 +81,10 @@ public class ChatBotServiceImpl implements ChatBotService {
 	
 	@Autowired
 	private InteractionLoggingRepo interactionLoggingRepo;
+	
+	@Autowired
+	private BotConfigurationRepo botConfigurationRepo;
+	
 	
 	
 	
@@ -227,6 +233,17 @@ public class ChatBotServiceImpl implements ChatBotService {
 	public BotButtonTemplateMSG findBotButtonTemplateByMessageId(BotInteractionMessage botInteractionMessage) {
 		return botButtonTemplateMSGRepo.findBotButtonTemplateMSGBybotInteractionMessage(botInteractionMessage) ;
 	}
+
+	@Override
+	public List<BotConfiguration> getBotAllConfiguration() {
+		return botConfigurationRepo.findAll();
+	}
+
+	@Override
+	public BotConfiguration getBotConfigurationByKey(String key) {
+		return botConfigurationRepo.findBotConfigurationByKey(key);
+	}
+
 
 	
 

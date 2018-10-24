@@ -18,12 +18,14 @@ public class UserSelections {
 
 	private String productIdForRenew;
 
+	private boolean isSubscribed;
+
 	private ArrayList<String> parametersListForRelatedProducts;
 
 	private ArrayList<String> consumptionNames;
 
 	private String freeText;
-	
+
 	public String getOriginalPayLoad() {
 		return originalPayLoad;
 	}
@@ -95,20 +97,27 @@ public class UserSelections {
 	public void setConsumptionNames(ArrayList<String> consumptionNames) {
 		this.consumptionNames = consumptionNames;
 	}
-	
-	
+
 	public void setFreeText(String freeText) {
 		this.freeText = freeText;
 	}
-	
+
 	public String getFreeText() {
 		return freeText;
 	}
 
+	public boolean isSubscribed() {
+		return isSubscribed;
+	}
+
+	public void setSubscribed(boolean isSubscribed) {
+		this.isSubscribed = isSubscribed;
+	}
+
 	@Override
 	public String toString() {
-		return " Original PayLoad " + this.getOriginalPayLoad() + " Phone Number " + this.getPhoneNumber() + " ProductId And OperationName " + this.getProductIdAndOperationName() + " Addon Id " + this.getAddonId()
-				+ " last PayLoad " + this.getLastPayLoad() + " Parent PayLoad " + this.getParentPayLoad() + " ProductID For Renew " + this.getProductIdForRenew();
+		return " Original PayLoad " + this.getOriginalPayLoad() + " Phone Number " + this.getPhoneNumber() + " ProductId And OperationName " + this.getProductIdAndOperationName() + " Addon Id "
+				+ this.getAddonId() + " last PayLoad " + this.getLastPayLoad() + " Parent PayLoad " + this.getParentPayLoad() + " ProductID For Renew " + this.getProductIdForRenew();
 	}
 
 }

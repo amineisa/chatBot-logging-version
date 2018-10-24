@@ -75,8 +75,9 @@ public class Utils {
 
 	// Get Text Value
 	public static String getTextValueForButtonLabel(String local, BotButton botButton) {
-		String text = "";
-		if (local.equalsIgnoreCase("ar")) {
+		String text = Constants.EMPTY_STRING;
+		;
+		if (local.equalsIgnoreCase(Constants.ARABIC_LOCAL)) {
 			text = botButton.getBotText().getArabicText();
 		} else {
 			text = botButton.getBotText().getEnglishText();
@@ -126,7 +127,7 @@ public class Utils {
 	 * @param customerProfile
 	 * @param botInteraction
 	 */
-	public static void interactionLogginghandling(CustomerProfile customerProfile, BotInteraction botInteraction, ChatBotService chatBotService, String phoneNumber) {
+	public static void interactionLogginghandling(CustomerProfile customerProfile, BotInteraction botInteraction, ChatBotService chatBotService) {
 		Date date = new Date();
 		Timestamp timeStamp = new Timestamp(date.getTime());
 		InteractionLogging interactionLogging = new InteractionLogging();
@@ -145,38 +146,24 @@ public class Utils {
 		logoutCustomerProfile.setLastGetProfileWSCall(storedCustomerProfile.getLastGetProfileWSCall());
 		logoutCustomerProfile.setLinkingDate(storedCustomerProfile.getLinkingDate());
 		logoutCustomerProfile.setLocale(storedCustomerProfile.getLocale());
-		logoutCustomerProfile.setMsisdn("");
+		logoutCustomerProfile.setMsisdn(Constants.EMPTY_STRING);
 		logoutCustomerProfile.setSenderID(storedCustomerProfile.getSenderID());
 		chatBotService.saveCustomerProfile(logoutCustomerProfile);
 	}
 
 	public static void saveCustomerInformation(ChatBotService chatBotService, String senderId, Messenger messenger) {
-		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 		CustomerProfile newCustomerProfile = new CustomerProfile();
-		
 		UserProfile userProfile = Utils.getUserProfile(senderId, messenger);
 		String userLocale = userProfile.locale();
-		if (customerProfile == null) {
-			Date date = new Date();
-			Timestamp timestamp = new Timestamp(date.getTime());
-			newCustomerProfile.setFirstInsertion(timestamp);
-			newCustomerProfile.setSenderID(senderId);
-			newCustomerProfile.setCustomerLastSeen(timestamp);
-			newCustomerProfile.setLocale(userLocale);
-			chatBotService.saveCustomerProfile(newCustomerProfile);
-		} else {
-			Date date = new Date();
-			Timestamp timestamp = new Timestamp(date.getTime());
-			newCustomerProfile.setSenderID(senderId);
-			newCustomerProfile.setCustomerLastSeen(timestamp);
-			newCustomerProfile.setLocale(userLocale);
-			newCustomerProfile.setCustomerLastSeen(customerProfile.getCustomerLastSeen());
-			newCustomerProfile.setFirstInsertion(customerProfile.getFirstInsertion());
-			newCustomerProfile.setLastGetProfileWSCall(customerProfile.getLastGetProfileWSCall());
-			newCustomerProfile.setMsisdn(customerProfile.getMsisdn());
-			newCustomerProfile.setLinkingDate(customerProfile.getLinkingDate());
-			chatBotService.saveCustomerProfile(newCustomerProfile);
-		}
+		String firstName = userProfile.firstName();
+		Date date = new Date();
+		Timestamp timestamp = new Timestamp(date.getTime());
+		newCustomerProfile.setFirstInsertion(timestamp);
+		newCustomerProfile.setSenderID(senderId);
+		newCustomerProfile.setCustomerLastSeen(timestamp);
+		newCustomerProfile.setLocale(userLocale);
+		newCustomerProfile.setFirstName(firstName);
+		chatBotService.saveCustomerProfile(newCustomerProfile);
 
 	}
 
@@ -184,9 +171,7 @@ public class Utils {
 		try {
 			String recipientId = userId;
 			SenderAction senderAction = SenderAction.MARK_SEEN;
-
 			SenderActionPayload payload = SenderActionPayload.create(recipientId, senderAction);
-
 			messenger.send(payload);
 		} catch (MessengerApiException | MessengerIOException e) {
 			logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
@@ -224,7 +209,7 @@ public class Utils {
 	public static String encryptChannelParam(String url)
 			throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, UnsupportedEncodingException {
 		String key = "etisalatetisalat";
-		byte keyBytes[] = key.getBytes();
+		byte[] keyBytes = key.getBytes();
 		SecretKeySpec secretKey = new SecretKeySpec(keyBytes, "AES");
 		Cipher ecipher = Cipher.getInstance("AES");
 		ecipher.init(Cipher.ENCRYPT_MODE, secretKey);
@@ -244,7 +229,7 @@ public class Utils {
 	}
 
 	public static Map<String, String> callGetWebServiceByRestTemplate(URI uri) {
-		Map<String, String> responseMap = new HashMap<String, String>();
+		Map<String, String> responseMap = new HashMap<>();
 		HttpHeaders headers = new HttpHeaders();
 		headers.set("Accept", MediaType.APPLICATION_JSON_UTF8_VALUE);
 		int statusId = 0;
@@ -253,15 +238,10 @@ public class Utils {
 			RestTemplate restTemplate = new RestTemplate();
 			ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.GET, entity, String.class);
 			statusId = response.getStatusCodeValue();
-			if (statusId == 200) {
-				responseMap.put("status", String.valueOf(statusId));
-				responseMap.put("response", response.getBody());
-			} else {
-				responseMap.put("status", String.valueOf(statusId));
-				responseMap.put("response", response.getBody());
-			}
+			responseMap.put(Constants.RESPONSE_STATUS_KEY, String.valueOf(statusId));
+			responseMap.put(Constants.RESPONSE_KEY, response.getBody());
 		} catch (Exception e) {
-			responseMap.put("status", String.valueOf(statusId));
+			responseMap.put(Constants.RESPONSE_STATUS_KEY, String.valueOf(statusId));
 			logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
 			e.printStackTrace();
 		}
@@ -274,10 +254,9 @@ public class Utils {
 			CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 			String dialNumber = customerProfile.getMsisdn();
 
-			String paramChannel = Utils.encryptChannelParam("msisdn=" + dialNumber + "&time=1525328875649" + "&channel=" + Constants.CHANEL_PARAM);
-			String realParameter = "paramChannel:" + paramChannel;
+			String paramChannel = Utils.encryptChannelParam(Constants.URL_PARAM_MSISDN_KEY + dialNumber + Constants.URL_TIME_CHANNEL_KEY + Constants.CHANEL_PARAM);
+			String realParameter = Constants.URL_PARAM_CHANNEL_KEY + paramChannel;
 			uri = new URI(botWebserviceMessage.getWsUrl() + "?dial=" + realParameter);
-			logger.debug(Constants.LOGGER_DIAL_IS + phoneNumber + " Web Service URL is " + uri);
 		} catch (URISyntaxException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException | UnsupportedEncodingException e1) {
 			logger.error(Constants.LOGGER_DIAL_IS + phoneNumber + Constants.LOGGER_SENDER_ID + senderId + Constants.LOGGER_EXCEPTION_MESSAGE + e1);
 			e1.printStackTrace();
@@ -286,40 +265,40 @@ public class Utils {
 	}
 
 	public static String getLabelForViewButton(String locale) {
-		if (locale.contains("ar")) {
+		if (locale.contains(Constants.ARABIC_LOCAL)) {
 			return "عرض";
 		}
 		return "View";
 	}
 
 	public static String getLabelForBackButton(String locale) {
-		if (locale.contains("ar")) {
+		if (locale.contains(Constants.ARABIC_LOCAL)) {
 			return "عودة";
 		}
 		return "Back";
 	}
 
 	public static String getLabelForٍSubscribeButton(String locale) {
-		if (locale.contains("ar")) {
+		if (locale.contains(Constants.ARABIC_LOCAL)) {
 			return "اشترك";
 		}
 		return "Subscribe";
 	}
 
 	public static String informUserThatHeDoesnotSubscribeAtAnyMIBundle(String locale) {
-		if (locale.contains("ar")) {
+		if (locale.contains(Constants.ARABIC_LOCAL)) {
 			return "نأسف أنت غير مشترك بأي من باقات الأنترنت و هذة هي الباقات المتاحة لرقمك";
 		}
 		return "Sorry ,You are not subscribe to any MI Bundle here are list of the available MI bundle for your dial";
 	}
-	
-	public static UserProfile getUserProfile(String senderId,Messenger messenger) { 
-	UserProfile userProfile = null;
-	try {
-		userProfile = messenger.queryUserProfile(senderId);
-	} catch (MessengerApiException | MessengerIOException e) {
-		e.printStackTrace();
-	}
-	return userProfile;
+
+	public static UserProfile getUserProfile(String senderId, Messenger messenger) {
+		UserProfile userProfile = null;
+		try {
+			userProfile = messenger.queryUserProfile(senderId);
+		} catch (MessengerApiException | MessengerIOException e) {
+			e.printStackTrace();
+		}
+		return userProfile;
 	}
 }

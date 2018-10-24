@@ -10,24 +10,22 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 @Entity
-@Table(name="BOT_CONFIGRATION")
+@Table(name="BOT_CONFIGURATION")
 public class BotConfiguration implements Serializable{
+
+	private static final long serialVersionUID = 1L;
+
 
 @Id
 @Column(name="ID")
 private Long id;
 
 
-@Column(name="LOCAL")
-private String local;
+@Column(name="KEY")
+private String key;
 
-@OneToOne()
-@JoinColumn(name="TEXT_ID" , referencedColumnName="TEXT_ID")
-private BotText textId;
-
-@Column(name="type")
-//@NotNull(message="NOT NULL")
-private String type;
+@Column(name="VALUE")
+private String value;
 
 public Long getId() {
 	return id;
@@ -37,29 +35,22 @@ public void setId(Long id) {
 	this.id = id;
 }
 
-public String getLocal() {
-	return local;
+public String getKey() {
+	return key;
 }
 
-public void setLocal(String local) {
-	this.local = local;
+public void setKey(String key) {
+	this.key = key;
 }
 
-public BotText getTextId() {
-	return textId;
+public String getValue() {
+	return value;
 }
 
-public void setTextId(BotText textId) {
-	this.textId = textId;
+public void setValue(String value) {
+	this.value = value;
 }
 
-public String getType() {
-	return type;
-}
-
-public void setType(String type) {
-	this.type = type;
-}
 
 
 	

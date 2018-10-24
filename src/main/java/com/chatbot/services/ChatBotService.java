@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.chatbot.entity.BotButton;
 import com.chatbot.entity.BotButtonTemplateMSG;
+import com.chatbot.entity.BotConfiguration;
 import com.chatbot.entity.BotGTemplateMessage;
 import com.chatbot.entity.BotInteraction;
 import com.chatbot.entity.BotInteractionMessage;
@@ -91,7 +92,11 @@ public interface ChatBotService {
 
 	
 	// Message
-	
 	public BotInteractionMessage findMessageByInteraction(BotInteraction botInteraction);
+	
+	
+	// BotConfiguration 
+	public List<BotConfiguration> getBotAllConfiguration();
+	public BotConfiguration getBotConfigurationByKey(String key);
 	
 }

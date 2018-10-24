@@ -35,6 +35,10 @@ public class CustomerProfile {
 
 	@Column(name = "CUSTOMER_LAST_SEEN")
 	private Date customerLastSeen;
+	
+	@Column
+	private String firstName;
+	
 
 
 	public String getSenderID() {
@@ -89,11 +93,20 @@ public class CustomerProfile {
 		return customerLastSeen;
 	}
 
+	public String getFirstName() {
+		return firstName;
+	}
+
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
+	}
+
 	public void setCustomerLastSeen(Date customerLastSeen) {
 		this.customerLastSeen = customerLastSeen;
 	}
 
-
+	 
+	
 	@Override
 	public String toString() {
 		return "CustomerProfile [senderID=" + senderID + ", local=" + locale + ", msisdn=" + msisdn + ", linkingDate=" + linkingDate + ", firstInsertion=" + firstInsertion + ", lastGetProfileWSCall="
