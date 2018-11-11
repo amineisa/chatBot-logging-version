@@ -30,13 +30,13 @@ public class CacheHelper <K extends Object,V extends Object> {
 				(Cache<K, V>) cacheManager.createCache(
 						cacheAlias, CacheConfigurationBuilder.newCacheConfigurationBuilder(
 								Object.class,Object.class,  ResourcePoolsBuilder.heap(100)).withExpiry(
-										Expirations.timeToLiveExpiration(Duration.of(3,TimeUnit.MINUTES))));
+										Expirations.timeToLiveExpiration(Duration.of(1,TimeUnit.MINUTES))));
 		}else {
 		cachedObject =
 					(Cache<K, V>) cacheManager.createCache(
 							cacheAlias, CacheConfigurationBuilder.newCacheConfigurationBuilder(
 									Object.class,Object.class,  ResourcePoolsBuilder.heap(100)).withExpiry(
-											Expirations.timeToLiveExpiration(Duration.of(1,TimeUnit.MINUTES))));
+											Expirations.timeToLiveExpiration(Duration.of(7,TimeUnit.MINUTES))));
 		}
 		return cachedObject;
 	}

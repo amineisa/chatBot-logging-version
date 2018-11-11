@@ -9,6 +9,8 @@ public class Constants {
 	public static final String PREFIX_RELATED_PRODUCTS = "related";
 	public static final String PREFIX_CONFIRM_MOBILEINTERNET_SUBSCRIPTION = "mi_yes_subscripe";
 	public static final String PREFIX_RELATED_PRODUCTS_SUBSCRIPTION = "relatedproductsubscription";
+	public static final String PREFIX_BUNDLE_UNSUBSCRIPTION ="mi_yes_unsubscribe";
+	
 
 	public static final String PAYLOAD_MOBILE_INTERNET_SUBSCRIPTION_CANCEL = "mi_no_subscripe";
 	public static final String PAYLOAD_CHANGE_BUNDLE = "change bundle";
@@ -40,9 +42,12 @@ public class Constants {
 	public static final String NOTELIGIBLE_ELEMENT_TITLE_EN = "Sorry !";
 	public static final String NOTELIGIBLE_ELEMENT_TITLE_AR = "! عفوا";
 
+	public static final String NOCONSUMPTION_ELEMENT_SUBTITLE_EN = " Your current rateplan is not have consumption  ";
+	public static final String NOCONSUMPTION_ELEMENT_SUBTITLE_AR = "باقتك ليس عليها اي استهلاك";
+	
 	public static final String NOTELIGIBLE_ELEMENT_SUBTITLE_EN = " Your Dial Not Eligible to any addons ";
 	public static final String NOTELIGIBLE_ELEMENT_SUBTITLE_AR = " عفوا رقمك ليس له اي اضافات";
-
+	
 	public static String profilePayloads = PAYLOAD_VIEW_CONNECT_DETAILS + Constants.COMMA_CHAR + PAYLOAD_RATEPLAN_AND_CONNECT + "," + PAYLOAD_VIEW_RATEPLAN_DETAILS + "," + PAYLOAD_RATEPLAN_DETAILS
 			+ "," + PAYLOAD_CONSUMPTION;
 	public static final String RESPOSE_MSG_CHANGE_LOCALE_AR = "تم تغير اللغة الي اللغة العربيه ";
@@ -135,6 +140,7 @@ public class Constants {
 	public static final String CONFIGURATION_TABLE_PAGE_ACCESS_TOKEN = "PAGE_ACCESS_TOKEN";
 	public static final String CONFIGURATION_TABLE_VERIFY_TOKEN = "VERIFY_TOKEN";
 	public static final String CONFIGURATION_TABLE_WARNING_IMAGE_URL = "WARNING_IMAGE";
+	public static final String SECONDRY_APP_ID = "SECONDRY_APP_ID";
 
 	public static final String CONFIGURATION_CACHE_KEY = "configurationCache";
 	
@@ -150,5 +156,11 @@ public class Constants {
 	
 	public static final String BUTTON_LABEL_CHARGE_AR = "اشحن الان";
 	public static final String BUTTON_LABEL_CHARGE_EN = "Recharge Now";
+	public static final String JSON_KEY_RATEPLAN_ADON = "ratePlanAddons";
+	public static final String JSON_KEY_MOBILE_INTERNET_ADON = "addons";
+	public static final String TELL_CLIENT_WAIT_FOR_AGENT_RESPONSE = "WAIT_FOR_AGENT_RESPONSE";
+	public static final String REQUEST_TIME_OUT_VALUE = "REQUEST_TIME_OUT_VALUE";
+	public static final String JSON_KEY_BIILAMOUNT = "billAmount";
+	public static final String PAY_BILL_BASE_URL = "PAY_BILL_BASE_URL";
 
 }

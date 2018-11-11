@@ -43,6 +43,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.chatbot.entity.BotButton;
 import com.chatbot.entity.BotButtonTemplateMSG;
+import com.chatbot.entity.BotConfiguration;
 import com.chatbot.entity.BotGTemplateMessage;
 import com.chatbot.entity.BotInteractionMessage;
 import com.chatbot.entity.BotQuickReplyMessage;
@@ -51,11 +52,8 @@ import com.chatbot.entity.BotTextMessage;
 import com.chatbot.entity.BotTextResponseMapping;
 import com.chatbot.entity.BotWebserviceMessage;
 import com.chatbot.entity.CustomerProfile;
-import com.chatbot.util.CacheHelper;
 import com.chatbot.util.Constants;
 import com.chatbot.util.Utils;
-import com.github.messenger4j.Messenger;
-import com.github.messenger4j.common.WebviewHeightRatio;
 import com.github.messenger4j.send.MessagePayload;
 import com.github.messenger4j.send.MessagingType;
 import com.github.messenger4j.send.message.TemplateMessage;
@@ -76,15 +74,16 @@ import com.github.messenger4j.send.message.template.common.Element;
 public class UtilService {
 
 	@Autowired
-	JsonUtilsService jsonUtilsService;
+	private JsonUtilsService jsonUtilsService;
 	
 	@Autowired
-	CacheHelper<Object, Object> configurationTable;
+	private ChatBotService chatBotService;
 
 	private static final Logger logger = LoggerFactory.getLogger(UtilService.class);
 
 	// Method to get Path Details
 	public String[] getPaths(String path) {
+		if(path != null) {
 		String[] paths = new String[0];
 		if (path.contains(Constants.COMMA_CHAR)) {
 			paths = path.split(Constants.COMMA_CHAR);
@@ -92,10 +91,14 @@ public class UtilService {
 			paths = new String[] { path };
 		}
 		return paths;
+		}else {
+			return new String[0];
+		}
 	}
 
 	// Method to get keys
 	public String[] getKeys(String key) {
+		if(key != null) {
 		String[] keys = new String[0];
 		if (key.contains(Constants.COMMA_CHAR)) {
 			keys = key.split(Constants.COMMA_CHAR);
@@ -103,6 +106,9 @@ public class UtilService {
 			keys = new String[] { key };
 		}
 		return keys;
+		}else {
+			return new String [0];
+		}
 	}
 
 	// Switcher for JSONObject
@@ -153,17 +159,16 @@ public class UtilService {
 			URL url = Utils.createUrl(botButton.getButtonUrl());
 			if (locale.contains(Constants.ARABIC_LOCAL)) {
 				try {
-					if (botButton.getBotText().getArabicText().equals("اشحن الان")) {
-						String par = Utils.encryptDPIParam(Constants.URL_USER_AND_TIME_KEY+ dialNumber + Constants.URL_PAY_BILL_AND_RECHARGE_CHANEL);
+					if (botButton.getBotText().getArabicText().equals(Constants.BUTTON_LABEL_CHARGE_AR)) {
+						String par = Utils.encryptDPIParam(Constants.URL_USER_AND_TIME_KEY + dialNumber + Constants.URL_PAY_BILL_AND_RECHARGE_CHANEL);
 						String stringUrl = url + Constants.URL_LOCALE_AR + par;
 						URL newUrl = Utils.createUrl(stringUrl);
-						return UrlButton.create(Utils.getTextValueForButtonLabel(locale, botButton), newUrl, Optional.of(WebviewHeightRatio.COMPACT), empty(), empty(), empty());
-
-					} else if (botButton.getBotText().getArabicText().equals(Constants.BUTTON_LABEL_CHARGE_AR)) {
-						String par = Utils.encryptDPIParam(Constants.URL_USER_AND_TIME_KEY+ dialNumber + Constants.URL_PAY_BILL_AND_RECHARGE_CHANEL);
-						String stringUrl = par;
+						return UrlButton.create(Utils.getTextValueForButtonLabel(locale, botButton), newUrl);
+					} else if (botButton.getBotText().getArabicText().equals(Constants.BUTTON_LABEL_CHARGE_EN)) {
+						String par = Utils.encryptDPIParam(Constants.URL_USER_AND_TIME_KEY + dialNumber + Constants.URL_PAY_BILL_AND_RECHARGE_CHANEL);
+						String stringUrl = url + Constants.URL_LOCALE_EN + par;
 						URL newUrl = Utils.createUrl(stringUrl);
-						return UrlButton.create(Utils.getTextValueForButtonLabel(locale, botButton), newUrl, Optional.of(WebviewHeightRatio.COMPACT), empty(), empty(), empty());
+						return UrlButton.create(Utils.getTextValueForButtonLabel(locale, botButton), newUrl);
 					}
 				} catch (Exception e) {
 					logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
@@ -171,15 +176,15 @@ public class UtilService {
 				}
 			} else {
 				try {
-					if (botButton.getBotText().getEnglishText().equalsIgnoreCase(Constants.BUTTON_LABEL_CHARGE_EN)) {
-						String par = Utils.encryptDPIParam(Constants.URL_USER_AND_TIME_KEY+ dialNumber + Constants.URL_PAY_BILL_AND_RECHARGE_CHANEL);
-						String stringUrl = url + Constants.URL_LOCALE_EN + par;
+					if (botButton.getBotText().getEnglishText().equalsIgnoreCase("ادفع فاتورتك الان ")) {
+						String par = Utils.encryptDPIParam(Constants.URL_USER_AND_TIME_KEY + dialNumber + Constants.URL_PAY_BILL_AND_RECHARGE_CHANEL);
+						String stringUrl = url + Constants.URL_LOCALE_AR + par;
 						URL newUrl = Utils.createUrl(stringUrl);
 						return UrlButton.create(Utils.getTextValueForButtonLabel(locale, botButton), newUrl);
 
 					} else if (botButton.getBotText().getEnglishText().equalsIgnoreCase("Pay Now")) {
-						String par = Utils.encryptDPIParam(Constants.URL_USER_AND_TIME_KEY+ dialNumber + Constants.URL_PAY_BILL_AND_RECHARGE_CHANEL);
-						String stringUrl = url + par;
+						String par = Utils.encryptDPIParam(Constants.URL_USER_AND_TIME_KEY + dialNumber + Constants.URL_PAY_BILL_AND_RECHARGE_CHANEL);
+						String stringUrl = url+ Constants.URL_LOCALE_EN + par;
 						URL newUrl = Utils.createUrl(stringUrl);
 						return UrlButton.create(Utils.getTextValueForButtonLabel(locale, botButton), newUrl);
 					}
@@ -234,19 +239,16 @@ public class UtilService {
 				ArrayList<String> titles = mapValues.get(Constants.RESPONSE_MAP_TITLE_KEY);
 				ArrayList<String> percentageList = mapValues.get(Constants.RESPONSE_PERCENTAGE_KEY);
 				if (values == null || values.isEmpty()) {
-					String errorTitle = Constants.EMPTY_STRING;
-					elemnetImageUrl = botTemplateElement.getImageUrl() + Constants.URL_WARNING_IMAGE ;
-					if (userlocale.contains(Constants.ARABIC_LOCAL)) {
-						errorTitle = Constants.NOTELIGIBLE_ELEMENT_TITLE_AR;
-					} else {
-						errorTitle = Constants.NOTELIGIBLE_ELEMENT_TITLE_EN;
-						}
-					element = createElement(buttonsList, elemnetImageUrl, errorTitle, msg);
-					elements.add(element);
+					createNoConsumptionTemplate(userlocale, elements, botTemplateElement, buttonsList, msg);
 				} else {
 					for (int i = 0; i < values.size(); i++) {
-						title = titles.get(i);
-						if ((title.equalsIgnoreCase(Constants.MOBILE_INTERNET_CONSUMPTION_NAME_EN) || title.equalsIgnoreCase(Constants.MOBILE_INTERNET_CONSUMPTION_NAME_AR)) && !payload.equalsIgnoreCase("rateplan details")) {
+						 if(payload.equalsIgnoreCase(Constants.PAYLOAD_RATEPLAN_ADDONS_CONSUMPTION)) {
+							 title = consumptionNames.get(i);
+						 }else {
+							 title = titles.get(i);
+						}
+						if ((title.equalsIgnoreCase(Constants.MOBILE_INTERNET_CONSUMPTION_NAME_EN) || title.equalsIgnoreCase(Constants.MOBILE_INTERNET_CONSUMPTION_NAME_AR))
+								&& !payload.equalsIgnoreCase("rateplan details")) {
 							title = consumptionNames.size() > i ? consumptionNames.get(i) : title;
 						}
 						String perc = String.valueOf(percentageList.get(i));
@@ -269,6 +271,27 @@ public class UtilService {
 			}
 		}
 		return GenericTemplate.create(elements);
+	}
+
+	/**
+	 * @param userlocale
+	 * @param elements
+	 * @param botTemplateElement
+	 * @param buttonsList
+	 * @param msg
+	 */
+	public void createNoConsumptionTemplate(String userlocale, List<Element> elements, BotTemplateElement botTemplateElement, List<Button> buttonsList, String msg) {
+		String elemnetImageUrl;
+		Element element;
+		String errorTitle = Constants.EMPTY_STRING;
+		elemnetImageUrl = botTemplateElement.getImageUrl() + Constants.URL_WARNING_IMAGE;
+		if (userlocale.contains(Constants.ARABIC_LOCAL)) {
+			errorTitle = Constants.NOTELIGIBLE_ELEMENT_TITLE_AR;
+		} else {
+			errorTitle = Constants.NOTELIGIBLE_ELEMENT_TITLE_EN;
+		}
+		element = createElement(buttonsList, elemnetImageUrl, errorTitle, msg);
+		elements.add(element);
 	}
 
 	/**
@@ -333,7 +356,10 @@ public class UtilService {
 
 	public String getTextForButtonTemplate(String local, BotButtonTemplateMSG botButtonTemplateMSG) {
 		String text = Constants.EMPTY_STRING;
-		if (local.equalsIgnoreCase(Constants.ARABIC_LOCAL)) {
+		if(local==null) {
+			local ="en_Us";
+		}
+		if (local.contains(Constants.ARABIC_LOCAL)) {
 			text = botButtonTemplateMSG.getBotText().getArabicText();
 		} else {
 			text = botButtonTemplateMSG.getBotText().getEnglishText();
@@ -351,7 +377,6 @@ public class UtilService {
 			if (botButton.getButtonImageUrl() != null) {
 				if (botButton.getButtonImageUrl().length() > 0) {
 					URL url = Utils.createUrl(botButton.getButtonImageUrl());
-
 					quickReply = TextQuickReply.create(label, botButton.getButtonPayload(), Optional.of(url));
 				} else {
 					quickReply = TextQuickReply.create(label, botButton.getButtonPayload(), empty());
@@ -411,7 +436,7 @@ public class UtilService {
 	 */
 
 	public void getTextMessageIfResponseIsObject(String senderId, List<MessagePayload> messagePayloadList, BotWebserviceMessage botWebserviceMessage, String jsonBodyString,
-			ChatBotService chatBotService, String local)  {
+			ChatBotService chatBotService, String local) {
 		MessagePayload messagePayload;
 		List<BotTextResponseMapping> botTextResponseMappings = chatBotService.findTextResponseMappingByWsId(botWebserviceMessage.getWsMsgId());
 		JSONObject rootObject = new JSONObject(jsonBodyString);
@@ -425,7 +450,6 @@ public class UtilService {
 			} else {
 				keys = botTextResponseMapping.getEnParams();
 			}
-
 			String[] keysArray = getKeys(keys);
 			ArrayList<String> values = switchToObjectMode(rootObject, paths, keysArray, msg, local).get(Constants.RESPONSE_MAP_MESSAGE_KEY);
 			for (String val : values) {
@@ -444,7 +468,7 @@ public class UtilService {
 			try {
 				JSONObject object = arrayResponse.getJSONObject(i);
 				JSONObject categoryObject = object.getJSONObject(Constants.JSON_KEY_CATEGORY_KEY);
-				String title, subTitle , buttonLabel;
+				String title, subTitle, buttonLabel;
 				title = subTitle = buttonLabel = Constants.EMPTY_STRING;
 				String name = Utils.getLabelForViewButton(locale);
 				if (categories.contains(categoryObject.get(Constants.JSON_KEY_CATEGORY_ID))) {
@@ -482,7 +506,7 @@ public class UtilService {
 		}
 	}
 
-	public void getTextMessageIfResponseIsString(String senderId, List<MessagePayload> messagePayloadList, BotWebserviceMessage botWebserviceMessage, String local)  {
+	public void getTextMessageIfResponseIsString(String senderId, List<MessagePayload> messagePayloadList, BotWebserviceMessage botWebserviceMessage, String local) {
 		String text = Constants.EMPTY_STRING;
 		if (local.equalsIgnoreCase(Constants.ARABIC_LOCAL)) {
 			text = botWebserviceMessage.getTitle().getArabicText();
@@ -517,8 +541,8 @@ public class UtilService {
 	 * @param messageId
 	 */
 
-	public MessagePayload responseInCaseStaticScenario(String payload, String senderId, String userFirstName,  BotInteractionMessage botInteractionMessage,
-			Long messageTypeId, Long messageId, ChatBotService chatBotService, String locale, String userDial,Messenger messenger) {
+	public MessagePayload responseInCaseStaticScenario(String payload, String senderId, String userFirstName, BotInteractionMessage botInteractionMessage, Long messageTypeId, Long messageId,
+			ChatBotService chatBotService, String locale, String userDial) {
 		String text;
 		MessagePayload messagePayload = null;
 		logger.debug(Constants.LOGGER_DIAL_IS + userDial + " Method Name is Static Scenario Message is " + botInteractionMessage.toString());
@@ -527,9 +551,6 @@ public class UtilService {
 			BotTextMessage botTextMessage = chatBotService.findTextMessageByMessageId(messageId);
 			text = getTextValueForBotTextMessage(botTextMessage, locale);
 			text = text + " " + userFirstName;
-			if (payload.equalsIgnoreCase("welcome")) {
-				Utils.saveCustomerInformation(chatBotService, senderId, messenger);
-			}
 			messagePayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TextMessage.create(text));
 
 		}
@@ -571,10 +592,10 @@ public class UtilService {
 	 * @param botWebserviceMessage
 	 */
 
-	public Map<String, String> callGetWebService(BotWebserviceMessage botWebserviceMessage, String senderId, ChatBotService chatBotService, String phoneNumber) {
+	/*public Map<String, String> callGetWebService(BotWebserviceMessage botWebserviceMessage, String senderId, ChatBotService chatBotService, String phoneNumber) {
 		logger.debug(Constants.LOGGER_DIAL_IS + phoneNumber + Constants.LOGGER_METHOD_NAME + "callGetWebService");
 		return getCalling(botWebserviceMessage, senderId, chatBotService, phoneNumber);
-	}
+	}*/
 
 	public Map<String, String> buyProductOrAddon(BotWebserviceMessage botWebserviceMessage, String jsonParam, ChatBotService chatBotService, String senderId) {
 		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
@@ -620,7 +641,7 @@ public class UtilService {
 	 */
 
 	public void createTextMessageInDynamicScenario(String senderId, List<MessagePayload> messagePayloadList, BotWebserviceMessage botWebserviceMessage, String jsonBodyString,
-			ChatBotService chatBotService, String local)  {
+			ChatBotService chatBotService, String local) {
 		// string
 		if (botWebserviceMessage.getOutType().getInOutTypeId() == 1) {
 			getTextMessageIfResponseIsString(senderId, messagePayloadList, botWebserviceMessage, local);
@@ -652,7 +673,7 @@ public class UtilService {
 		newCustomerProfile.setFirstInsertion(customerProfile.getFirstInsertion());
 		newCustomerProfile.setLinkingDate(timestamp);
 		newCustomerProfile.setLocale(customerProfile.getLocale());
-		if (customerDial.startsWith("0")&& customerDial.length()>10) {
+		if (customerDial.startsWith("0") && customerDial.length() > 10) {
 			newCustomerProfile.setMsisdn(customerDial);
 		} else {
 			newCustomerProfile.setMsisdn(Constants.EMPTY_STRING);
@@ -662,7 +683,7 @@ public class UtilService {
 		chatBotService.saveCustomerProfile(newCustomerProfile);
 	}
 
-	public void setCustomerProfileLocalAsArabic(CustomerProfile customerProfile, ChatBotService chatBotService) {
+	public void setCustomerProfileLocal(CustomerProfile customerProfile, ChatBotService chatBotService,String locale) {
 		CustomerProfile customerProfileForLocal = new CustomerProfile();
 		Date date = new Date();
 		Timestamp timestamp = new Timestamp(date.getTime());
@@ -670,29 +691,16 @@ public class UtilService {
 		customerProfileForLocal.setFirstInsertion(customerProfile.getFirstInsertion());
 		customerProfileForLocal.setLastGetProfileWSCall(customerProfile.getLastGetProfileWSCall());
 		customerProfileForLocal.setLinkingDate(customerProfile.getLinkingDate());
-		customerProfileForLocal.setLocale(Constants.ARABIC_LOCAL);
+		customerProfileForLocal.setLocale(locale);
 		customerProfileForLocal.setMsisdn(customerProfile.getMsisdn());
 		customerProfileForLocal.setSenderID(customerProfile.getSenderID());
 		chatBotService.saveCustomerProfile(customerProfileForLocal);
 	}
 
-	public void setCustomerProfileLocalAsEnglish(CustomerProfile customerProfile, ChatBotService chatBotService) {
-		CustomerProfile customerProfileForLocal = new CustomerProfile();
-		Date date = new Date();
-		Timestamp timestamp = new Timestamp(date.getTime());
-		customerProfileForLocal.setCustomerLastSeen(timestamp);
-		customerProfileForLocal.setFirstInsertion(customerProfile.getFirstInsertion());
-		customerProfileForLocal.setLastGetProfileWSCall(customerProfile.getLastGetProfileWSCall());
-		customerProfileForLocal.setLinkingDate(customerProfile.getLinkingDate());
-		customerProfileForLocal.setLocale(Constants.LOCALE_EN);
-		customerProfileForLocal.setMsisdn(customerProfile.getMsisdn());
-		customerProfileForLocal.setSenderID(customerProfile.getSenderID());
-		chatBotService.saveCustomerProfile(customerProfileForLocal);
-	}
-
+	
 	public MessagePayload getProductsFromJsonByCategory(JSONArray arrayResponse, String category, String senderId, ChatBotService chatBotService, String locale) {
 		MessagePayload fmsg = null;
-		logger.debug(Constants.LOGGER_ELIGIBLE_PRODUCT+arrayResponse);
+		logger.debug(Constants.LOGGER_ELIGIBLE_PRODUCT + arrayResponse);
 		for (int i = 0; i < arrayResponse.length(); i++) {
 			try {
 				JSONObject object = arrayResponse.getJSONObject(i);
@@ -739,7 +747,7 @@ public class UtilService {
 
 	}
 
-	public MessagePayload getProductsByCategoryNotLego(String senderId, String locale, JSONArray products)  {
+	public MessagePayload getProductsByCategoryNotLego(String senderId, String locale, JSONArray products) {
 		MessagePayload fmsg;
 		List<Element> elements = new ArrayList<>();
 		for (int j = 0; j < products.length(); j++) {
@@ -804,7 +812,7 @@ public class UtilService {
 		return MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(gTemplate));
 	}
 
-	public MessagePayload getRelatedProductFromJsonByBundleId(JSONArray arrayResponse, String productId, String senderId , String locale) {
+	public MessagePayload getRelatedProductFromJsonByBundleId(JSONArray arrayResponse, String productId, String senderId, String locale) {
 		MessagePayload fmsg = null;
 		for (int i = 0; i < arrayResponse.length(); i++) {
 			JSONObject object = new JSONObject();
@@ -825,7 +833,8 @@ public class UtilService {
 							String relatedProductName = relatedObject.getString(Constants.JSON_KEY_FOR_NAME);
 							String title = relatedObject.getString(Constants.JSON_KEY_NAME_EN);
 							String subtitle = relatedObject.getString(Constants.JSON_KEY_FOR_ENGLISH_DESCRIPTION);
-							Button button = PostbackButton.create(Utils.getLabelForٍSubscribeButton(locale), relatedProductName + Constants.COMMA_CHAR + Constants.PREFIX_RELATED_PRODUCTS_SUBSCRIPTION);
+							Button button = PostbackButton.create(Utils.getLabelForٍSubscribeButton(locale),
+									relatedProductName + Constants.COMMA_CHAR + Constants.PREFIX_RELATED_PRODUCTS_SUBSCRIPTION);
 							buttons.add(button);
 							Button backButton = PostbackButton.create(Utils.getLabelForBackButton(locale), Constants.PAYLOAD_CHANGE_BUNDLE);
 							buttons.add(backButton);
@@ -945,7 +954,8 @@ public class UtilService {
 		} else {
 			PostbackButton bundleButton = PostbackButton.create(Utils.getLabelForBackButton(locale), Constants.PAYLOAD_MI_CONSUMTION_PARENT);
 			buttonsList.add(bundleButton);
-			Element element = Element.create(Constants.MOBILE_INTERNET_CONSUMPTION_NAME_EN, Optional.of("Your dial" + " ' " + dial + " ' " + "is not eligible to any bundle"), empty(), empty(), Optional.of(buttonsList));
+			Element element = Element.create(Constants.MOBILE_INTERNET_CONSUMPTION_NAME_EN, Optional.of("Your dial" + " ' " + dial + " ' " + "is not eligible to any bundle"), empty(), empty(),
+					Optional.of(buttonsList));
 			elements.add(element);
 			return GenericTemplate.create(elements);
 		}
@@ -953,8 +963,8 @@ public class UtilService {
 
 	public Map<String, String> getCalling(BotWebserviceMessage botWebserviceMessage, String senderId, ChatBotService chatBotService, String phoneNumber) {
 		URI uri = Utils.createURI(botWebserviceMessage, senderId, chatBotService, phoneNumber);
-		logger.debug(Constants.LOGGER_SERVICE_URL + uri);
-		return Utils.callGetWebServiceByRestTemplate(uri);
+		logger.debug(Constants.LOGGER_SENDER_ID + senderId + Constants.LOGGER_DIAL_IS + phoneNumber +Constants.LOGGER_SERVICE_URL + uri);
+		return Utils.callGetWebServiceByRestTemplate(uri,chatBotService);
 	}
 
 	public MessagePayload changeLanguageResponse(String locale, String senderId) {
@@ -986,25 +996,53 @@ public class UtilService {
 		}
 		Button button = PostbackButton.create(buttonLabel, payload);
 		buttons.add(button);
-		Map<String,String> mapValue =  (HashMap<String, String>) configurationTable.getCachedValue(Constants.CONFIGURATION_CACHE_KEY);
-		URL url = Utils.createUrl(mapValue.get(Constants.CONFIGURATION_TABLE_WARNING_IMAGE_URL));
+		BotConfiguration warningImageRaw = chatBotService.getBotConfigurationByKey(Constants.CONFIGURATION_TABLE_WARNING_IMAGE_URL);
+		
+		URL url = Utils.createUrl(warningImageRaw.getValue());
 		Element element = Element.create(title, Optional.of(subtitle), Optional.of(url), empty(), Optional.of(buttons));
 		elementsList.add(element);
 		GenericTemplate gTemplate = GenericTemplate.create(elementsList);
 		return MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(gTemplate));
 	}
 
-	public JSONObject rasaIntegration(String url, String payload,String paramKey) {
+	public JSONObject rasaIntegration(String url, String payload, String paramKey) {
 		RestTemplate restTemplate = new RestTemplate();
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
 		JSONObject requestBody = new JSONObject();
 		requestBody.put(paramKey, payload);
 		HttpEntity<String> request = new HttpEntity<>(requestBody.toString());
-		ResponseEntity<String> response = restTemplate.exchange(url,HttpMethod.POST,request,String.class); 
-		if(response.getStatusCodeValue() != 200) {
+		ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
+		if (response.getStatusCodeValue() != 200) {
 			return new JSONObject();
 		}
 		return new JSONObject(response.getBody());
+	}
+	
+	
+	
+	public MessagePayload createErrorTemplateForNoConsumptionDetails(String senderId, String locale, String payload) {
+		List<Element> elementsList = new ArrayList<>();
+		List<Button> buttons = new ArrayList<>();
+		String title;
+		String subtitle;
+		String buttonLabel = Utils.getLabelForBackButton(locale);
+		if (locale.contains(Constants.ARABIC_LOCAL)) {
+			title = Constants.NOTELIGIBLE_ELEMENT_TITLE_AR;
+			subtitle = Constants.NOCONSUMPTION_ELEMENT_SUBTITLE_EN;
+
+		} else {
+			title = Constants.NOTELIGIBLE_ELEMENT_TITLE_EN;
+			subtitle = Constants.NOCONSUMPTION_ELEMENT_SUBTITLE_EN;
+
+		}
+		Button button = PostbackButton.create(buttonLabel, payload);
+		buttons.add(button);
+		BotConfiguration warningImageRaw = chatBotService.getBotConfigurationByKey(Constants.CONFIGURATION_TABLE_WARNING_IMAGE_URL);
+		URL url = Utils.createUrl(warningImageRaw.getValue());
+		Element element = Element.create(title, Optional.of(subtitle), Optional.of(url), empty(), Optional.of(buttons));
+		elementsList.add(element);
+		GenericTemplate gTemplate = GenericTemplate.create(elementsList);
+		return MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(gTemplate));
 	}
 }

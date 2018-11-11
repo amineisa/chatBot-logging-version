@@ -13,7 +13,6 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -50,15 +49,19 @@ public class MessengerChatBot {
 
 	@Autowired
 	private BotButtonRepo botButtonRepo;
+	
+	@Autowired
+	private CacheHelper<Object,Object> configurationCache;
 
 	private static final Logger logger = LoggerFactory.getLogger(MessengerChatBot.class);
 
 	public static void main(String[] args) {
 		SpringApplication.run(MessengerChatBot.class, args);
 	}
-
 	
-	/*@Bean
+	
+	
+ /* @Bean
 	public Messenger messengerSendClient(@Value("${messenger4j.appSecret}") final String appSecret,
 			@Value("${messenger4j.pageAccessToken}") final String pageAccessToken,
 			@Value("${messenger4j.verifyToken}") final String verifyToken) {
@@ -89,20 +92,21 @@ public class MessengerChatBot {
 
 	@Bean
 	public Messenger messengerSendClient() {
-		Map<String,String> cacheTabel = (Map<String, String>) configurationCache().getCachedValue(Constants.CONFIGURATION_CACHE_KEY);
-		
-		String appSecret = cacheTabel.get(Constants.CONFIGURATION_TABLE_APP_SECRET);
-		String pageAccessToken = cacheTabel.get(Constants.CONFIGURATION_TABLE_PAGE_ACCESS_TOKEN);
-		String verifyToken = cacheTabel.get(Constants.CONFIGURATION_TABLE_VERIFY_TOKEN);
+	//	boolean updatePersistenceMenu = true;
+		Map<String, String> configCacheObject = (Map<String, String>) configurationCache.getCachedValue(Constants.CONFIGURATION_CACHE_KEY);
+		String appSecret = configCacheObject.get(Constants.CONFIGURATION_TABLE_APP_SECRET);
+		String pageAccessToken =  configCacheObject.get(Constants.CONFIGURATION_TABLE_PAGE_ACCESS_TOKEN);
+		String verifyToken =  configCacheObject.get(Constants.CONFIGURATION_TABLE_VERIFY_TOKEN);
 		logger.debug("Initializing MessengerSendClient - pageAccessToken: {}", pageAccessToken);
-
 		Messenger messenger = Messenger.create(pageAccessToken, appSecret, verifyToken);
-
+		//if(updatePersistenceMenu) {
 		try {
+			logger.debug(" Update Persistence Menu ");
 			messenger.updateSettings(initSendPersistenceMenu());
 		} catch (MessengerApiException  | MessengerIOException e) {
 			logger.error(e.getMessage());
 		} 
+		//}
 		return messenger;
 	}
 
@@ -110,19 +114,19 @@ public class MessengerChatBot {
 		List<CallToAction> callToActions = getMasterButtons();
 
 		// supported Local as English Language
-		SupportedLocale local = SupportedLocale.en_US;
+		SupportedLocale local = SupportedLocale.ar_AR;
 		// Optional of call To Action list
 		Optional<List<CallToAction>> otipnalPerBtns = Optional.of(callToActions);
 		// LocalizedPersistentMenu
 		LocalizedPersistentMenu localizedPersistentMenu = LocalizedPersistentMenu.create(local, false, otipnalPerBtns);
-		final PersistentMenu persistentMenu = PersistentMenu.create(false, otipnalPerBtns, localizedPersistentMenu);
+		final PersistentMenu persistentMenu = PersistentMenu.create(true, otipnalPerBtns, localizedPersistentMenu);
 		Optional<PersistentMenu> persistentMenus = Optional.of(persistentMenu);
 		// Start Button
 		BotButton startBtn = botButtonRepo.findButtonByButtonTypeId(Utils.ButtonTypeEnum.START.getValue());
 		StartButton startButton = StartButton.create(startBtn.getButtonPayload());
 		Optional<StartButton> opStartButton = Optional.of(startButton);
 		// Greeting Section
-		String greetingMessage = startBtn.getBotText().getEnglishText();
+		String greetingMessage = startBtn.getBotText().getArabicText();
 		LocalizedGreeting localizedGreeting = LocalizedGreeting.create(local, greetingMessage);
 		Greeting greeting = Greeting.create(Constants.EMPTY_STRING, new LocalizedGreeting[] { localizedGreeting });
 		Optional<Greeting> optionalGreeting = Optional.of(greeting);
@@ -143,12 +147,12 @@ public class MessengerChatBot {
 				} catch (MalformedURLException e) {
 					logger.error(e.getMessage());
 				}
-				UrlCallToAction urlCallToAction = UrlCallToAction.create(realButton.getBotText().getEnglishText(), url, Optional.of(WebviewHeightRatio.FULL), empty(), empty(),
+				UrlCallToAction urlCallToAction = UrlCallToAction.create(realButton.getBotText().getArabicText(), url, Optional.of(WebviewHeightRatio.FULL), empty(), empty(),
 						Optional.of(WebviewShareButtonState.HIDE));
 				callToActions.add(urlCallToAction);
 				// PostBack
 			} else if (realButton.getButtonType().getId() == Utils.ButtonTypeEnum.POSTBACK.getValue()) {
-				String title = realButton.getBotText().getEnglishText();
+				String title = realButton.getBotText().getArabicText();
 				String payLoad = realButton.getButtonPayload();
 				PostbackCallToAction postbackCallToAction = PostbackCallToAction.create(title, payLoad);
 				callToActions.add(postbackCallToAction);
@@ -173,12 +177,12 @@ public class MessengerChatBot {
 			}
 			BotButton button = subButton.getButton();
 			if (subButton.getButton().getButtonType().getId() == Utils.ButtonTypeEnum.POSTBACK.getValue()) {
-				String title = button.getBotText().getEnglishText();
+				String title = button.getBotText().getArabicText();
 				String payload = button.getButtonPayload();
 				PostbackCallToAction postBackButton = PostbackCallToAction.create(title, payload);
 				subNestedButton.add(postBackButton);
 			} else if (subButton.getButton().getButtonType().getId() == Utils.ButtonTypeEnum.URL.getValue()) {
-				String title = button.getBotText().getEnglishText();
+				String title = button.getBotText().getArabicText();
 				String url = button.getButtonUrl();
 				try {
 					UrlCallToAction urlCallToAction = UrlCallToAction.create(title, new URL(url));
@@ -188,7 +192,7 @@ public class MessengerChatBot {
 				}
 			}
 		}
-		String title = perButton.getButton().getBotText().getEnglishText();
+		String title = perButton.getButton().getBotText().getArabicText();
 		return NestedCallToAction.create(title, subNestedButton);
 	}
 

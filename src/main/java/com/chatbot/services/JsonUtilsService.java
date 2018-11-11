@@ -44,7 +44,6 @@ public class JsonUtilsService {
 		ArrayList<String> values = new ArrayList<>();
 		ArrayList<String> textMsgs = new ArrayList<>();
 		for (int i = 0; i < rootArray.length(); i++) {
-
 			try {
 				JSONObject childObject = rootArray.getJSONObject(i);
 				values = getValuesFromJson(childObject, keys);
@@ -182,21 +181,41 @@ public class JsonUtilsService {
 						String finalPath = paths[1].substring(1, paths[1].length());
 						JSONArray finalJsonArray = firstLevelObject.getJSONArray(finalPath);
 						for (int j = 0; j < finalJsonArray.length(); j++) {
-							JSONObject finalJsonObject = finalJsonArray.getJSONObject(j);
-							double consumed, total, percentage = 0;
-							values = getValuesFromJson(finalJsonObject, keys);
-							titleList.add(values.get(0));
-							values.remove(0);
-							consumed = Double.parseDouble(values.get(0));
-							if (consumed == 0.0) {
-								percentage = 0;
-							} else {
-								total = Double.parseDouble(values.get(2));
-								percentage = (consumed / total) * 100;
-							}
-							percentageList.add(String.valueOf(percentage));
-							String finalMsg = replaceValuesByMapping(values, msg, locale);
-							textMsgs.add(finalMsg);
+							try{
+								boolean isTime = false;
+								JSONObject finalJsonObject = finalJsonArray.getJSONObject(j);
+								double consumed, total, percentage;
+								consumed = total = percentage= 0;
+								values = getValuesFromJson(finalJsonObject, keys);
+								titleList.add(values.get(0));
+								values.remove(0);
+								if(values.get(0).contains(":") || values.get(2).contains(":")){
+									isTime = true;
+								}
+								if(!isTime){
+									consumed = Double.parseDouble(values.get(0));							
+									if (consumed == 0.0) {
+										percentage = 0;
+									}else{
+										total = Double.parseDouble(values.get(2));
+										percentage = (consumed / total) * 100;
+									}
+								}else{
+									consumed = timeToMins(values.get(0));							
+									if (consumed == 0.0) {
+										percentage = 0;
+									}else{
+										total = timeToMins(values.get(2));
+										percentage = (consumed / total) * 100;
+									}
+								}
+								logger.debug("Meter Percentage : "+percentage);
+								percentageList.add(String.valueOf(percentage));
+								String finalMsg = replaceValuesByMapping(values, msg, locale);
+								textMsgs.add(finalMsg);
+							}catch(Exception e){
+								e.printStackTrace();
+							}							
 						}
 						mapValues.put(Constants.RESPONSE_MAP_MESSAGE_KEY, textMsgs);
 						mapValues.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
@@ -335,7 +354,7 @@ public class JsonUtilsService {
 						value = finalObject.getString(valueKey);
 					} else {
 						value = jsonObject.getString(key);
-					}
+					} 
 				} catch (JSONException e) {
 					value = Constants.UNDERSCORE;
 				}
@@ -360,6 +379,14 @@ public class JsonUtilsService {
 
 		}
 		
-	
+		private  double timeToMins(String s) {
+			String[] hourMin = s.split(":");
+			double hour = Integer.parseInt(hourMin[0]);
+			double mins = Integer.parseInt(hourMin[1]);
+			double hoursInMins = hour * 60;
+			return hoursInMins + mins;
+		}
+		
+		
 
 }

@@ -12,6 +12,8 @@ public class UserSelections {
 
 	private String addonId;
 
+	private String billingProfileParam; 
+	
 	private String lastPayLoad;
 
 	private String parentPayLoad;
@@ -104,6 +106,15 @@ public class UserSelections {
 
 	public String getFreeText() {
 		return freeText;
+	}
+	
+
+	public String getBillingProfileParam() {
+		return billingProfileParam;
+	}
+
+	public void setBillingProfileParam(String billingProfileParam) {
+		this.billingProfileParam = billingProfileParam;
 	}
 
 	public boolean isSubscribed() {

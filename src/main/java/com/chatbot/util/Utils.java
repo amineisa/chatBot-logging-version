@@ -1,5 +1,6 @@
 package com.chatbot.util;
 
+
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -26,6 +27,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 import com.chatbot.entity.BotButton;
@@ -46,6 +49,7 @@ public class Utils {
 
 	private static final Logger logger = LoggerFactory.getLogger(UtilService.class);
 
+	
 	public enum ButtonTypeEnum {
 		START(1L), POSTBACK(2l), URL(3l), NESTED(4L), LOGIN(5L), LOGOUT(6L), CALL(7L);
 		private final Long buttonTypeId;
@@ -58,6 +62,9 @@ public class Utils {
 			return buttonTypeId;
 		}
 	}
+	
+	
+	
 
 	public enum MessageTypeEnum {
 
@@ -76,7 +83,6 @@ public class Utils {
 	// Get Text Value
 	public static String getTextValueForButtonLabel(String local, BotButton botButton) {
 		String text = Constants.EMPTY_STRING;
-		;
 		if (local.equalsIgnoreCase(Constants.ARABIC_LOCAL)) {
 			text = botButton.getBotText().getArabicText();
 		} else {
@@ -151,21 +157,31 @@ public class Utils {
 		chatBotService.saveCustomerProfile(logoutCustomerProfile);
 	}
 
-	public static void saveCustomerInformation(ChatBotService chatBotService, String senderId, Messenger messenger) {
-		CustomerProfile newCustomerProfile = new CustomerProfile();
-		UserProfile userProfile = Utils.getUserProfile(senderId, messenger);
-		String userLocale = userProfile.locale();
-		String firstName = userProfile.firstName();
-		Date date = new Date();
-		Timestamp timestamp = new Timestamp(date.getTime());
-		newCustomerProfile.setFirstInsertion(timestamp);
-		newCustomerProfile.setSenderID(senderId);
-		newCustomerProfile.setCustomerLastSeen(timestamp);
-		newCustomerProfile.setLocale(userLocale);
-		newCustomerProfile.setFirstName(firstName);
-		chatBotService.saveCustomerProfile(newCustomerProfile);
-
-	}
+	public static CustomerProfile saveCustomerInformation(ChatBotService chatBotService, String senderId,String userLocale) {
+		CustomerProfile cProfile = chatBotService.getCustomerProfileBySenderId(senderId);
+		if(cProfile == null) {
+			CustomerProfile newCustomerProfile = new CustomerProfile();
+			Date date = new Date();
+			Timestamp timestamp = new Timestamp(date.getTime());
+			newCustomerProfile.setFirstInsertion(timestamp);
+			newCustomerProfile.setSenderID(senderId);
+			newCustomerProfile.setMsisdn("");
+			newCustomerProfile.setCustomerLastSeen(timestamp);
+			newCustomerProfile.setLocale(userLocale);
+			return chatBotService.saveCustomerProfile(newCustomerProfile);
+		}else {
+			Date date = new Date();
+			CustomerProfile newCustomerProfile = new CustomerProfile();
+			Timestamp timestamp = new Timestamp(date.getTime());
+			newCustomerProfile.setFirstInsertion(cProfile.getFirstInsertion());
+			newCustomerProfile.setSenderID(cProfile.getSenderID());
+			newCustomerProfile.setMsisdn(cProfile.getMsisdn());
+			newCustomerProfile.setLinkingDate(cProfile.getLinkingDate());
+			newCustomerProfile.setCustomerLastSeen(timestamp);
+			newCustomerProfile.setLocale(cProfile.getLocale());
+		  return	chatBotService.saveCustomerProfile(newCustomerProfile);
+		}
+		}
 
 	public static void markAsSeen(Messenger messenger, String userId) {
 		try {
@@ -228,22 +244,24 @@ public class Utils {
 		return toBeSentParams;
 	}
 
-	public static Map<String, String> callGetWebServiceByRestTemplate(URI uri) {
+	public static Map<String, String> callGetWebServiceByRestTemplate(URI uri,ChatBotService chatBotService) {
 		Map<String, String> responseMap = new HashMap<>();
 		HttpHeaders headers = new HttpHeaders();
 		headers.set("Accept", MediaType.APPLICATION_JSON_UTF8_VALUE);
 		int statusId = 0;
 		try {
 			HttpEntity entity = new HttpEntity<>(headers);
-			RestTemplate restTemplate = new RestTemplate();
+			RestTemplate restTemplate = new RestTemplate(getClientHttpRequestFactory(chatBotService));
 			ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.GET, entity, String.class);
 			statusId = response.getStatusCodeValue();
 			responseMap.put(Constants.RESPONSE_STATUS_KEY, String.valueOf(statusId));
 			responseMap.put(Constants.RESPONSE_KEY, response.getBody());
+			responseMap.put(Constants.RESPONSE_STATUS_KEY, String.valueOf(statusId));
 		} catch (Exception e) {
 			responseMap.put(Constants.RESPONSE_STATUS_KEY, String.valueOf(statusId));
 			logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
 			e.printStackTrace();
+			
 		}
 		return responseMap;
 	}
@@ -271,6 +289,21 @@ public class Utils {
 		return "View";
 	}
 
+	public static String getLabelForPayBillButton(String locale) {
+		if (locale.contains(Constants.ARABIC_LOCAL)) {
+			return "ادفع الان";
+		}
+		return "Pay Now";
+	}
+	
+	
+	public static String getTitleForPayBillButton(String locale) {
+		if (locale.contains(Constants.ARABIC_LOCAL)) {
+			return "هل تريد ان تدفع الان ";
+		}
+		return "Do you want to pay yor bill now ?";
+	}
+	
 	public static String getLabelForBackButton(String locale) {
 		if (locale.contains(Constants.ARABIC_LOCAL)) {
 			return "عودة";
@@ -287,9 +320,9 @@ public class Utils {
 
 	public static String informUserThatHeDoesnotSubscribeAtAnyMIBundle(String locale) {
 		if (locale.contains(Constants.ARABIC_LOCAL)) {
-			return "نأسف أنت غير مشترك بأي من باقات الأنترنت و هذة هي الباقات المتاحة لرقمك";
+			return "نأسف أنت غير مشترك بأي من باقات الأنترنت .سوف نتأكد من الباقات المتاحة لرقمك";
 		}
-		return "Sorry ,You are not subscribe to any MI Bundle here are list of the available MI bundle for your dial";
+		return "Sorry ,You are not subscribe to any MI Bundle. We will check available MI bundles for your number";
 	}
 
 	public static UserProfile getUserProfile(String senderId, Messenger messenger) {
@@ -301,4 +334,15 @@ public class Utils {
 		}
 		return userProfile;
 	}
+	
+	private static  ClientHttpRequestFactory getClientHttpRequestFactory(ChatBotService chatBotService) {
+		String sTimeOut  = chatBotService.getBotConfigurationByKey(Constants.REQUEST_TIME_OUT_VALUE).getValue();
+		int timeout = Integer.parseInt(sTimeOut);
+	    logger.debug("Time Out "+timeout);
+	    HttpComponentsClientHttpRequestFactory clientHttpRequestFactory =
+	      new HttpComponentsClientHttpRequestFactory();
+	    clientHttpRequestFactory.setConnectTimeout(timeout);
+	    return clientHttpRequestFactory;
+	}
 }
+
