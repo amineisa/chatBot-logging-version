@@ -34,7 +34,9 @@ import org.springframework.web.client.RestTemplate;
 import com.chatbot.entity.BotButton;
 import com.chatbot.entity.BotInteraction;
 import com.chatbot.entity.BotWebserviceMessage;
+import com.chatbot.entity.CustomerLinkingDial;
 import com.chatbot.entity.CustomerProfile;
+import com.chatbot.entity.FreeTextLogging;
 import com.chatbot.entity.InteractionLogging;
 import com.chatbot.services.ChatBotService;
 import com.chatbot.services.UtilService;
@@ -118,11 +120,13 @@ public class Utils {
 	public static void updateCustomerLastSeen(CustomerProfile customerProfile, String phoneNumber, ChatBotService chatBotService) {
 		Date date = new Date();
 		CustomerProfile updatedCustomerProfile = new CustomerProfile();
+		updatedCustomerProfile.setLastName(customerProfile.getLastName());
 		updatedCustomerProfile.setFirstInsertion(customerProfile.getFirstInsertion());
 		updatedCustomerProfile.setLastGetProfileWSCall(customerProfile.getLastGetProfileWSCall());
 		updatedCustomerProfile.setLinkingDate(customerProfile.getLinkingDate());
 		updatedCustomerProfile.setLocale(customerProfile.getLocale());
 		updatedCustomerProfile.setMsisdn(customerProfile.getMsisdn());
+		updatedCustomerProfile.setFirstName(customerProfile.getFirstName());
 		updatedCustomerProfile.setSenderID(customerProfile.getSenderID());
 		Timestamp timeStamp = new Timestamp(date.getTime());
 		updatedCustomerProfile.setCustomerLastSeen(timeStamp);
@@ -133,7 +137,7 @@ public class Utils {
 	 * @param customerProfile
 	 * @param botInteraction
 	 */
-	public static void interactionLogginghandling(CustomerProfile customerProfile, BotInteraction botInteraction, ChatBotService chatBotService) {
+	public static InteractionLogging interactionLogginghandling(CustomerProfile customerProfile, BotInteraction botInteraction, ChatBotService chatBotService) {
 		Date date = new Date();
 		Timestamp timeStamp = new Timestamp(date.getTime());
 		InteractionLogging interactionLogging = new InteractionLogging();
@@ -141,10 +145,23 @@ public class Utils {
 		interactionLogging.setInteractionCallingDate(timeStamp);
 		interactionLogging.setCustomerProfile(customerProfile);
 		chatBotService.saveInteractionLogging(interactionLogging);
-		chatBotService.saveInteractionLogging(interactionLogging);
+		return chatBotService.saveInteractionLogging(interactionLogging);
 	}
 
-	public static void userLogout(final String senderId, ChatBotService chatBotService) {
+	public static void freeTextinteractionLogginghandling( InteractionLogging interactionLogging,String text,ChatBotService chatBotService) {
+		Date date = new Date();
+		Timestamp timeStamp = new Timestamp(date.getTime());
+		FreeTextLogging freeTextLogging = new FreeTextLogging();
+		freeTextLogging.setInteractionLogging(interactionLogging);
+		freeTextLogging.setReceivingTime(timeStamp);
+		freeTextLogging.setRecivedFreeText(text);
+	    chatBotService.saveFreeTextLogging(freeTextLogging);
+	}
+	
+	
+	
+	
+	public static CustomerProfile userLogout(final String senderId, ChatBotService chatBotService) {
 		CustomerProfile storedCustomerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 		CustomerProfile logoutCustomerProfile = new CustomerProfile();
 		logoutCustomerProfile.setCustomerLastSeen(storedCustomerProfile.getCustomerLastSeen());
@@ -153,11 +170,13 @@ public class Utils {
 		logoutCustomerProfile.setLinkingDate(storedCustomerProfile.getLinkingDate());
 		logoutCustomerProfile.setLocale(storedCustomerProfile.getLocale());
 		logoutCustomerProfile.setMsisdn(Constants.EMPTY_STRING);
+		logoutCustomerProfile.setFirstName(storedCustomerProfile.getFirstName());
 		logoutCustomerProfile.setSenderID(storedCustomerProfile.getSenderID());
-		chatBotService.saveCustomerProfile(logoutCustomerProfile);
+		logoutCustomerProfile.setLastName(storedCustomerProfile.getLastName());
+		return chatBotService.saveCustomerProfile(logoutCustomerProfile);
 	}
 
-	public static CustomerProfile saveCustomerInformation(ChatBotService chatBotService, String senderId,String userLocale) {
+	public static CustomerProfile saveCustomerInformation(ChatBotService chatBotService, String senderId,String userLocale,String firstName,String lastName) {
 		CustomerProfile cProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 		if(cProfile == null) {
 			CustomerProfile newCustomerProfile = new CustomerProfile();
@@ -168,6 +187,8 @@ public class Utils {
 			newCustomerProfile.setMsisdn("");
 			newCustomerProfile.setCustomerLastSeen(timestamp);
 			newCustomerProfile.setLocale(userLocale);
+			newCustomerProfile.setFirstName(firstName);
+			newCustomerProfile.setLastName(lastName);
 			return chatBotService.saveCustomerProfile(newCustomerProfile);
 		}else {
 			Date date = new Date();
@@ -179,6 +200,8 @@ public class Utils {
 			newCustomerProfile.setLinkingDate(cProfile.getLinkingDate());
 			newCustomerProfile.setCustomerLastSeen(timestamp);
 			newCustomerProfile.setLocale(cProfile.getLocale());
+			newCustomerProfile.setFirstName(cProfile.getFirstName());
+			newCustomerProfile.setLastName(lastName);
 		  return	chatBotService.saveCustomerProfile(newCustomerProfile);
 		}
 		}
@@ -220,6 +243,21 @@ public class Utils {
 			logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
 			e.printStackTrace();
 		}
+	}
+	
+	public static CustomerLinkingDial setLinkedDial(CustomerProfile customerProfile ,ChatBotService chatBotService,boolean isLinked,String msisdn) {
+		CustomerLinkingDial customerLinkingDial = new  CustomerLinkingDial();
+		Date linkingDate = new Date();
+		Timestamp timestamp = new Timestamp(linkingDate.getTime());
+		if(isLinked) {
+			customerLinkingDial.setUnlinkingDate(timestamp);
+			customerLinkingDial.setDial(msisdn);
+		}else {
+			customerLinkingDial.setLinkingDate(timestamp);
+			customerLinkingDial.setDial(customerProfile.getMsisdn());
+		}
+		customerLinkingDial.setCustomerProfile(customerProfile);
+		return chatBotService.saveCustomerLinkingDial(customerLinkingDial );
 	}
 
 	public static String encryptChannelParam(String url)

@@ -39,6 +39,8 @@ import com.chatbot.entity.BotInteraction;
 import com.chatbot.entity.BotInteractionMessage;
 import com.chatbot.entity.BotWebserviceMessage;
 import com.chatbot.entity.CustomerProfile;
+import com.chatbot.entity.FreeTextLogging;
+import com.chatbot.entity.InteractionLogging;
 import com.chatbot.entity.UserSelections;
 import com.chatbot.services.ChatBotService;
 import com.chatbot.services.UtilService;
@@ -106,13 +108,26 @@ public class ChatBotController {
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
 		}
 	}
-
+	private static int counter = 0; 
 	@RequestMapping(method = RequestMethod.POST)
 	public ResponseEntity<Void> handleCallback(@RequestBody final String payload, @RequestHeader("X-Hub-Signature") final String signature) {
-
+		counter++;
+		logger.debug("Counter "+counter);
 		logger.debug("Received Messenger Platform callback - payload: {} | signature: {}", payload, signature);
-		if (payload.contains("standby")) {
+		if (payload.contains(Constants.FB_JSON_KEY_STANDBY)) {
+			if(payload.contains(Constants.FB_JSON_KEY_MESSAGE)) {
+			String recivedFreeText = "";
 			logger.debug("Bot is standby mode thread controlle is with agent ");
+			logger.debug("PAYLOAD in case standby status "+payload);
+			JSONObject standbyJsonObject  = new JSONObject(payload);
+			BotInteraction botInteraction = chatBotService.findInteractionByPayload("freetext");
+			recivedFreeText = standbyJsonObject.getJSONArray(Constants.FB_JSON_KEY_ENTRY).getJSONObject(0).getJSONArray(Constants.FB_JSON_KEY_STANDBY).getJSONObject(0).getJSONObject(Constants.FB_JSON_KEY_MESSAGE).getString(Constants.FB_JSON_KEY_FREE_TEXT);
+			String senderId = standbyJsonObject.getJSONArray(Constants.FB_JSON_KEY_ENTRY).getJSONObject(0).getJSONArray(Constants.FB_JSON_KEY_STANDBY).getJSONObject(0).getJSONObject(Constants.FB_JSON_KEY_SENDER).getString(Constants.FB_JSON_KEY_ID);
+			CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
+			if(customerProfile!= null) {
+				InteractionLogging interactionLogging = Utils.interactionLogginghandling(customerProfile, botInteraction, chatBotService);
+				Utils.freeTextinteractionLogginghandling(interactionLogging, recivedFreeText , chatBotService);
+			}	}	
 			return ResponseEntity.status(HttpStatus.OK).build();
 		} else {
 			try {
@@ -123,7 +138,7 @@ public class ChatBotController {
 					if (event.isPostbackEvent()) {
 						PostbackEvent postbackEvent = event.asPostbackEvent();
 						String pLoad = postbackEvent.payload().get();
-						if (pLoad.equalsIgnoreCase("Talk to Agent")) {
+						if (pLoad.equalsIgnoreCase(Constants.PAYLOAD_TALK_TO_AGENT)) {
 							String phoneNumber = " _ ";
 							CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 							if(customerProfile != null ) {
@@ -135,7 +150,7 @@ public class ChatBotController {
 							}
 							callSecondryHandover(senderId,phoneNumber);
 						} else {
-							if(pLoad.equalsIgnoreCase("welcome again")){
+							if(pLoad.equalsIgnoreCase(Constants.PAYLOAD_WELCOME_AGAIN)){
 								logger.debug("TAke Thread Control");
 								try {
 								takeThreadControl(senderId);
@@ -147,12 +162,19 @@ public class ChatBotController {
 						}
 					} else if (event.isAccountLinkingEvent()) {
 						AccountLinkingEvent accountLinkingEvent = event.asAccountLinkingEvent();
+						logger.debug("ACCOUNT LINKING EVENT");
 						if ((accountLinkingEvent.status().equals(AccountLinkingEvent.Status.LINKED))) {
-							utilService.setLinkingInfoForCustomer(senderId, accountLinkingEvent.authorizationCode().get(), chatBotService);
+							String msisdnR = accountLinkingEvent.authorizationCode().get();
+							logger.debug("LINKED MSISDN "+msisdnR);
+							CustomerProfile customerProfile = utilService.setLinkingInfoForCustomer(senderId, accountLinkingEvent.authorizationCode().get(), chatBotService);
+							Utils.setLinkedDial(customerProfile, chatBotService,false,Constants.EMPTY_STRING);
 							handlePayload(userSelections.getOriginalPayLoad(), messenger, senderId);							
 						} else if (accountLinkingEvent.status().equals(AccountLinkingEvent.Status.UNLINKED)) {
-							Utils.userLogout(senderId, chatBotService);
-							handlePayload("welcome again", messenger, senderId);
+							String msisdn = chatBotService.getCustomerProfileBySenderId(senderId).getMsisdn();
+							logger.debug("UNLINKED MSISDN "+msisdn);
+							CustomerProfile customerProfile = Utils.userLogout(senderId, chatBotService);
+							Utils.setLinkedDial(customerProfile, chatBotService, true,msisdn);	
+							handlePayload(Constants.PAYLOAD_WELCOME_AGAIN, messenger, senderId);
 						}
 					} else if (event.isTextMessageEvent()) {
 						final TextMessageEvent textMessageEvent = event.asTextMessageEvent();
@@ -177,6 +199,9 @@ public class ChatBotController {
 		BotConfiguration secondryAppIdRaw = chatBotService.getBotConfigurationByKey(Constants.SECONDRY_APP_ID);
 		BotConfiguration informClientMSGRaw = chatBotService.getBotConfigurationByKey(Constants.TELL_CLIENT_WAIT_FOR_AGENT_RESPONSE);
 		String appId = secondryAppIdRaw.getValue();
+		if(phoneNumber == null) {
+			phoneNumber ="_";
+		}
 		MessagePayload messagePayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TextMessage.create(informClientMSGRaw.getValue()+" "+phoneNumber));
 		logger.debug("PASS THREAD CONTROL TO " + appId);
 		HandoverPayload handoverPayload = HandoverPayload.create(senderId, HandoverAction.pass_thread_control, appId, "information");
@@ -204,15 +229,17 @@ public class ChatBotController {
 	private void handlePayload(String payload, Messenger messenger, String senderId) {
 		String userFirstName = "";
 		String userLocale = "";
+		String lastName = "";
 		Utils.markAsTypingOn(messenger, senderId);
 		if (payload != null && payload.equalsIgnoreCase("welcome")) {
 			UserProfile userProfile = Utils.getUserProfile(senderId, messenger);
 			userFirstName = userProfile.firstName();
+			lastName = userProfile.lastName();
 			userLocale = userProfile.locale();
 		} else if (payload != null) {
 			payload = payloadSetting(payload, senderId);
 		}
-		CustomerProfile customerProfile = Utils.saveCustomerInformation(chatBotService, senderId, userLocale);
+		CustomerProfile customerProfile = Utils.saveCustomerInformation(chatBotService, senderId, userLocale,userFirstName,lastName);
 		String phoneNumber = Constants.EMPTY_STRING;
 		userLocale = customerProfile.getLocale();
 		logger.debug("Handle payload for customer " + customerProfile.toString());
@@ -409,6 +436,7 @@ public class ChatBotController {
 					if (payload.equalsIgnoreCase(Constants.PAYLOAD_POSTPAID_DIAL)) {
 						// lastBill
 						logger.debug("Billing profile Object ");
+						
 						JSONObject billProfile = new JSONObject(mapResponse.get(Constants.RESPONSE_KEY));
 						String billAmount = "";
 						if (!billProfile.get(Constants.JSON_KEY_BIILAMOUNT).equals(null)) {
@@ -418,14 +446,14 @@ public class ChatBotController {
 						logger.debug("Billing Amount " + billAmount);
 						if (billAmount == "") {
 							List<Button> buttons = new ArrayList<>();
-							Button backButton = PostbackButton.create(Utils.getLabelForBackButton(userLocale), "welcome again");
+							Button backButton = PostbackButton.create(Utils.getLabelForBackButton(userLocale), Constants.PAYLOAD_WELCOME_AGAIN);
 							buttons.add(backButton);
 							ButtonTemplate buttonTemplate = ButtonTemplate.create(createNOBillingProfileMessage(userLocale), buttons);
 							messagePayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(buttonTemplate));
 							messagePayloadList.add(messagePayload);
 							messageTypeId = 0L;
 						} else {
-							String billingParam = billProfile.getJSONArray("actionButtons").getJSONObject(0).getString("param");
+							String billingParam = billProfile.getJSONArray(Constants.JSON_KEY_ACTION_BUTTONS).getJSONObject(0).getString(Constants.JSON_KEY_PARAM);
 							logger.debug("Billing Param " + billingParam);
 							messagePayload = createBillingProfileInformationMessage(userLocale, senderId, billAmount);
 							messagePayloadList.add(messagePayload);
@@ -441,7 +469,7 @@ public class ChatBotController {
 								if (values.get(Constants.RESPONSE_STATUS_KEY).equals("200")) {
 									List<Button> buttons = new ArrayList<>();
 									JSONObject iframeObject = new JSONObject(values.get(Constants.RESPONSE_KEY));
-									String payBillButtonURl = iframeObject.getString("iframeUrl");
+									String payBillButtonURl = iframeObject.getString(Constants.JSON_KEY_IFRAME_BILL_PAYMENT_URL);
 									UrlButton payButton = UrlButton.create(Utils.getLabelForPayBillButton(userLocale), Utils.createUrl(payBillButtonURl));
 									PostbackButton backButton = PostbackButton.create(Utils.getLabelForBackButton(userLocale), Constants.PAYLOAD_CONSUMPTION);
 									buttons.add(payButton);

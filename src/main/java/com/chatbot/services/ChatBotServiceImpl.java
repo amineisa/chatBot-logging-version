@@ -16,8 +16,10 @@ import com.chatbot.dao.BotTextMessageRepo;
 import com.chatbot.dao.BotTextResponseMappingRepo;
 import com.chatbot.dao.BotWebserviceMappingRepo;
 import com.chatbot.dao.BotWebserviceMessageRepo;
+import com.chatbot.dao.CustomerLinkingDialDao;
 import com.chatbot.dao.CustomerProfileRepo;
 import com.chatbot.dao.EnabledCategoryConfigurationRepo;
+import com.chatbot.dao.FreeTextLoggingDao;
 import com.chatbot.dao.InteractionLoggingRepo;
 import com.chatbot.dao.InteractionMessageRepo;
 import com.chatbot.dao.PersistenceMenuButtonRepo;
@@ -33,8 +35,10 @@ import com.chatbot.entity.BotTextMessage;
 import com.chatbot.entity.BotTextResponseMapping;
 import com.chatbot.entity.BotWebserviceMapping;
 import com.chatbot.entity.BotWebserviceMessage;
+import com.chatbot.entity.CustomerLinkingDial;
 import com.chatbot.entity.CustomerProfile;
 import com.chatbot.entity.EnabledCategoryConfiguration;
+import com.chatbot.entity.FreeTextLogging;
 import com.chatbot.entity.InteractionLogging;
 import com.chatbot.entity.PersistenceMenuButton;
 
@@ -85,6 +89,11 @@ public class ChatBotServiceImpl implements ChatBotService {
 	@Autowired
 	private BotConfigurationRepo botConfigurationRepo;
 	
+	@Autowired
+	private FreeTextLoggingDao freeTextLoggingDao;
+	
+	@Autowired
+	private CustomerLinkingDialDao customerLinkingDialDao;
 	
 	
 	
@@ -242,6 +251,16 @@ public class ChatBotServiceImpl implements ChatBotService {
 	@Override
 	public BotConfiguration getBotConfigurationByKey(String key) {
 		return botConfigurationRepo.findBotConfigurationByKey(key);
+	}
+
+	@Override
+	public FreeTextLogging saveFreeTextLogging(FreeTextLogging freeTextLogging) {
+		return freeTextLoggingDao.save(freeTextLogging);
+	}
+
+	@Override
+	public CustomerLinkingDial saveCustomerLinkingDial(CustomerLinkingDial customerLinkingDial) {
+		return customerLinkingDialDao.save(customerLinkingDial);
 	}
 
 

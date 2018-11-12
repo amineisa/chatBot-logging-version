@@ -119,7 +119,7 @@ public class MessengerChatBot {
 		Optional<List<CallToAction>> otipnalPerBtns = Optional.of(callToActions);
 		// LocalizedPersistentMenu
 		LocalizedPersistentMenu localizedPersistentMenu = LocalizedPersistentMenu.create(local, false, otipnalPerBtns);
-		final PersistentMenu persistentMenu = PersistentMenu.create(true, otipnalPerBtns, localizedPersistentMenu);
+		final PersistentMenu persistentMenu = PersistentMenu.create(false, otipnalPerBtns, localizedPersistentMenu);
 		Optional<PersistentMenu> persistentMenus = Optional.of(persistentMenu);
 		// Start Button
 		BotButton startBtn = botButtonRepo.findButtonByButtonTypeId(Utils.ButtonTypeEnum.START.getValue());

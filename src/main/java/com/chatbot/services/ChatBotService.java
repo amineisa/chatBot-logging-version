@@ -14,8 +14,10 @@ import com.chatbot.entity.BotTextMessage;
 import com.chatbot.entity.BotTextResponseMapping;
 import com.chatbot.entity.BotWebserviceMapping;
 import com.chatbot.entity.BotWebserviceMessage;
+import com.chatbot.entity.CustomerLinkingDial;
 import com.chatbot.entity.CustomerProfile;
 import com.chatbot.entity.EnabledCategoryConfiguration;
+import com.chatbot.entity.FreeTextLogging;
 import com.chatbot.entity.InteractionLogging;
 import com.chatbot.entity.PersistenceMenuButton;
 
@@ -99,4 +101,11 @@ public interface ChatBotService {
 	public List<BotConfiguration> getBotAllConfiguration();
 	public BotConfiguration getBotConfigurationByKey(String key);
 	
+
+	// FreeTextLogging
+	public FreeTextLogging saveFreeTextLogging (FreeTextLogging freeTextLogging);
+	
+	
+	//CustomerLinkingDial
+	public CustomerLinkingDial saveCustomerLinkingDial(CustomerLinkingDial customerLinkingDial);
 }

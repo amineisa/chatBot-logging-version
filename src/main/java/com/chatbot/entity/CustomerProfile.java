@@ -36,8 +36,11 @@ public class CustomerProfile {
 	@Column(name = "CUSTOMER_LAST_SEEN")
 	private Date customerLastSeen;
 	
-	@Column
+	@Column(name="FIRST_NAME")
 	private String firstName;
+	
+	@Column(name="LAST_NAME")
+	private String lastName;
 	
 
 
@@ -103,10 +106,16 @@ public class CustomerProfile {
 
 	public void setCustomerLastSeen(Date customerLastSeen) {
 		this.customerLastSeen = customerLastSeen;
+	} 
+	
+	public String getLastName() {
+		return lastName;
 	}
 
-	 
-	
+	public void setLastName(String lastName) {
+		this.lastName = lastName;
+	}
+
 	@Override
 	public String toString() {
 		return "CustomerProfile [senderID=" + senderID + ", local=" + locale + ", msisdn=" + msisdn + ", linkingDate=" + linkingDate + ", firstInsertion=" + firstInsertion + ", lastGetProfileWSCall="

@@ -38,6 +38,8 @@ public class Constants {
 	public static final String PAYLOAD_POSTPAID_DIAL = "postpaid";
 	public static final String PAYLOAD_BUY_ADDONS_ROOT = "buy addons root";
 	public static final String PAYLOAD_UNEXPECTED_PAYLOAD = "unexpected";
+	public static final String PAYLOAD_TALK_TO_AGENT = "Talk to Agent";
+	public static final String PAYLOAD_WELCOME_AGAIN = "welcome again";
 
 	public static final String NOTELIGIBLE_ELEMENT_TITLE_EN = "Sorry !";
 	public static final String NOTELIGIBLE_ELEMENT_TITLE_AR = "! عفوا";
@@ -106,6 +108,19 @@ public class Constants {
 	public static final String JSON_KEY_RENEWAL_DATE = "renewalDate";
 	public static final String JSON_KEY_CONSUMPTION_DETAILS_LIST = "consumptionDetailsList";
 	public static final String JSON_KEY_CHILED_ELIGIBLE_PRODUCTS = "childEligibleProductModels";
+	public static final String JSON_KEY_ACTION_BUTTONS="actionButtons";
+	public static final String JSON_KEY_PARAM = "param";
+	public static final String JSON_KEY_IFRAME_BILL_PAYMENT_URL = "iframeUrl";
+	
+	public static final String FB_JSON_KEY_STANDBY ="standby";
+	public static final String FB_JSON_KEY_MESSAGE = "message";
+	public static final String FB_JSON_KEY_ENTRY = "entry";
+	public static final String FB_JSON_KEY_SENDER = "sender";
+	public static final String FB_JSON_KEY_ID = "id";
+	public static final String FB_JSON_KEY_FREE_TEXT = "text";
+	
+	
+
 	
 	public static final String RESPONSE_STATUS_KEY = "status";
 	public static final String RESPONSE_KEY = "response" ;

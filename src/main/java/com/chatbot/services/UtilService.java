@@ -664,7 +664,7 @@ public class UtilService {
 		return text;
 	}
 
-	public void setLinkingInfoForCustomer(String senderId, String customerDial, ChatBotService chatBotService) {
+	public CustomerProfile setLinkingInfoForCustomer(String senderId, String customerDial, ChatBotService chatBotService) {
 		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 		CustomerProfile newCustomerProfile = new CustomerProfile();
 		Date date = new Date();
@@ -673,14 +673,15 @@ public class UtilService {
 		newCustomerProfile.setFirstInsertion(customerProfile.getFirstInsertion());
 		newCustomerProfile.setLinkingDate(timestamp);
 		newCustomerProfile.setLocale(customerProfile.getLocale());
+		newCustomerProfile.setFirstName(customerProfile.getFirstName());
+		newCustomerProfile.setLastName(customerProfile.getLastName());
 		if (customerDial.startsWith("0") && customerDial.length() > 10) {
 			newCustomerProfile.setMsisdn(customerDial);
 		} else {
 			newCustomerProfile.setMsisdn(Constants.EMPTY_STRING);
 		}
 		newCustomerProfile.setSenderID(senderId);
-
-		chatBotService.saveCustomerProfile(newCustomerProfile);
+		return chatBotService.saveCustomerProfile(newCustomerProfile);
 	}
 
 	public void setCustomerProfileLocal(CustomerProfile customerProfile, ChatBotService chatBotService,String locale) {
@@ -694,6 +695,8 @@ public class UtilService {
 		customerProfileForLocal.setLocale(locale);
 		customerProfileForLocal.setMsisdn(customerProfile.getMsisdn());
 		customerProfileForLocal.setSenderID(customerProfile.getSenderID());
+		customerProfileForLocal.setFirstName(customerProfile.getFirstName());
+		customerProfileForLocal.setLastName(customerProfile.getLastName());
 		chatBotService.saveCustomerProfile(customerProfileForLocal);
 	}
 
