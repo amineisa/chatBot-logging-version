@@ -114,11 +114,12 @@ public class MessengerChatBot {
 		List<CallToAction> callToActions = getMasterButtons();
 
 		// supported Local as English Language
-		SupportedLocale local = SupportedLocale.ar_AR;
+		SupportedLocale arlocal = SupportedLocale.ar_AR;
+		SupportedLocale enlocal = SupportedLocale.en_US;
 		// Optional of call To Action list
 		Optional<List<CallToAction>> otipnalPerBtns = Optional.of(callToActions);
 		// LocalizedPersistentMenu
-		LocalizedPersistentMenu localizedPersistentMenu = LocalizedPersistentMenu.create(local, false, otipnalPerBtns);
+		LocalizedPersistentMenu localizedPersistentMenu = LocalizedPersistentMenu.create(arlocal, false, otipnalPerBtns);
 		final PersistentMenu persistentMenu = PersistentMenu.create(false, otipnalPerBtns, localizedPersistentMenu);
 		Optional<PersistentMenu> persistentMenus = Optional.of(persistentMenu);
 		// Start Button
@@ -127,7 +128,7 @@ public class MessengerChatBot {
 		Optional<StartButton> opStartButton = Optional.of(startButton);
 		// Greeting Section
 		String greetingMessage = startBtn.getBotText().getArabicText();
-		LocalizedGreeting localizedGreeting = LocalizedGreeting.create(local, greetingMessage);
+		LocalizedGreeting localizedGreeting = LocalizedGreeting.create(enlocal, greetingMessage);
 		Greeting greeting = Greeting.create(Constants.EMPTY_STRING, new LocalizedGreeting[] { localizedGreeting });
 		Optional<Greeting> optionalGreeting = Optional.of(greeting);
 		return MessengerSettings.create(opStartButton, optionalGreeting, persistentMenus, empty(), empty(), empty(), empty());

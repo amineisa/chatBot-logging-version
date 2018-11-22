@@ -33,6 +33,15 @@ public class FreeTextLogging implements Serializable {
 	@Column(name="RECEIVING_TIME")
 	private  Date receivingTime ;
 	
+	@Column(name="CUSTOMER_INTEND")
+	private String intend;
+	
+	@Column(name="CUSTOMER_ENTITY")
+	private String entity;
+	
+	@Column(name="INCLUDED")
+	private boolean included;
+	
 	@OneToOne
 	@JoinColumn(name = "INTERACTION_LOGGING")
 	private InteractionLogging interactionLogging;
@@ -71,10 +80,30 @@ public class FreeTextLogging implements Serializable {
 		this.interactionLogging = interactionLogging;
 	}
 
-	
-	
-	
-	
+	public String getIntend() {
+		return intend;
+	}
+
+	public void setIntend(String intend) {
+		this.intend = intend;
+	}
+
+	public String getEntity() {
+		return entity;
+	}
+
+	public void setEntity(String entity) {
+		this.entity = entity;
+	}
+
+	public boolean isIncluded() {
+		return included;
+	}
+
+	public void setIncluded(boolean included) {
+		this.included = included;
+	}
+
 	
 	
 }

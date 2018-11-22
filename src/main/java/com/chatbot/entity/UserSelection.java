@@ -1,32 +1,59 @@
 package com.chatbot.entity;
 
-import java.util.ArrayList;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.NamedQuery;
+import javax.persistence.Table;
 
-public class UserSelections {
 
+
+@Entity
+@Table(name="USER_SELECTIONS")
+@NamedQuery( query="SELECT u FROM UserSelection u ", name = "UserSelection.findAll")
+public class UserSelection {
+
+	@Id
+	@Column(name="SENDER_ID")
+	private String senderId;
+	
+	@Column(name="ORIGINAL_PAYLOAD")
 	private String originalPayLoad;
 
+	@Column(name="PHONE_NUMBER")
 	private String phoneNumber;
 
+	@Column(name="PRODUCT_ID_OPERATION_NAME")
 	private String productIdAndOperationName;
 
+	@Column(name="AADON_ID")
 	private String addonId;
 
-	private String billingProfileParam; 
-	
-	private String lastPayLoad;
-
+	@Column(name="PARENT_PAYLOAD")
 	private String parentPayLoad;
 
+	@Column(name="PRODUCT_ID_FOR_RENEW")
 	private String productIdForRenew;
 
+	@Column(name="IS_SUBSCRIBE")
 	private boolean isSubscribed;
 
-	private ArrayList<String> parametersListForRelatedProducts;
+	@Column(name="PARAMETER_FOR_RP")
+	private String parametersListForRelatedProducts;
 
-	private ArrayList<String> consumptionNames;
+	/*@Column(name="CONSUMPTION_NAME")
+	private String consumptionNames;*/
 
+	@Column(name="FREE_TEXT")
 	private String freeText;
+	
+	public String getSenderId() {
+		return senderId;
+	}
+
+	public void setSenderId(String senderId) {
+		this.senderId = senderId;
+	}
 
 	public String getOriginalPayLoad() {
 		return originalPayLoad;
@@ -60,13 +87,6 @@ public class UserSelections {
 		this.addonId = addonId;
 	}
 
-	public String getLastPayLoad() {
-		return lastPayLoad;
-	}
-
-	public void setLastPayLoad(String lastPayLoad) {
-		this.lastPayLoad = lastPayLoad;
-	}
 
 	public String getParentPayLoad() {
 		return parentPayLoad;
@@ -84,38 +104,22 @@ public class UserSelections {
 		this.productIdForRenew = productIdForRenew;
 	}
 
-	public ArrayList<String> getParametersListForRelatedProducts() {
+	public String getParametersListForRelatedProducts() {
 		return parametersListForRelatedProducts;
 	}
 
-	public void setParametersListForRelatedProducts(ArrayList<String> parametersListForRelatedProducts) {
+	public void setParametersListForRelatedProducts(String parametersListForRelatedProducts) {
 		this.parametersListForRelatedProducts = parametersListForRelatedProducts;
 	}
 
-	public ArrayList<String> getConsumptionNames() {
+	/*public String getConsumptionNames() {
 		return consumptionNames;
 	}
 
-	public void setConsumptionNames(ArrayList<String> consumptionNames) {
+	public void setConsumptionNames(String consumptionNames) {
 		this.consumptionNames = consumptionNames;
-	}
+	}*/
 
-	public void setFreeText(String freeText) {
-		this.freeText = freeText;
-	}
-
-	public String getFreeText() {
-		return freeText;
-	}
-	
-
-	public String getBillingProfileParam() {
-		return billingProfileParam;
-	}
-
-	public void setBillingProfileParam(String billingProfileParam) {
-		this.billingProfileParam = billingProfileParam;
-	}
 
 	public boolean isSubscribed() {
 		return isSubscribed;
@@ -124,11 +128,21 @@ public class UserSelections {
 	public void setSubscribed(boolean isSubscribed) {
 		this.isSubscribed = isSubscribed;
 	}
+	
+	
+
+	public String getFreeText() {
+		return freeText;
+	}
+
+	public void setFreeText(String freeText) {
+		this.freeText = freeText;
+	}
 
 	@Override
 	public String toString() {
 		return " Original PayLoad " + this.getOriginalPayLoad() + " Phone Number " + this.getPhoneNumber() + " ProductId And OperationName " + this.getProductIdAndOperationName() + " Addon Id "
-				+ this.getAddonId() + " last PayLoad " + this.getLastPayLoad() + " Parent PayLoad " + this.getParentPayLoad() + " ProductID For Renew " + this.getProductIdForRenew();
+				+ this.getAddonId() + " last PayLoad " + this.getParentPayLoad() + " ProductID For Renew " + this.getProductIdForRenew();
 	}
 
 }

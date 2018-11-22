@@ -20,6 +20,7 @@ import com.chatbot.entity.EnabledCategoryConfiguration;
 import com.chatbot.entity.FreeTextLogging;
 import com.chatbot.entity.InteractionLogging;
 import com.chatbot.entity.PersistenceMenuButton;
+import com.chatbot.entity.UserSelection;
 
 
 public interface ChatBotService {
@@ -92,7 +93,9 @@ public interface ChatBotService {
 	
 	public EnabledCategoryConfiguration getEnabledCategoryConfigurationDaoById(Long id);
 
-	
+	//UserSelection
+    public UserSelection getUserSelectionBySenderId(String senderId);
+	public void updateUserSelections(UserSelection userSelection);
 	// Message
 	public BotInteractionMessage findMessageByInteraction(BotInteraction botInteraction);
 	
@@ -108,4 +111,5 @@ public interface ChatBotService {
 	
 	//CustomerLinkingDial
 	public CustomerLinkingDial saveCustomerLinkingDial(CustomerLinkingDial customerLinkingDial);
+	public CustomerLinkingDial getCustomerLinkingDialById(String dial);
 }

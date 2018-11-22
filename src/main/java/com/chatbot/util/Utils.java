@@ -1,6 +1,5 @@
 package com.chatbot.util;
 
-
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -51,7 +50,6 @@ public class Utils {
 
 	private static final Logger logger = LoggerFactory.getLogger(UtilService.class);
 
-	
 	public enum ButtonTypeEnum {
 		START(1L), POSTBACK(2l), URL(3l), NESTED(4L), LOGIN(5L), LOGOUT(6L), CALL(7L);
 		private final Long buttonTypeId;
@@ -64,9 +62,6 @@ public class Utils {
 			return buttonTypeId;
 		}
 	}
-	
-	
-	
 
 	public enum MessageTypeEnum {
 
@@ -148,19 +143,16 @@ public class Utils {
 		return chatBotService.saveInteractionLogging(interactionLogging);
 	}
 
-	public static void freeTextinteractionLogginghandling( InteractionLogging interactionLogging,String text,ChatBotService chatBotService) {
+	public static void freeTextinteractionLogginghandling(InteractionLogging interactionLogging, String text, ChatBotService chatBotService) {
 		Date date = new Date();
 		Timestamp timeStamp = new Timestamp(date.getTime());
 		FreeTextLogging freeTextLogging = new FreeTextLogging();
 		freeTextLogging.setInteractionLogging(interactionLogging);
 		freeTextLogging.setReceivingTime(timeStamp);
 		freeTextLogging.setRecivedFreeText(text);
-	    chatBotService.saveFreeTextLogging(freeTextLogging);
+		chatBotService.saveFreeTextLogging(freeTextLogging);
 	}
-	
-	
-	
-	
+
 	public static CustomerProfile userLogout(final String senderId, ChatBotService chatBotService) {
 		CustomerProfile storedCustomerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 		CustomerProfile logoutCustomerProfile = new CustomerProfile();
@@ -176,9 +168,9 @@ public class Utils {
 		return chatBotService.saveCustomerProfile(logoutCustomerProfile);
 	}
 
-	public static CustomerProfile saveCustomerInformation(ChatBotService chatBotService, String senderId,String userLocale,String firstName,String lastName) {
+	public static CustomerProfile saveCustomerInformation(ChatBotService chatBotService, String senderId, String userLocale, String firstName, String lastName) {
 		CustomerProfile cProfile = chatBotService.getCustomerProfileBySenderId(senderId);
-		if(cProfile == null) {
+		if (cProfile == null) {
 			CustomerProfile newCustomerProfile = new CustomerProfile();
 			Date date = new Date();
 			Timestamp timestamp = new Timestamp(date.getTime());
@@ -190,7 +182,7 @@ public class Utils {
 			newCustomerProfile.setFirstName(firstName);
 			newCustomerProfile.setLastName(lastName);
 			return chatBotService.saveCustomerProfile(newCustomerProfile);
-		}else {
+		} else {
 			Date date = new Date();
 			CustomerProfile newCustomerProfile = new CustomerProfile();
 			Timestamp timestamp = new Timestamp(date.getTime());
@@ -202,9 +194,9 @@ public class Utils {
 			newCustomerProfile.setLocale(cProfile.getLocale());
 			newCustomerProfile.setFirstName(cProfile.getFirstName());
 			newCustomerProfile.setLastName(lastName);
-		  return	chatBotService.saveCustomerProfile(newCustomerProfile);
+			return chatBotService.saveCustomerProfile(newCustomerProfile);
 		}
-		}
+	}
 
 	public static void markAsSeen(Messenger messenger, String userId) {
 		try {
@@ -244,20 +236,29 @@ public class Utils {
 			e.printStackTrace();
 		}
 	}
-	
-	public static CustomerLinkingDial setLinkedDial(CustomerProfile customerProfile ,ChatBotService chatBotService,boolean isLinked,String msisdn) {
-		CustomerLinkingDial customerLinkingDial = new  CustomerLinkingDial();
+
+	public static CustomerLinkingDial setLinkedDial(CustomerProfile customerProfile, ChatBotService chatBotService) {
+		
+		CustomerLinkingDial customerLinkingDial = new CustomerLinkingDial();
 		Date linkingDate = new Date();
 		Timestamp timestamp = new Timestamp(linkingDate.getTime());
-		if(isLinked) {
-			customerLinkingDial.setUnlinkingDate(timestamp);
-			customerLinkingDial.setDial(msisdn);
-		}else {
-			customerLinkingDial.setLinkingDate(timestamp);
-			customerLinkingDial.setDial(customerProfile.getMsisdn());
-		}
+		customerLinkingDial.setUnlinkingDate(timestamp);
+		customerLinkingDial.setLinkingDate(timestamp);
+		customerLinkingDial.setDial(customerProfile.getMsisdn());
 		customerLinkingDial.setCustomerProfile(customerProfile);
-		return chatBotService.saveCustomerLinkingDial(customerLinkingDial );
+		return chatBotService.saveCustomerLinkingDial(customerLinkingDial);
+	}
+	
+	public static CustomerLinkingDial updateUnlinkindDate(ChatBotService chatBotService, String msisdn) {
+		Date unLinkingDate = new Date();
+		Timestamp unLinkingTime = new Timestamp(unLinkingDate.getTime());
+		CustomerLinkingDial storedObject = chatBotService.getCustomerLinkingDialById(msisdn); 
+		CustomerLinkingDial newCustomerLinkingDial = new  CustomerLinkingDial();
+		newCustomerLinkingDial.setCustomerProfile(storedObject.getCustomerProfile());
+		newCustomerLinkingDial.setDial(storedObject.getDial());
+		newCustomerLinkingDial.setLinkingDate(storedObject.getLinkingDate());
+		newCustomerLinkingDial.setUnlinkingDate(unLinkingTime);
+		return chatBotService.saveCustomerLinkingDial(newCustomerLinkingDial);
 	}
 
 	public static String encryptChannelParam(String url)
@@ -282,7 +283,7 @@ public class Utils {
 		return toBeSentParams;
 	}
 
-	public static Map<String, String> callGetWebServiceByRestTemplate(URI uri,ChatBotService chatBotService) {
+	public static Map<String, String> callGetWebServiceByRestTemplate(URI uri, ChatBotService chatBotService) {
 		Map<String, String> responseMap = new HashMap<>();
 		HttpHeaders headers = new HttpHeaders();
 		headers.set("Accept", MediaType.APPLICATION_JSON_UTF8_VALUE);
@@ -299,7 +300,7 @@ public class Utils {
 			responseMap.put(Constants.RESPONSE_STATUS_KEY, String.valueOf(statusId));
 			logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
 			e.printStackTrace();
-			
+
 		}
 		return responseMap;
 	}
@@ -311,7 +312,8 @@ public class Utils {
 			String dialNumber = customerProfile.getMsisdn();
 
 			String paramChannel = Utils.encryptChannelParam(Constants.URL_PARAM_MSISDN_KEY + dialNumber + Constants.URL_TIME_CHANNEL_KEY + Constants.CHANEL_PARAM);
-			String realParameter = Constants.URL_PARAM_CHANNEL_KEY + paramChannel;
+			String realParameter ="paramChannel:74524b535742674c35536b693443454c696f45486f645a3676654b59756f4d573479677558446d673266416944446258793530367634734b43625a3868556b76467659472b706c657a5764590a6979747a4c6f594266413d3d";
+					//Constants.URL_PARAM_CHANNEL_KEY + paramChannel;
 			uri = new URI(botWebserviceMessage.getWsUrl() + "?dial=" + realParameter);
 		} catch (URISyntaxException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException | UnsupportedEncodingException e1) {
 			logger.error(Constants.LOGGER_DIAL_IS + phoneNumber + Constants.LOGGER_SENDER_ID + senderId + Constants.LOGGER_EXCEPTION_MESSAGE + e1);
@@ -333,15 +335,14 @@ public class Utils {
 		}
 		return "Pay Now";
 	}
-	
-	
+
 	public static String getTitleForPayBillButton(String locale) {
 		if (locale.contains(Constants.ARABIC_LOCAL)) {
 			return "هل تريد ان تدفع الان ";
 		}
 		return "Do you want to pay yor bill now ?";
 	}
-	
+
 	public static String getLabelForBackButton(String locale) {
 		if (locale.contains(Constants.ARABIC_LOCAL)) {
 			return "عودة";
@@ -372,15 +373,13 @@ public class Utils {
 		}
 		return userProfile;
 	}
-	
-	private static  ClientHttpRequestFactory getClientHttpRequestFactory(ChatBotService chatBotService) {
-		String sTimeOut  = chatBotService.getBotConfigurationByKey(Constants.REQUEST_TIME_OUT_VALUE).getValue();
+
+	private static ClientHttpRequestFactory getClientHttpRequestFactory(ChatBotService chatBotService) {
+		String sTimeOut = chatBotService.getBotConfigurationByKey(Constants.REQUEST_TIME_OUT_VALUE).getValue();
 		int timeout = Integer.parseInt(sTimeOut);
-	    logger.debug("Time Out "+timeout);
-	    HttpComponentsClientHttpRequestFactory clientHttpRequestFactory =
-	      new HttpComponentsClientHttpRequestFactory();
-	    clientHttpRequestFactory.setConnectTimeout(timeout);
-	    return clientHttpRequestFactory;
+		logger.debug("Time Out " + timeout);
+		HttpComponentsClientHttpRequestFactory clientHttpRequestFactory = new HttpComponentsClientHttpRequestFactory();
+		clientHttpRequestFactory.setConnectTimeout(timeout);
+		return clientHttpRequestFactory;
 	}
 }
-

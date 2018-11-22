@@ -40,7 +40,7 @@ public class Constants {
 	public static final String PAYLOAD_UNEXPECTED_PAYLOAD = "unexpected";
 	public static final String PAYLOAD_TALK_TO_AGENT = "Talk to Agent";
 	public static final String PAYLOAD_WELCOME_AGAIN = "welcome again";
-
+	public static final String PAYLOAD_FREE_TEXT = "freetext";
 	public static final String NOTELIGIBLE_ELEMENT_TITLE_EN = "Sorry !";
 	public static final String NOTELIGIBLE_ELEMENT_TITLE_AR = "! عفوا";
 
