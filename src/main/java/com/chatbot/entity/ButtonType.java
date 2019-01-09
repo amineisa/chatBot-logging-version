@@ -10,6 +10,11 @@ import javax.persistence.Table;
 @Entity
 @Table(name ="Bot_BUTTON_TYPES")
 public class ButtonType implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	@Id
 	@Column (name="ID")
 	private Long id;

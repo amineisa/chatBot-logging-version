@@ -1,51 +1,51 @@
 package com.chatbot.entity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
+import java.io.Serializable;
 
 
-
-@Entity
+/*@Entity
 @Table(name="USER_SELECTIONS")
-@NamedQuery( query="SELECT u FROM UserSelection u ", name = "UserSelection.findAll")
-public class UserSelection {
+@NamedQuery( query="SELECT u FROM UserSelection u ", name = "UserSelection.findAll")*/
+public class UserSelection implements Serializable{
 
-	@Id
-	@Column(name="SENDER_ID")
+	private static final long serialVersionUID = 1L;
+	
+	/*@Id
+	@Column(name="SENDER_ID")*/
 	private String senderId;
 	
-	@Column(name="ORIGINAL_PAYLOAD")
+	/*@Column(name="ORIGINAL_PAYLOAD")*/
 	private String originalPayLoad;
 
-	@Column(name="PHONE_NUMBER")
+	/*@Column(name="PHONE_NUMBER")*/
 	private String phoneNumber;
 
-	@Column(name="PRODUCT_ID_OPERATION_NAME")
+	/*@Column(name="PRODUCT_ID_OPERATION_NAME")*/
 	private String productIdAndOperationName;
 
-	@Column(name="AADON_ID")
+	/*@Column(name="AADON_ID")*/
 	private String addonId;
 
-	@Column(name="PARENT_PAYLOAD")
+	/*@Column(name="PARENT_PAYLOAD")*/
 	private String parentPayLoad;
 
-	@Column(name="PRODUCT_ID_FOR_RENEW")
+	/*@Column(name="PRODUCT_ID_FOR_RENEW")*/
 	private String productIdForRenew;
 
-	@Column(name="IS_SUBSCRIBE")
+	/*@Column(name="IS_SUBSCRIBE")*/
 	private boolean isSubscribed;
 
-	@Column(name="PARAMETER_FOR_RP")
+	/*@Column(name="PARAMETER_FOR_RP")*/
 	private String parametersListForRelatedProducts;
 
-	/*@Column(name="CONSUMPTION_NAME")
-	private String consumptionNames;*/
-
-	@Column(name="FREE_TEXT")
+	/*@Column(name="FREE_TEXT")*/
 	private String freeText;
+	
+	/*@Column(name="MIGRATION_ID")*/
+	private String rateplanNameForMigration;
+	
+	/*@Column(name="MIGRATION_NAME")*/
+	private int rateplanIdForMigration;
 	
 	public String getSenderId() {
 		return senderId;
@@ -112,15 +112,6 @@ public class UserSelection {
 		this.parametersListForRelatedProducts = parametersListForRelatedProducts;
 	}
 
-	/*public String getConsumptionNames() {
-		return consumptionNames;
-	}
-
-	public void setConsumptionNames(String consumptionNames) {
-		this.consumptionNames = consumptionNames;
-	}*/
-
-
 	public boolean isSubscribed() {
 		return isSubscribed;
 	}
@@ -139,10 +130,23 @@ public class UserSelection {
 		this.freeText = freeText;
 	}
 
-	@Override
-	public String toString() {
-		return " Original PayLoad " + this.getOriginalPayLoad() + " Phone Number " + this.getPhoneNumber() + " ProductId And OperationName " + this.getProductIdAndOperationName() + " Addon Id "
-				+ this.getAddonId() + " last PayLoad " + this.getParentPayLoad() + " ProductID For Renew " + this.getProductIdForRenew();
+	public String getRateplanNameForMigration() {
+		return rateplanNameForMigration;
 	}
+
+	public void setRateplanNameForMigration(String rateplanNameForMigration) {
+		this.rateplanNameForMigration = rateplanNameForMigration;
+	}
+
+	public int getRateplanIdForMigration() {
+		return rateplanIdForMigration;
+	}
+
+	public void setRateplanIdForMigration(int rateplanIdForMigration) {
+		this.rateplanIdForMigration = rateplanIdForMigration;
+	}
+
+	
+	
 
 }

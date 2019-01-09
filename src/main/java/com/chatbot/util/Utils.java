@@ -26,8 +26,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.ClientHttpRequestFactory;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 import com.chatbot.entity.BotButton;
@@ -80,7 +78,7 @@ public class Utils {
 	// Get Text Value
 	public static String getTextValueForButtonLabel(String local, BotButton botButton) {
 		String text = Constants.EMPTY_STRING;
-		if (local.equalsIgnoreCase(Constants.ARABIC_LOCAL)) {
+		if (local.equalsIgnoreCase(Constants.LOCALE_AR)) {
 			text = botButton.getBotText().getArabicText();
 		} else {
 			text = botButton.getBotText().getEnglishText();
@@ -290,7 +288,7 @@ public class Utils {
 		int statusId = 0;
 		try {
 			HttpEntity entity = new HttpEntity<>(headers);
-			RestTemplate restTemplate = new RestTemplate(getClientHttpRequestFactory(chatBotService));
+			RestTemplate restTemplate = new RestTemplate(/*getClientHttpRequestFactory(chatBotService)*/);
 			ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.GET, entity, String.class);
 			statusId = response.getStatusCodeValue();
 			responseMap.put(Constants.RESPONSE_STATUS_KEY, String.valueOf(statusId));
@@ -312,8 +310,8 @@ public class Utils {
 			String dialNumber = customerProfile.getMsisdn();
 
 			String paramChannel = Utils.encryptChannelParam(Constants.URL_PARAM_MSISDN_KEY + dialNumber + Constants.URL_TIME_CHANNEL_KEY + Constants.CHANEL_PARAM);
-			String realParameter ="paramChannel:74524b535742674c35536b693443454c696f45486f645a3676654b59756f4d573479677558446d673266416944446258793530367634734b43625a3868556b76467659472b706c657a5764590a6979747a4c6f594266413d3d";
-					//Constants.URL_PARAM_CHANNEL_KEY + paramChannel;
+			String realParameter =Constants.URL_PARAM_CHANNEL_KEY + paramChannel;
+					//"paramChannel:74524b535742674c35536b693443454c696f45486f645a3676654b59756f4d573479677558446d673266416944446258793530367634734b43625a3868556b76467659472b706c657a5764590a6979747a4c6f594266413d3d";
 			uri = new URI(botWebserviceMessage.getWsUrl() + "?dial=" + realParameter);
 		} catch (URISyntaxException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException | UnsupportedEncodingException e1) {
 			logger.error(Constants.LOGGER_DIAL_IS + phoneNumber + Constants.LOGGER_SENDER_ID + senderId + Constants.LOGGER_EXCEPTION_MESSAGE + e1);
@@ -323,42 +321,42 @@ public class Utils {
 	}
 
 	public static String getLabelForViewButton(String locale) {
-		if (locale.contains(Constants.ARABIC_LOCAL)) {
+		if (locale.contains(Constants.LOCALE_AR)) {
 			return "عرض";
 		}
 		return "View";
 	}
 
 	public static String getLabelForPayBillButton(String locale) {
-		if (locale.contains(Constants.ARABIC_LOCAL)) {
+		if (locale.contains(Constants.LOCALE_AR)) {
 			return "ادفع الان";
 		}
 		return "Pay Now";
 	}
 
 	public static String getTitleForPayBillButton(String locale) {
-		if (locale.contains(Constants.ARABIC_LOCAL)) {
+		if (locale.contains(Constants.LOCALE_AR)) {
 			return "هل تريد ان تدفع الان ";
 		}
 		return "Do you want to pay yor bill now ?";
 	}
 
 	public static String getLabelForBackButton(String locale) {
-		if (locale.contains(Constants.ARABIC_LOCAL)) {
+		if (locale.contains(Constants.LOCALE_AR)) {
 			return "عودة";
 		}
 		return "Back";
 	}
 
 	public static String getLabelForٍSubscribeButton(String locale) {
-		if (locale.contains(Constants.ARABIC_LOCAL)) {
+		if (locale.contains(Constants.LOCALE_AR)) {
 			return "اشترك";
 		}
 		return "Subscribe";
 	}
 
 	public static String informUserThatHeDoesnotSubscribeAtAnyMIBundle(String locale) {
-		if (locale.contains(Constants.ARABIC_LOCAL)) {
+		if (locale.contains(Constants.LOCALE_AR)) {
 			return "نأسف أنت غير مشترك بأي من باقات الأنترنت .سوف نتأكد من الباقات المتاحة لرقمك";
 		}
 		return "Sorry ,You are not subscribe to any MI Bundle. We will check available MI bundles for your number";
@@ -374,12 +372,40 @@ public class Utils {
 		return userProfile;
 	}
 
-	private static ClientHttpRequestFactory getClientHttpRequestFactory(ChatBotService chatBotService) {
+	/*private static ClientHttpRequestFactory getClientHttpRequestFactory(ChatBotService chatBotService) {
 		String sTimeOut = chatBotService.getBotConfigurationByKey(Constants.REQUEST_TIME_OUT_VALUE).getValue();
 		int timeout = Integer.parseInt(sTimeOut);
 		logger.debug("Time Out " + timeout);
 		HttpComponentsClientHttpRequestFactory clientHttpRequestFactory = new HttpComponentsClientHttpRequestFactory();
 		clientHttpRequestFactory.setConnectTimeout(timeout);
 		return clientHttpRequestFactory;
+	}*/
+	
+	
+	public static String moreButtonLabel(String locale) {
+		if(locale.contains(Constants.LOCALE_AR)) {
+			return Constants.MORE_BUTTON_LABEL_AR;
+		}else {
+			return Constants.MORE_BUTTON_LABEL_EN;
+		}
+		
 	}
+	
+	public static String moreElementTitle(String locale) {
+		if(locale.contains(Constants.LOCALE_AR)) {
+			return	"المزيد من الباقات ";
+		}else {
+			return "More rateplans";
+		}
+	}
+	
+	public static String moreElementSubTitle(String locale) {
+		if(locale.contains(Constants.LOCALE_AR)) {
+			return	"المزيد من الباقات الاخري ";
+		}else {
+			return "Check more rateplans";
+		}
+}
+	
+	
 }

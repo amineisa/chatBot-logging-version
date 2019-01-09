@@ -1,9 +1,15 @@
 package com.chatbot.controller;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -39,14 +45,17 @@ import com.github.messenger4j.webhook.event.TextMessageEvent;
 import com.github.messenger4j.webhook.event.attachment.Attachment;
 import com.github.messenger4j.webhook.event.common.Referral;
 
+
 @RestController
 @RequestMapping("/callback")
 @SessionScope
 public class ChatBotController {
 
-	@Autowired
-	private final Messenger messenger;
+/*	@Autowired
+	private final Messenger messenger;*/
 
+	
+	
 	@Autowired
 	private ChatBotService chatBotService;
 
@@ -55,32 +64,48 @@ public class ChatBotController {
 	
 	@Autowired
 	InteractionHandlingService interactionHandlingService ;
-
+	
+	@Autowired
+	Map<String,Messenger> messengersObjectsMap;
+	
+	Messenger messenger ;
+	
 	
 	private static int counter = 0; 
 	//private static CacheHelper<String, Object> wsResponseCache = new CacheHelper<>("usersResponses");
 
 	//private static CacheHelper<String, Object> userSelectionsCache = new CacheHelper<>("usersSelections");
 
+
+	
 	private static final Logger logger = LoggerFactory.getLogger(ChatBotController.class);
 
-	@Autowired
+	/*@Autowired
 	public ChatBotController(final Messenger sendClient) {
 		this.messenger = sendClient;
 
+	}*/
+	
+	@Autowired
+	 public ChatBotController(final Map<String,Messenger> messengersObjectsMap ) {
+		this.messengersObjectsMap = messengersObjectsMap;
 	}
 
 	@RequestMapping(method = RequestMethod.GET)
-	public ResponseEntity<String> verifyWebhook(@RequestParam("hub.mode") final String mode, @RequestParam("hub.verify_token") final String verifyToken,
+	public ResponseEntity<String> verifyWebhook( HttpServletRequest req ,@RequestParam("hub.mode") final String mode, @RequestParam("hub.verify_token") final String verifyToken,
 			@RequestParam("hub.challenge") final String challenge) {
 		logger.debug("Received Webhook event verification request - mode: {} | verifyToken: {} | challenge: {}", mode, verifyToken, challenge);
 		try {
-			this.messenger.verifyWebhook(mode, verifyToken);
+/*			String url = req.getRequestURI();
+			String body = req.getReader().lines().reduce("", (accumulator, actual) -> accumulator + actual);
+			req.getParameterNames();*/
+			this.messenger = this.messengersObjectsMap.get("347837262369425"); 
+			messenger.verifyWebhook(mode, verifyToken);
 			return ResponseEntity.status(HttpStatus.OK).body(challenge);
 		} catch (MessengerVerificationException e) {
 			logger.warn("Webhook verification failed: {}", e.getMessage());
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
-		}
+		} 
 	}
 	
 	@RequestMapping(method = RequestMethod.POST)
@@ -93,7 +118,7 @@ public class ChatBotController {
 			return webhookEventesHandling(payload, signature);
 		}
 	}
-
+	
 	/**
 	 * @param payload
 	 * @param signature
@@ -101,9 +126,12 @@ public class ChatBotController {
 	 */
 	public ResponseEntity<Void> webhookEventesHandling(final String payload, final String signature) {
 		try {
+			String pageId = new JSONObject(payload).getJSONArray("entry").getJSONObject(0).getString("id");
+			this.messenger = this.messengersObjectsMap.get(pageId);
 			messenger.onReceiveEvents(payload, Optional.of(signature), event -> {
 				final String senderId = event.senderId();
-				UserSelection userSelections = interactionHandlingService.getUserSelections(senderId);
+				UserSelection userSelections = interactionHandlingService.getUserSelectionsFromCache(senderId);
+						//interactionHandlingService.getUserSelections(senderId);
 				Utils.markAsSeen(messenger, senderId);
 				if (event.isPostbackEvent()) {
 					PostbackEvent postbackEvent = event.asPostbackEvent();
@@ -111,12 +139,9 @@ public class ChatBotController {
 					if (pLoad.equalsIgnoreCase(Constants.PAYLOAD_TALK_TO_AGENT)) {
 						String phoneNumber = " _ ";
 						CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
+						BotInteraction interaction = chatBotService.findInteractionByPayload(pLoad);
 						if(customerProfile != null ) {
 							phoneNumber = customerProfile.getMsisdn();
-						}
-						BotInteraction interaction = chatBotService.findInteractionByPayload(pLoad);	
-						if (customerProfile != null) {
-							Utils.interactionLogginghandling(customerProfile, interaction, chatBotService);
 						}
 						interactionHandlingService.callSecondryHandover(senderId,phoneNumber,messenger);
 					} else {

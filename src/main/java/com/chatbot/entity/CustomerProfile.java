@@ -1,5 +1,6 @@
 package com.chatbot.entity;
 
+import java.io.Serializable;
 import java.util.Date;
 
 import javax.persistence.Column;
@@ -11,7 +12,7 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "CUSTOMER_PROFILE")
 @NamedQuery(name = "CustomerProfile.findAll", query = "SELECT c FROM CustomerProfile c")
-public class CustomerProfile {
+public class CustomerProfile implements Serializable{
 	private static final long serialVersionUID = 1L;
 
 	@Id

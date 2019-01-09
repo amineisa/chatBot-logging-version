@@ -41,11 +41,14 @@ public class Constants {
 	public static final String PAYLOAD_TALK_TO_AGENT = "Talk to Agent";
 	public static final String PAYLOAD_WELCOME_AGAIN = "welcome again";
 	public static final String PAYLOAD_FREE_TEXT = "freetext";
+	public static final String PAYLOAD_MIGRATE_MORE = "Migrate More";
 	public static final String NOTELIGIBLE_ELEMENT_TITLE_EN = "Sorry !";
 	public static final String NOTELIGIBLE_ELEMENT_TITLE_AR = "! عفوا";
-
+	public static final String PAYLOAD_MIGRATE = "Migrate";
 	public static final String NOCONSUMPTION_ELEMENT_SUBTITLE_EN = " Your current rateplan is not have consumption  ";
 	public static final String NOCONSUMPTION_ELEMENT_SUBTITLE_AR = "باقتك ليس عليها اي استهلاك";
+	
+	
 	
 	public static final String NOTELIGIBLE_ELEMENT_SUBTITLE_EN = " Your Dial Not Eligible to any addons ";
 	public static final String NOTELIGIBLE_ELEMENT_SUBTITLE_AR = " عفوا رقمك ليس له اي اضافات";
@@ -79,6 +82,7 @@ public class Constants {
 	public static final String SOCIAL_CONSUMPTION = "socialConsumption";
 
 	public static final String JSON_KEY_NAME_EN = "englishName";
+	public static final String JSON_KEY_NAME_AR = "arabicName";
 	public static final String JSON_KEY_FOR_PRODUCT = "products";
 	public static final String JSON_KEY_FOR_RELATED_PRODUCT = "relatedProduct";
 	public static final String JSON_KEY_FOR_ENGLISH_DESCRIPTION = "englishDescription";
@@ -89,7 +93,6 @@ public class Constants {
 	public static final String JSON_KEY_CATEGORY_NAME_EN = "categoryNameEn";
 	public static final String JSON_KEY_CATEGORY_KEY = "category";
 	public static final String JSON_KEY_CATEGORY_ID = "categoryId";
-	public static final String JSON_KEY_NAME_AR = "arabicName";
 	public static final String JSON_KEY_LEGO = "LEGO";
 	public static final String JSON_KEY_LEGO_HIGH = "LEGO_HIGH";
 	public static final String JSON_KEY_LEGO_LOW = "LEGO_LOW";
@@ -111,7 +114,7 @@ public class Constants {
 	public static final String JSON_KEY_ACTION_BUTTONS="actionButtons";
 	public static final String JSON_KEY_PARAM = "param";
 	public static final String JSON_KEY_IFRAME_BILL_PAYMENT_URL = "iframeUrl";
-	
+	public static final String JSON_KEY_MIGRATION_ROUTING ="ratePlanRelease2";
 	public static final String FB_JSON_KEY_STANDBY ="standby";
 	public static final String FB_JSON_KEY_MESSAGE = "message";
 	public static final String FB_JSON_KEY_ENTRY = "entry";
@@ -144,7 +147,6 @@ public class Constants {
 	public static final String MOBILE_INTERNET_CONSUMPTION_NAME_EN = "Mobile Internet";
 	public static final String MOBILE_INTERNET_CONSUMPTION_NAME_AR = "موبايل انترنت";
 	public static final String OPERATION_NAME_RENEW = ",RENEW";
-	public static final String ARABIC_LOCAL = "ar";
 
 	public static final String RESPONSE_MAP_MESSAGE_KEY = "msg";
 	public static final String RESPONSE_MAP_TITLE_KEY = "title";
@@ -154,7 +156,7 @@ public class Constants {
 	public static final String CONFIGURATION_TABLE_APP_SECRET = "APP_SECRET";
 	public static final String CONFIGURATION_TABLE_PAGE_ACCESS_TOKEN = "PAGE_ACCESS_TOKEN";
 	public static final String CONFIGURATION_TABLE_VERIFY_TOKEN = "VERIFY_TOKEN";
-	public static final String CONFIGURATION_TABLE_WARNING_IMAGE_URL = "WARNING_IMAGE";
+	public static final String CONFIGURATION_TABLE_WARNING_I0MAGE_URL = "WARNING_IMAGE";
 	public static final String SECONDRY_APP_ID = "SECONDRY_APP_ID";
 
 	public static final String CONFIGURATION_CACHE_KEY = "configurationCache";
@@ -177,5 +179,41 @@ public class Constants {
 	public static final String REQUEST_TIME_OUT_VALUE = "REQUEST_TIME_OUT_VALUE";
 	public static final String JSON_KEY_BIILAMOUNT = "billAmount";
 	public static final String PAY_BILL_BASE_URL = "PAY_BILL_BASE_URL";
+	
+	
+	public static final String HAZEL_OBJECT_NAME = "CASH_OBJECT_NAME";
+	
+	public static final String HAZEL_CACHE_MAP_CONTAINER_NAME = "CACHES";
+	public static final String USER_SELECTION_MAP_KEY = "USERS_SELCTIONS";
+	
+	
+	public static final String FIRST_CACHING_SERVER_IP = "FIRST_SEVER_IP";
+	public static final String SECOND_CACHING_SERVER_IP = "SECOND_SERVER_IP";
+	public static final String COMMUNICATE_PORT_BETWEEN_CACHING_SERVERES = "COMMUNICATE_PORT";
+	
+	public static final String MIGRATION_RATEPLANS_KEY = "rateplans";
+	public static final String MIGRATION_DISPLAY_MOREBUTTON = "displayMoreBtn";
+	public static final String MORE_BUTTON_LABEL_AR = "أكثر";
+	public static final String MORE_BUTTON_LABEL_EN = "More";
+	public static final String MIGRATE_BUTTON_LABEL= "Migrate";
+	public static final String PREFIX_MIGRATE_ID = "MigrateID,";
+	public static final String PREFIX_MIGRATE_NAME = "MigrateName,";
+	public static final String PAYLOAD_MIGRATE_BY_ID = "Migratebyid";
+	public static final String PAYLOAD_MIGRATE_BY_NAME = "Migratebyname";
+	public static final String PAYLOAD_CONFIRMATION_MIGRATE = "Migrate_Confirmation";
+	public static final String PAYLOAD_MIGRATE_CONFIRM = "rateplan_migrate_yes";
+	public static final String CONFIGURATION_TABLE_WARNING_IMAGE_URL = "WARNING_IMAGE";
+	public static final String MIGRATATION_OPERATION_VALUE = "MIGRATE";
+	public static final String MIGRATE_BY_PREFIX = "Migrateby";
+	public static final String UNSUBSCRIBE_OPERATION_VALUE = "DEACTIVATE";
+	public static final String PAYLOAD_RATEPLAN_ACTIONS = "rateplan actions";
+	public static final String PAYLOAD_MOBILE_INTERNET_CONTROLLER = "Mobile Internet controller";
+	public static final String PAYLOAD_NO_MI_BUNDLE_FOUND = "No MI Bundle Found";
+	
+	
+
+	
+
+	
 
 }

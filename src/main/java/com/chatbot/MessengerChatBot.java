@@ -5,6 +5,7 @@ import static java.util.Optional.empty;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,9 +14,11 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Scope;
 
 import com.chatbot.dao.BotButtonRepo;
 import com.chatbot.entity.BotButton;
@@ -29,8 +32,6 @@ import com.github.messenger4j.Messenger;
 import com.github.messenger4j.common.SupportedLocale;
 import com.github.messenger4j.common.WebviewHeightRatio;
 import com.github.messenger4j.common.WebviewShareButtonState;
-import com.github.messenger4j.exception.MessengerApiException;
-import com.github.messenger4j.exception.MessengerIOException;
 import com.github.messenger4j.messengerprofile.MessengerSettings;
 import com.github.messenger4j.messengerprofile.getstarted.StartButton;
 import com.github.messenger4j.messengerprofile.greeting.Greeting;
@@ -41,6 +42,10 @@ import com.github.messenger4j.messengerprofile.persistentmenu.action.CallToActio
 import com.github.messenger4j.messengerprofile.persistentmenu.action.NestedCallToAction;
 import com.github.messenger4j.messengerprofile.persistentmenu.action.PostbackCallToAction;
 import com.github.messenger4j.messengerprofile.persistentmenu.action.UrlCallToAction;
+import com.hazelcast.config.Config;
+import com.hazelcast.config.MapConfig;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.IMap;
 
 @SpringBootApplication
 public class MessengerChatBot {
@@ -61,6 +66,26 @@ public class MessengerChatBot {
 	
 	
 	
+	
+	@Bean
+	Map<String,Messenger> messengersObjectsMap(){
+		Map<String,Messenger> messengersObjectsMap = new HashMap<>();
+		Map<String, String> configCacheObject = (Map<String, String>) configurationCache.getCachedValue(Constants.CONFIGURATION_CACHE_KEY);
+		List<String> pagesIds = Arrays.asList(configCacheObject.get("PAGES_IDS").split(","));
+		for(String pageId : pagesIds) {
+			System.out.println(" ID IS "+pageId);
+			String appSecret = configCacheObject.get(pageId+"_"+Constants.CONFIGURATION_TABLE_APP_SECRET);
+			String pageAccessToken =  configCacheObject.get(pageId+"_"+Constants.CONFIGURATION_TABLE_PAGE_ACCESS_TOKEN);
+			String verifyToken =  configCacheObject.get(pageId+"_"+Constants.CONFIGURATION_TABLE_VERIFY_TOKEN);
+			Messenger messenger = Messenger.create(pageAccessToken, appSecret, verifyToken);
+			messengersObjectsMap.put(pageId, messenger);
+		}
+		for(String key : messengersObjectsMap.keySet()) {
+			System.out.println("Key "+key);
+		}
+		return messengersObjectsMap;
+	}
+	
  /* @Bean
 	public Messenger messengerSendClient(@Value("${messenger4j.appSecret}") final String appSecret,
 			@Value("${messenger4j.pageAccessToken}") final String pageAccessToken,
@@ -77,6 +102,32 @@ public class MessengerChatBot {
 		return messenger;
 	}*/
 	
+	
+	 @Bean
+	 @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
+	public IMap<String,Object>  hazelCastCache() {
+		    logger.info("Initializing Hazelcast Shiro session persistence..");
+		    Map<String, String> configCacheObject = (Map<String, String>) configurationCache.getCachedValue(Constants.CONFIGURATION_CACHE_KEY);
+		    String firstServereIp = configCacheObject.get(Constants.FIRST_CACHING_SERVER_IP) == null  ? "" : configCacheObject.get(Constants.FIRST_CACHING_SERVER_IP);
+		    String secondServerIp = configCacheObject.get(Constants.SECOND_CACHING_SERVER_IP) == null ? "" : configCacheObject.get(Constants.SECOND_CACHING_SERVER_IP);
+		    int communicatePort = Integer.parseInt(configCacheObject.get(Constants.COMMUNICATE_PORT_BETWEEN_CACHING_SERVERES));
+		   
+		    final Config cfg = new Config();
+		    MapConfig mapConfig = new MapConfig();
+		    mapConfig.setTimeToLiveSeconds(900);
+		    Map<String,MapConfig> mapConfigs = new HashMap<>();
+		    mapConfigs.put("default", mapConfig);
+		    cfg.setMapConfigs(mapConfigs);
+		    cfg.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
+		    cfg.getNetworkConfig().setPort(communicatePort).setPortAutoIncrement(false);
+		    cfg.getNetworkConfig().getJoin().getTcpIpConfig().setRequiredMember(firstServereIp);
+		    cfg.getNetworkConfig().getJoin().getTcpIpConfig().addMember(firstServereIp).setEnabled(true);
+		    cfg.getNetworkConfig().getJoin().getTcpIpConfig().addMember(secondServerIp).setEnabled(true);
+		    cfg.setInstanceName(Constants.HAZEL_OBJECT_NAME);
+		    logger.info("Hazelcast Shiro session persistence initialized.");
+		    return Hazelcast.newHazelcastInstance(cfg).getMap(Constants.USER_SELECTION_MAP_KEY);
+
+	}
 	 
 	@Bean
 	public CacheHelper<Object, Object> configurationCache() {
@@ -90,25 +141,25 @@ public class MessengerChatBot {
 		return configurationCache;
 	}
 
-	@Bean
+	/*@Bean
 	public Messenger messengerSendClient() {
-	//	boolean updatePersistenceMenu = true;
+		boolean updatePersistenceMenu = false;
 		Map<String, String> configCacheObject = (Map<String, String>) configurationCache.getCachedValue(Constants.CONFIGURATION_CACHE_KEY);
 		String appSecret = configCacheObject.get(Constants.CONFIGURATION_TABLE_APP_SECRET);
 		String pageAccessToken =  configCacheObject.get(Constants.CONFIGURATION_TABLE_PAGE_ACCESS_TOKEN);
 		String verifyToken =  configCacheObject.get(Constants.CONFIGURATION_TABLE_VERIFY_TOKEN);
 		logger.debug("Initializing MessengerSendClient - pageAccessToken: {}", pageAccessToken);
 		Messenger messenger = Messenger.create(pageAccessToken, appSecret, verifyToken);
-		//if(updatePersistenceMenu) {
+		if(updatePersistenceMenu) {
 		try {
 			logger.debug(" Update Persistence Menu ");
 			messenger.updateSettings(initSendPersistenceMenu());
 		} catch (MessengerApiException  | MessengerIOException e) {
 			logger.error(e.getMessage());
 		} 
-		//}
+		}
 		return messenger;
-	}
+	}*/
 
 	private MessengerSettings initSendPersistenceMenu() {
 		List<CallToAction> callToActions = getMasterButtons();

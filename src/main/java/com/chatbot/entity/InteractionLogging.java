@@ -42,6 +42,9 @@ public class InteractionLogging implements Serializable {
 	@Column(name="INTERACTION_CALLING_DATE")
 	private Date interactionCallingDate;
 	
+	@Column(name="BOT_RESPONSE_DATE")
+	private Date botResponseDate;
+	
 
 	public Long getInteractionLoggingId() {
 		return interactionLoggingId;
@@ -81,6 +84,14 @@ public class InteractionLogging implements Serializable {
 
 	public void setInteractionCallingDate(Date interactionCallingDate) {
 		this.interactionCallingDate = interactionCallingDate;
+	}
+
+	public Date getBotResponseDate() {
+		return botResponseDate;
+	}
+
+	public void setBotResponseDate(Date botResponseDate) {
+		this.botResponseDate = botResponseDate;
 	}
 
 	

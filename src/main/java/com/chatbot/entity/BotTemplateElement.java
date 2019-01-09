@@ -59,9 +59,7 @@ public class BotTemplateElement implements Serializable {
 	@JoinColumn(name = "BOTWEBSERVICEMESSAGE_ID")
 	private BotWebserviceMessage botWebserviceMessage;
 
-	public BotTemplateElement() {
-	}
-
+	
 	public Long getElementId() {
 		return this.elementId;
 	}

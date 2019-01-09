@@ -23,7 +23,6 @@ import com.chatbot.dao.FreeTextLoggingDao;
 import com.chatbot.dao.InteractionLoggingRepo;
 import com.chatbot.dao.InteractionMessageRepo;
 import com.chatbot.dao.PersistenceMenuButtonRepo;
-import com.chatbot.dao.UserSelectionDao;
 import com.chatbot.entity.BotButton;
 import com.chatbot.entity.BotButtonTemplateMSG;
 import com.chatbot.entity.BotConfiguration;
@@ -42,7 +41,6 @@ import com.chatbot.entity.EnabledCategoryConfiguration;
 import com.chatbot.entity.FreeTextLogging;
 import com.chatbot.entity.InteractionLogging;
 import com.chatbot.entity.PersistenceMenuButton;
-import com.chatbot.entity.UserSelection;
 
 @Service
 public class ChatBotServiceImpl implements ChatBotService {
@@ -55,8 +53,8 @@ public class ChatBotServiceImpl implements ChatBotService {
 	@Autowired
 	private BotButtonRepo botButtonRepo;
 
-	@Autowired
-	private UserSelectionDao userSelectionDao;
+	/*@Autowired
+	private UserSelectionDao userSelectionDao;*/
 	
 	@Autowired
 	private BotInteractionRepo botInteractionRepo;
@@ -273,7 +271,7 @@ public class ChatBotServiceImpl implements ChatBotService {
 		return customerLinkingDialDao.getCustomerLinkingDialByDial(dial);
 	}
 
-	@Override
+/*	@Override
 	public UserSelection getUserSelectionBySenderId(String senderId) {
 		return userSelectionDao.findBySenderId(senderId);
 	}
@@ -282,7 +280,7 @@ public class ChatBotServiceImpl implements ChatBotService {
 	public void updateUserSelections(UserSelection userSelection) {
 		userSelectionDao.save(userSelection);
 		
-	}
+	}*/
 
 
 	

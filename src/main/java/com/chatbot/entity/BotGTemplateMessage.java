@@ -12,6 +12,8 @@ import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Type;
+
 
 /**
  * The persistent class for the bot_g_template_message database table.
@@ -36,8 +38,10 @@ public class BotGTemplateMessage implements Serializable {
 	@OneToMany(mappedBy="botGTemplateMessage")
 	private List<BotTemplateElement> botTemplateElements;
 
-	public BotGTemplateMessage() {
-	}
+	@Type(type= "org.hibernate.type.NumericBooleanType")
+	@Column(name="IS_LIST_TEMPLATE")
+	private Boolean isListTemplate;
+	
 
 	public Long getGTMsgId() {
 		return this.gTMsgId;
@@ -77,4 +81,14 @@ public class BotGTemplateMessage implements Serializable {
 		return botTemplateElement;
 	}
 
+	public Boolean isListTemplate() {
+		return isListTemplate;
+	}
+
+	public void setListTemplate(Boolean isListTemplate) {
+		this.isListTemplate = isListTemplate;
+	}
+
+	
+	
 }
