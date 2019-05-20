@@ -36,10 +36,10 @@
 			<artifactId>httpclient</artifactId>
 			<version>4.3.6</version>
 		</dependency>
-		<dependency>
+		<!-- <dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-cache</artifactId>
-		</dependency>
+		</dependency> -->
 		<dependency>
 			<groupId>com.github.messenger4j</groupId>
 			<artifactId>messenger4j</artifactId>
@@ -57,15 +57,20 @@
 			<version>20180130</version>
 		</dependency>
 		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
 			<groupId>com.hazelcast</groupId>
 			<artifactId>hazelcast</artifactId>
 			<version>3.2</version>
 		</dependency>
-		<dependency>
+		<!-- <dependency>
 			<groupId>com.hazelcast</groupId>
 			<artifactId>hazelcast-client</artifactId>
 			<version>3.2</version>
-		</dependency>
+		</dependency> -->
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -127,6 +132,7 @@
 					<skipTests>true</skipTests>
 				</configuration>
 			</plugin>
+
 		</plugins>
 	</build>
 

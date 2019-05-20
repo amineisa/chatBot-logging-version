@@ -13,10 +13,13 @@ import org.springframework.stereotype.Service;
 
 import com.chatbot.util.Constants;
 
+/**
+ * @author Amin Eisa 
+ */
 @Service
-public class JsonUtilsService {
+public class JSONUtilsService {
 	
-	private static final Logger logger = LoggerFactory.getLogger(JsonUtilsService.class);
+	private static final Logger logger = LoggerFactory.getLogger(JSONUtilsService.class);
 
 	// IN Case Zero Level JSONObject
 	public Map<String, ArrayList<String>> inCaseZeroLevelJsonObject(String[] keys, JSONObject jsonObject, String msg, String locale) {
@@ -387,6 +390,52 @@ public class JsonUtilsService {
 			return hoursInMins + mins;
 		}
 		
+		public String getDescriptionValue(JSONObject jsonObject , String locale) {
+			if (locale.contains(Constants.LOCALE_AR)) {
+				return jsonObject.get(Constants.JSON_KEY_ARABIC_DESCRIPTION_KEY).equals(null) ?Constants.SUBTITLE_VALUE : jsonObject.get(Constants.JSON_KEY_ARABIC_DESCRIPTION_KEY).toString();
+			} else {
+				return jsonObject.get(Constants.JSON_KEY_FOR_ENGLISH_DESCRIPTION).equals(null) ? Constants.SUBTITLE_VALUE : jsonObject.get(Constants.JSON_KEY_FOR_ENGLISH_DESCRIPTION).toString();
+			}
+		}
+		
+		public String getNameValue(JSONObject jsonObject , String locale) {
+			if (locale.contains(Constants.LOCALE_AR)) {
+				return jsonObject.getString(Constants.JSON_KEY_NAME_AR);
+			} else {
+				return jsonObject.getString(Constants.JSON_KEY_NAME_EN);
+			}
+		}
+		
+		
+		
+		public String getCategoryNameValue(JSONObject jsonObject , String locale) {
+			if (locale.contains(Constants.LOCALE_AR)) {
+				return jsonObject.getString(Constants.JSON_KEY_CATEGORY_NAME_AR);
+			} else {
+				return jsonObject.getString(Constants.JSON_KEY_CATEGORY_NAME_EN);
+			}
+		}
+		
+		public String getCommercialNameValue(JSONObject jsonObject , String locale) {
+			return locale.contains(Constants.LOCALE_AR) ? jsonObject.getString(Constants.JSON_KEY_VALUE_AR) :jsonObject.getString(Constants.JSON_KEY_VALUE_EN); 
+		}
+		
+		public String getConsumptionNameValue(JSONObject jsonObject , String locale) {
+			if(locale.contains(Constants.LOCALE_AR)) {
+				return jsonObject.get(Constants.JSON_KEY_LABEL_AR).equals(null) ? Constants.UNDERSCORE : jsonObject.getString(Constants.JSON_KEY_LABEL_AR).toString();
+			} else {
+				
+				return jsonObject.get(Constants.JSON_KEY_LABEL_EN).equals(null) ? Constants.UNDERSCORE : jsonObject.getString(Constants.JSON_KEY_LABEL_EN).toString();
+			}
+		}
+		
+		public String getRenewalDateValue(JSONObject jsonObject , String locale) {
+			if(locale.contains(Constants.LOCALE_AR)) {
+				return jsonObject.getString(Constants.JSON_KEY_VALUE_AR);
+			} else {
+				return jsonObject.getString(Constants.JSON_KEY_VALUE_EN);
+			}
+		}
 		
 
 }

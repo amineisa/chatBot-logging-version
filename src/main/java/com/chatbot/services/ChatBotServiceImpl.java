@@ -42,64 +42,45 @@ import com.chatbot.entity.FreeTextLogging;
 import com.chatbot.entity.InteractionLogging;
 import com.chatbot.entity.PersistenceMenuButton;
 
+/**
+ * @author Amin Eisa 
+ */
 @Service
 public class ChatBotServiceImpl implements ChatBotService {
 	@Autowired
 	private InteractionMessageRepo interactionMessageRepo;
-
 	@Autowired
 	private BotQuickReplyMessageRepo botQuickReplyMessageRepo;
-
 	@Autowired
-	private BotButtonRepo botButtonRepo;
-
-	/*@Autowired
-	private UserSelectionDao userSelectionDao;*/
-	
+	private BotButtonRepo botButtonRepo;	
 	@Autowired
 	private BotInteractionRepo botInteractionRepo;
-
 	@Autowired
 	private BotTextMessageRepo botTextMessageRepo;
-
 	@Autowired
 	private BotGTemplateMessageRepo botGTemplateMessageRepo;
-
 	@Autowired
 	private BotTemplateElementRepo botTemplateElementRepo;
-
 	@Autowired
 	private PersistenceMenuButtonRepo persistenceMenuButtonRepo;
-	
 	@Autowired
 	private BotWebserviceMessageRepo botWebserviceMessageRepo;
-	
 	@Autowired
 	private BotWebserviceMappingRepo botWebserviceMappingRepo;
-	
 	@Autowired
 	private BotTextResponseMappingRepo botTextResponseMappingRepo;
-	
 	@Autowired
 	private BotButtonTemplateMSGRepo botButtonTemplateMSGRepo;
-	
 	@Autowired
 	private CustomerProfileRepo customerProfileRepo;
-	
 	@Autowired
 	private InteractionLoggingRepo interactionLoggingRepo;
-	
 	@Autowired
 	private BotConfigurationRepo botConfigurationRepo;
-	
 	@Autowired
 	private FreeTextLoggingDao freeTextLoggingDao;
-	
 	@Autowired
 	private CustomerLinkingDialDao customerLinkingDialDao;
-	
-	
-	
 	@Autowired
 	private EnabledCategoryConfigurationRepo  enabledCategoryConfigurationRepo;
 	
@@ -142,7 +123,6 @@ public class ChatBotServiceImpl implements ChatBotService {
 		return botButtonRepo.findByBotTemplateElementElementId(elementId);
 	}
 
-	// Persistence Menu
 	@Override
 	public List<PersistenceMenuButton> findMasterButtonInPersistenceMenu() {
 		return persistenceMenuButtonRepo.findByParentIdNull();
@@ -174,7 +154,6 @@ public class ChatBotServiceImpl implements ChatBotService {
 				return botWebserviceMessageRepo.findByBotInteractionMessageMessageId(messageId);
 	}
 
-
 	@Override
 	public List<BotWebserviceMapping> findWebserviceMappingByWsId(Long wsId) {
 		return botWebserviceMappingRepo.findByBotWebserviceMessageWsMsgId(wsId);
@@ -199,7 +178,6 @@ public class ChatBotServiceImpl implements ChatBotService {
 	public List<BotButtonTemplateMSG> findBotButtonTemplateMSGByBotInteractionMessage(BotInteractionMessage interactionMsg) {
 		return botButtonTemplateMSGRepo.findBotButtonTemplateMSGByBotInteractionMessage(interactionMsg);
 	}
-
 	
 	@Override
 	public List<BotButton> findAllButtonsByWebserviceMessage(BotWebserviceMessage botWebserviceMessage) {
@@ -270,19 +248,6 @@ public class ChatBotServiceImpl implements ChatBotService {
 	public CustomerLinkingDial getCustomerLinkingDialById(String dial) {
 		return customerLinkingDialDao.getCustomerLinkingDialByDial(dial);
 	}
-
-/*	@Override
-	public UserSelection getUserSelectionBySenderId(String senderId) {
-		return userSelectionDao.findBySenderId(senderId);
-	}
-
-	@Override
-	public void updateUserSelections(UserSelection userSelection) {
-		userSelectionDao.save(userSelection);
-		
-	}*/
-
-
 	
 
 }

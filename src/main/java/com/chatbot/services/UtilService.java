@@ -21,43 +21,41 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
+import org.apache.http.NameValuePair;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
+import com.chatbot.entity.AddonCategory;
 import com.chatbot.entity.BotButton;
 import com.chatbot.entity.BotButtonTemplateMSG;
 import com.chatbot.entity.BotConfiguration;
 import com.chatbot.entity.BotInteractionMessage;
-import com.chatbot.entity.BotQuickReplyMessage;
 import com.chatbot.entity.BotTextMessage;
 import com.chatbot.entity.BotTextResponseMapping;
 import com.chatbot.entity.BotWebserviceMessage;
 import com.chatbot.entity.CustomerProfile;
+import com.chatbot.entity.InteractionLogging;
+import com.chatbot.entity.UserSelection;
 import com.chatbot.util.Constants;
 import com.chatbot.util.Utils;
 import com.github.messenger4j.send.MessagePayload;
 import com.github.messenger4j.send.MessagingType;
 import com.github.messenger4j.send.message.TemplateMessage;
 import com.github.messenger4j.send.message.TextMessage;
-import com.github.messenger4j.send.message.quickreply.QuickReply;
-import com.github.messenger4j.send.message.quickreply.TextQuickReply;
 import com.github.messenger4j.send.message.template.ButtonTemplate;
 import com.github.messenger4j.send.message.template.GenericTemplate;
 import com.github.messenger4j.send.message.template.button.Button;
@@ -66,18 +64,36 @@ import com.github.messenger4j.send.message.template.button.LogOutButton;
 import com.github.messenger4j.send.message.template.button.PostbackButton;
 import com.github.messenger4j.send.message.template.button.UrlButton;
 import com.github.messenger4j.send.message.template.common.Element;
+import com.hazelcast.core.IMap;
 
+/**
+ * @author Amin Eisa 
+ */
 @Service
 public class UtilService {
 
 	@Autowired
-	private JsonUtilsService jsonUtilsService;
+	private JSONUtilsService jsonUtilsService;
 
 	@Autowired
 	private ChatBotService chatBotService;
-
+	@Autowired
+	private IMap<String, Object> usersSelectionCache;
+	
 	private static final Logger logger = LoggerFactory.getLogger(UtilService.class);
 
+	
+	public UserSelection getUserSelectionsFromCache(String senderId) {
+		return usersSelectionCache.get(senderId) == null ? new UserSelection() : (UserSelection) usersSelectionCache.get(senderId);
+	}
+
+	public void updateUserSelectionsInCache(String senderId, UserSelection userSelection) {
+		usersSelectionCache.put(senderId, userSelection);
+	}
+	
+	
+	
+	
 	// Method to get Path Details
 	public String[] getPaths(String path) {
 		if (path != null) {
@@ -211,7 +227,7 @@ public class UtilService {
 	 * @param chatBotService
 	 * @return
 	 */
-	public ButtonTemplate createButtonTemplateInScenario(BotInteractionMessage botInteractionMessage, ChatBotService chatBotService, String local, String dialNumber) {
+	public ButtonTemplate createButtonTemplateInScenario(BotInteractionMessage botInteractionMessage, String local, String dialNumber) {
 		String title = Constants.EMPTY_STRING;
 		ArrayList<Button> buttons = new ArrayList<>();
 		List<BotButtonTemplateMSG> botButtonTemplateMSGs = chatBotService.findBotButtonTemplateMSGByBotInteractionMessage(botInteractionMessage);
@@ -240,27 +256,7 @@ public class UtilService {
 		return text;
 	}
 
-	public List<QuickReply> createQuickReply(ChatBotService chatBotService, Long messageId, String local) {
-		BotQuickReplyMessage botQuickReplyMessage = chatBotService.findQuickReplyMessageByMessageId(messageId);
-		List<QuickReply> quickReplies = new ArrayList<>();
-		List<BotButton> quickReplyButtonList = chatBotService.findButtonsByQuickReplyMessageId(botQuickReplyMessage.getQuickMsgId());
-		QuickReply quickReply = null;
-		for (BotButton botButton : quickReplyButtonList) {
-			String label = Utils.getTextValueForButtonLabel(local, botButton);
-			if (botButton.getButtonImageUrl() != null) {
-				if (botButton.getButtonImageUrl().length() > 0) {
-					URL url = Utils.createUrl(botButton.getButtonImageUrl());
-					quickReply = TextQuickReply.create(label, botButton.getButtonPayload(), Optional.of(url));
-				} else {
-					quickReply = TextQuickReply.create(label, botButton.getButtonPayload(), empty());
-				}
-			} else {
-				quickReply = TextQuickReply.create(label, botButton.getButtonPayload());
-			}
-			quickReplies.add(quickReply);
-		}
-		return quickReplies;
-	}
+
 
 	/**
 	 * @param senderId
@@ -271,7 +267,7 @@ public class UtilService {
 	 */
 
 	public void getTextMessageIfResponseIsArray(String senderId, List<MessagePayload> messagePayloadList, BotWebserviceMessage botWebserviceMessage, String jsonBodyString,
-			ChatBotService chatBotService, String local) {
+			 String local) {
 		MessagePayload messagePayload;
 		List<BotTextResponseMapping> botTextResponseMappings = chatBotService.findTextResponseMappingByWsId(botWebserviceMessage.getWsMsgId());
 		JSONArray rootArray = new JSONArray(jsonBodyString);
@@ -308,8 +304,7 @@ public class UtilService {
 	 * @throws JSONException
 	 */
 
-	public void getTextMessageIfResponseIsObject(String senderId, List<MessagePayload> messagePayloadList, BotWebserviceMessage botWebserviceMessage, String jsonBodyString,
-			ChatBotService chatBotService, String local) {
+	public void getTextMessageIfResponseIsObject(String senderId, List<MessagePayload> messagePayloadList, BotWebserviceMessage botWebserviceMessage, String jsonBodyString, String local) {
 		MessagePayload messagePayload;
 		List<BotTextResponseMapping> botTextResponseMappings = chatBotService.findTextResponseMappingByWsId(botWebserviceMessage.getWsMsgId());
 		JSONObject rootObject = new JSONObject(jsonBodyString);
@@ -360,14 +355,10 @@ public class UtilService {
 
 
 	// get text for BotTextMessage according to local
-	public String getTextValueForBotTextMessage(BotTextMessage botTextMessage, String local) {
-		String text = Constants.EMPTY_STRING;
-		if (local.equalsIgnoreCase(Constants.LOCALE_AR)) {
-			text = botTextMessage.getBotText().getArabicText();
-		} else {
-			text = botTextMessage.getBotText().getEnglishText();
-		}
-		return text;
+	public String getTextValueForBotTextMessage(BotTextMessage botTextMessage, String local , String userFirstName ,String phoneNumber) {
+		String text = local.equalsIgnoreCase(Constants.LOCALE_AR) ? botTextMessage.getBotText().getArabicText() : botTextMessage.getBotText().getEnglishText();
+		return Utils.replacePlaceholderByNameValue(text, userFirstName, phoneNumber);
+		
 	}
 
 	/**
@@ -378,19 +369,37 @@ public class UtilService {
 	 */
 
 
-	public Map<String, String> buyProductOrAddon(BotWebserviceMessage botWebserviceMessage, String jsonParam, ChatBotService chatBotService, String senderId) {
+	public Map<String, String> postWSCalling(BotWebserviceMessage botWebserviceMessage, String jsonParam, String senderId) {
 		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 		String dialNumber = customerProfile.getMsisdn();
 		Map<String, String> mapResponse = new HashMap<>();
 		String paramChannel = Constants.EMPTY_STRING;
 		int responseStatusId = 0;
+		String stringResponse = Constants.EMPTY_STRING;
 		try {
 			paramChannel = Utils.encryptChannelParam(Constants.URL_PARAM_MSISDN_KEY + dialNumber + Constants.URL_TIME_CHANNEL_KEY + Constants.CHANEL_PARAM);
-			String realParameter = Constants.URL_PARAM_CHANNEL_KEY + paramChannel;
-			CloseableHttpClient client = HttpClients.createDefault();
+			CloseableHttpClient client = createClient(); 
 			HttpPost httpPost = new HttpPost(botWebserviceMessage.getWsUrl());
-			URI uri = new URIBuilder(httpPost.getURI()).addParameter("dial", realParameter).build();
+			URI uri = null;
+			if(botWebserviceMessage.getWsUrl().contains(Constants.SEND_VERFICATION_CODE_SERVICE)) {
+			List<NameValuePair> nvps = new ArrayList<>();
+			String dialParamKey = botWebserviceMessage.getListParamName().split(",")[0];
+			String langParamKey = botWebserviceMessage.getListParamName().split(",")[1];
+			JSONObject params = new JSONObject(jsonParam);
+			NameValuePair dialParam = new BasicNameValuePair(botWebserviceMessage.getListParamName().split(",")[0],params.getString(dialParamKey));
+			NameValuePair langParam = new BasicNameValuePair(botWebserviceMessage.getListParamName().split(",")[1], params.getString(langParamKey));
+			nvps.add(dialParam);
+			nvps.add(langParam);
+			uri = new URIBuilder(httpPost.getURI()).addParameters(nvps).build();
+			}else if(botWebserviceMessage.getWsUrl().contains(Constants.VERFICATION_CODE_VALIDITY_SERVICE)) {
+				uri = new URIBuilder(httpPost.getURI()).build();
+			}else {
+			 String realParameter = Constants.URL_PARAM_CHANNEL_KEY + paramChannel;
+			 uri = new URIBuilder(httpPost.getURI()).addParameter("dial", realParameter).build();
+			}
 			httpPost.setURI(uri);
+			logger.debug("WebService Name is "+botWebserviceMessage.getWsName());
+			logger.debug("Post Service URL IS "+uri);
 			logger.debug(Constants.LOGGER_BUNDLE_SUPSCRIPTION + jsonParam);
 			StringEntity entity = new StringEntity(jsonParam);
 			httpPost.setEntity(entity);
@@ -398,19 +407,27 @@ public class UtilService {
 			httpPost.setHeader("Content-type", "application/json");
 			CloseableHttpResponse response = client.execute(httpPost);
 			responseStatusId = response.getStatusLine().getStatusCode();
+			org.apache.http.HttpEntity responseEntity = response.getEntity();
+			stringResponse = EntityUtils.toString(responseEntity, "UTF-8");
 			client.close();
 		} catch (IOException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException | URISyntaxException e) {
 			logger.error(Constants.LOGGER_SENDER_ID + senderId + Constants.LOGGER_EXCEPTION_MESSAGE + e);
 			e.printStackTrace();
-		}
-		if (responseStatusId == 200) {
+		}finally {
 			mapResponse.put(Constants.RESPONSE_STATUS_KEY, String.valueOf(responseStatusId));
-			mapResponse.put(Constants.RESPONSE_KEY, Constants.EMPTY_STRING);
-		} else {
-			mapResponse.put(Constants.RESPONSE_STATUS_KEY, String.valueOf(responseStatusId));
-			mapResponse.put(Constants.RESPONSE_KEY, Constants.EMPTY_STRING);
-		}
+			mapResponse.put(Constants.RESPONSE_KEY,stringResponse );
+		}	
 		return mapResponse;
+	}
+	
+	
+	private CloseableHttpClient createClient(){
+		RequestConfig requestConfig = RequestConfig.custom()
+				.setConnectionRequestTimeout(100000)
+				.setConnectTimeout(5 * 1000)
+				.setConnectionRequestTimeout(5 * 1000)
+				.setSocketTimeout(5 * 1000).build();
+		return  HttpClientBuilder.create().setDefaultRequestConfig(requestConfig).build();
 	}
 
 	/**
@@ -421,31 +438,21 @@ public class UtilService {
 	 * @throws JSONException
 	 */
 
-	public void createTextMessageInDynamicScenario(String senderId, List<MessagePayload> messagePayloadList, BotWebserviceMessage botWebserviceMessage, String jsonBodyString,
-			ChatBotService chatBotService, String local) {
+	public void createTextMessageInDynamicScenario(String senderId, List<MessagePayload> messagePayloadList, BotWebserviceMessage botWebserviceMessage, String jsonBodyString, String local) {
 		// string
 		if (botWebserviceMessage.getOutType().getInOutTypeId() == 1) {
 			getTextMessageIfResponseIsString(senderId, messagePayloadList, botWebserviceMessage, local);
 			// Object
 		} else if (botWebserviceMessage.getOutType().getInOutTypeId() == 2) {
-			getTextMessageIfResponseIsObject(senderId, messagePayloadList, botWebserviceMessage, jsonBodyString, chatBotService, local);
+			getTextMessageIfResponseIsObject(senderId, messagePayloadList, botWebserviceMessage, jsonBodyString, local);
 			// Array
 		} else if (botWebserviceMessage.getOutType().getInOutTypeId() == 3) {
-			getTextMessageIfResponseIsArray(senderId, messagePayloadList, botWebserviceMessage, jsonBodyString, chatBotService, local);
+			getTextMessageIfResponseIsArray(senderId, messagePayloadList, botWebserviceMessage, jsonBodyString, local);
 		}
 	}
 
-	public String getTextForQuickReply(String local, BotQuickReplyMessage botQuickReplyMessage, String userDial) {
-		String text = Constants.EMPTY_STRING;
-		if (local.equalsIgnoreCase(Constants.LOCALE_AR)) {
-			text = botQuickReplyMessage.getBotText().getArabicText(); /*+ " " + userDial + " ?";*/
-		} else {
-			text = botQuickReplyMessage.getBotText().getEnglishText();/* + " " + userDial + " ?";*/
-		}
-		return text;
-	}
 
-	public CustomerProfile setLinkingInfoForCustomer(String senderId, String customerDial, ChatBotService chatBotService) {
+	public CustomerProfile setLinkingInfoForCustomer(String senderId, String customerDial) {
 		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 		CustomerProfile newCustomerProfile = new CustomerProfile();
 		Date date = new Date();
@@ -465,7 +472,7 @@ public class UtilService {
 		return chatBotService.saveCustomerProfile(newCustomerProfile);
 	}
 
-	public void setCustomerProfileLocal(CustomerProfile customerProfile, ChatBotService chatBotService, String locale) {
+	public void setCustomerProfileLocal(CustomerProfile customerProfile, String locale) {
 		CustomerProfile customerProfileForLocal = new CustomerProfile();
 		Date date = new Date();
 		Timestamp timestamp = new Timestamp(date.getTime());
@@ -498,17 +505,12 @@ public class UtilService {
 							List<Button> buttons = new ArrayList<>();
 							JSONObject childEligibleProduct = childEligibleProductModels.getJSONObject(o);
 							JSONObject categoryObject = childEligibleProduct.getJSONObject(Constants.JSON_KEY_CATEGORY_KEY);
-							String label = Constants.EMPTY_STRING;
-							if (locale.contains(Constants.LOCALE_AR)) {
-								label = categoryObject.getString(Constants.JSON_KEY_CATEGORY_NAME_AR);
-							} else {
-								label = categoryObject.getString(Constants.JSON_KEY_CATEGORY_NAME_EN);
-							}
+							String label = jsonUtilsService.getCategoryNameValue(categoryObject, locale);
 							String payload = categoryObject.getString(Constants.JSON_KEY_CATEGORY_ID);
 							String subTitle = Constants.SUBTITLE_VALUE;
 							PostbackButton button = PostbackButton.create(Utils.getLabelForViewButton(locale), Constants.PREFIX_RATEPLAN_SUBSCRIPTION + payload);
 							Button backButton = PostbackButton.create(Utils.getLabelForBackButton(locale), Constants.PAYLOAD_CHANGE_BUNDLE);
-							buttons.add(backButton);
+						    buttons.add(backButton);
 							buttons.add(button);
 							Element element = Element.create(label, Optional.of(subTitle), empty(), empty(), Optional.of(buttons));
 							elements.add(element);
@@ -541,18 +543,13 @@ public class UtilService {
 			JSONArray relatedProducts = childObject.getJSONArray(Constants.JSON_KEY_FOR_RELATED_PRODUCT);
 			String subtitle, title;
 			subtitle = title = Constants.EMPTY_STRING;
-			if (locale.equalsIgnoreCase(Constants.LOCALE_AR)) {
-				title = childObject.getString(Constants.JSON_KEY_NAME_AR);
-				subtitle = childObject.getString(Constants.JSON_KEY_ARABIC_DESCRIPTION_KEY);
-			} else {
-				title = childObject.getString(Constants.JSON_KEY_NAME_EN);
-				subtitle = childObject.getString(Constants.JSON_KEY_FOR_ENGLISH_DESCRIPTION);
-			}
+			subtitle = jsonUtilsService.getDescriptionValue(childObject, locale);
+			title = jsonUtilsService.getNameValue(childObject, locale);
 			if (relatedProducts.length() > 0) {
-				Button button = PostbackButton.create(Utils.getLabelForٍSubscribeButton(locale), Constants.PREFIX_RELATED_PRODUCTS + Constants.COMMA_CHAR + name + "," + operationName);
+				Button button = PostbackButton.create(Utils.subscribeButtonLabel(locale), Constants.PREFIX_RELATED_PRODUCTS + Constants.COMMA_CHAR + name + "," + operationName);
 				buttons.add(button);
 			} else {
-				Button button = PostbackButton.create(Utils.getLabelForٍSubscribeButton(locale), name + Constants.COMMA_CHAR + operationName);
+				Button button = PostbackButton.create(Utils.subscribeButtonLabel(locale), name + Constants.COMMA_CHAR + operationName);
 				buttons.add(button);
 			}
 			Button backButton = PostbackButton.create(Utils.getLabelForBackButton(locale), Constants.PAYLOAD_CHANGE_BUNDLE);
@@ -579,10 +576,12 @@ public class UtilService {
 					JSONObject product = products.getJSONObject(p);
 					operationName = product.getJSONArray(Constants.JSON_KEY_OPERATION_RESPONSE).getJSONObject(0).getString("operationName");
 					name = product.getString(Constants.JSON_KEY_FOR_NAME);
-					Button button = PostbackButton.create(Utils.getLabelForٍSubscribeButton(locale), name + Constants.COMMA_CHAR + operationName);
+					Button button = PostbackButton.create(Utils.subscribeButtonLabel(locale), name + Constants.COMMA_CHAR + operationName);
 					Button backButton = PostbackButton.create(Utils.getLabelForBackButton(locale), Constants.PAYLOAD_CHANGE_BUNDLE);
-					title = product.getString(Constants.JSON_KEY_NAME_EN);
-					subtitle = product.getString(Constants.JSON_KEY_FOR_ENGLISH_DESCRIPTION);
+					title = jsonUtilsService.getNameValue(product, locale);
+							//product.getString(Constants.JSON_KEY_NAME_EN);
+					subtitle = jsonUtilsService.getDescriptionValue(product, locale); 
+					//product.getString(Constants.JSON_KEY_FOR_ENGLISH_DESCRIPTION);
 					buttons.add(backButton);
 					buttons.add(button);
 					Element element = Element.create(title, Optional.of(subtitle), empty(), empty(), Optional.of(buttons));
@@ -614,9 +613,11 @@ public class UtilService {
 								List<Button> buttons = new ArrayList<>();
 								JSONObject relatedObject = relatedProducts.getJSONObject(r);
 								String relatedProductName = relatedObject.getString(Constants.JSON_KEY_FOR_NAME);
-								String title = relatedObject.getString(Constants.JSON_KEY_NAME_EN);
-								String subtitle = relatedObject.getString(Constants.JSON_KEY_FOR_ENGLISH_DESCRIPTION);
-								Button button = PostbackButton.create(Utils.getLabelForٍSubscribeButton(locale),
+								String title = jsonUtilsService.getNameValue(relatedObject, locale); 
+										//relatedObject.getString(Constants.JSON_KEY_NAME_EN);
+								String subtitle = jsonUtilsService.getDescriptionValue(relatedObject, locale);
+										//relatedObject.getString(Constants.JSON_KEY_FOR_ENGLISH_DESCRIPTION);
+								Button button = PostbackButton.create(Utils.subscribeButtonLabel(locale),
 										relatedProductName + Constants.COMMA_CHAR + Constants.PREFIX_RELATED_PRODUCTS_SUBSCRIPTION);
 								buttons.add(button);
 								Button backButton = PostbackButton.create(Utils.getLabelForBackButton(locale), Constants.PAYLOAD_CHANGE_BUNDLE);
@@ -641,7 +642,7 @@ public class UtilService {
 		ArrayList<Element> elements = new ArrayList<>();
 		String title = Constants.EMPTY_STRING;
 		String subTitle = Constants.SUBTITLE_VALUE;
-		String buttonLabel = Utils.getLabelForٍSubscribeButton(locale);
+		String buttonLabel = Utils.subscribeButtonLabel(locale);
 		for (int i = 0; i < arrayResponse.length(); i++) {
 			try {
 				List<Button> buttonsList = new ArrayList<>();
@@ -650,11 +651,7 @@ public class UtilService {
 				String id = object.getString("id");
 				for (int o = 0; o < retrievedCategoriesArray.length(); o++) {
 					if (retrievedCategoriesArray.getString(o).equalsIgnoreCase(addonId)) {
-						if (locale.equalsIgnoreCase(Constants.LOCALE_AR)) {
-							title = object.getString(Constants.JSON_KEY_NAME_AR);
-						} else {
-							title = object.getString(Constants.JSON_KEY_NAME_EN);
-						}
+						title = jsonUtilsService.getNameValue(object, locale);
 						String payLoad = Constants.PREFIX_ADDONSUBSCRIPE + id;
 						PostbackButton bundleButton = PostbackButton.create(buttonLabel, payLoad);
 						PostbackButton backButton = PostbackButton.create(Utils.getLabelForBackButton(locale), Constants.PAYLOAD_BUY_ADDONS_ROOT);
@@ -675,35 +672,42 @@ public class UtilService {
 
 	}
 
-	public MessagePayload getCategoryForMobileInternetAddons(JSONArray arrayResponse, String senderId, ChatBotService chatBotService, String locale) {
+	public MessagePayload getCategoryForMobileInternetAddons(JSONArray arrayResponse, String senderId,   String locale) {
 		logger.debug(Constants.LOGGER_SENDER_ID + senderId + Constants.LOGGER_ELIGIBLE_PRODUCT + arrayResponse.toString());
-		Map<String, String> categoriesMap = new HashMap<>();
+		//Map<String, String> categoriesMap = new HashMap<>();
+		Map<String, AddonCategory> categoriesMap = new HashMap<>();
 		ArrayList<Element> elements = new ArrayList<>();
 		String[] categoriesIDS = chatBotService.getEnabledCategoryConfigurationDaoById(2l).getEnglishCategories().split(Constants.COMMA_CHAR);
 		String[] categoriesLabels = null;
-		if (locale.equalsIgnoreCase(Constants.LOCALE_AR)) {
+		String[] categoriesDescription = null;
+		if (locale.contains(Constants.LOCALE_AR)) {
 			categoriesLabels = chatBotService.getEnabledCategoryConfigurationDaoById(2l).getCategoryLabel().getArabicText().split(Constants.COMMA_CHAR);
+//			categoriesDescription = chatBotService.getEnabledCategoryConfigurationDaoById(2l).getCategoryDescriptionId().getArabicText().split(Constants.COMMA_CHAR);
 		} else {
 			categoriesLabels = chatBotService.getEnabledCategoryConfigurationDaoById(2l).getCategoryLabel().getEnglishText().split(Constants.COMMA_CHAR);
+			categoriesDescription = chatBotService.getEnabledCategoryConfigurationDaoById(2l).getCategoryDescriptionId().getEnglishText().split(Constants.COMMA_CHAR);
 		}
 
-		String subTitle = Constants.SUBTITLE_VALUE;
+		//String subtitle = Constants.SUBTITLE_VALUE;
 		String buttonLabel = Constants.EMPTY_STRING;
 		for (int i = 0; i < arrayResponse.length(); i++) {
 			try {
 				JSONObject object = arrayResponse.getJSONObject(i);
 				JSONArray jsonCategoriesArray = object.getJSONArray(Constants.JSON_KEY_FOR_PRODUCT_CATEGORY);
 				ArrayList<String> categoriesLabelsList = new ArrayList<>(Arrays.asList(categoriesLabels));
+				ArrayList<String> categoriesDescriptionList = new ArrayList<>(Arrays.asList(categoriesDescription));
 				ArrayList<String> enabledCategoriesList = new ArrayList<>(Arrays.asList(categoriesIDS));
 				for (int o = 0; jsonCategoriesArray.length() > o; o++) {
 					String category = jsonCategoriesArray.getString(o);
 					if (enabledCategoriesList.contains(category)) {
 						int index = enabledCategoriesList.indexOf(category);
-						categoriesMap.put(categoriesLabelsList.get(index), jsonCategoriesArray.getString(o));
+						AddonCategory addonCategory = new AddonCategory();
+						addonCategory.setTitle(jsonCategoriesArray.getString(o));
+						addonCategory.setDescription(categoriesDescriptionList.get(o));
+						//categoriesMap.put(categoriesLabelsList.get(index), jsonCategoriesArray.getString(o));
+						categoriesMap.put(categoriesLabelsList.get(index), addonCategory);
 					}
-
 				}
-
 			} catch (JSONException e) {
 				logger.error(Constants.LOGGER_SENDER_ID + senderId + Constants.LOGGER_EXCEPTION_MESSAGE + e);
 				e.printStackTrace();
@@ -711,12 +715,12 @@ public class UtilService {
 
 		}
 		if (categoriesMap.size() > 0) {
-			for (String key : categoriesMap.keySet()) {
+			for(String key : categoriesMap.keySet()) {
 				buttonLabel = Utils.getLabelForViewButton(locale);
 				List<Button> buttonsList = new ArrayList<>();
 				PostbackButton bundleButton = PostbackButton.create(buttonLabel, Constants.PREFIX_MOBILEINTERNET_ADDON + categoriesMap.get(key));
 				buttonsList.add(bundleButton);
-				Element element = Element.create(key, Optional.of(subTitle), empty(), empty(), Optional.of(buttonsList));
+				Element element = Element.create(key, Optional.of(categoriesMap.get(key).getDescription()), empty(), empty(), Optional.of(buttonsList));
 				elements.add(element);
 			}
 			GenericTemplate gTemplate = GenericTemplate.create(elements);
@@ -730,10 +734,10 @@ public class UtilService {
 
 
 
-	public Map<String, String> getCalling(BotWebserviceMessage botWebserviceMessage, String senderId, ChatBotService chatBotService, String phoneNumber) {
+	public Map<String, String> getCalling(BotWebserviceMessage botWebserviceMessage, String senderId, String phoneNumber) {
 		URI uri = Utils.createURI(botWebserviceMessage, senderId, chatBotService, phoneNumber);
 		logger.debug(Constants.LOGGER_SENDER_ID + senderId + Constants.LOGGER_DIAL_IS + phoneNumber + Constants.LOGGER_SERVICE_URL + uri);
-		return Utils.callGetWebServiceByRestTemplate(uri, chatBotService);
+		return Utils.callGetWebServiceByRestTemplate(uri);
 	}
 
 	public MessagePayload changeLanguageResponse(String locale, String senderId) {
@@ -774,21 +778,7 @@ public class UtilService {
 		return MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(gTemplate));
 	}
 
-	public JSONObject rasaIntegration(String url, String payload, String paramKey) {
-		RestTemplate restTemplate = new RestTemplate();
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
-		JSONObject requestBody = new JSONObject();
-		requestBody.put(paramKey, payload);
-		HttpEntity<String> request = new HttpEntity<>(requestBody.toString());
-		logger.debug("Rasa Request "+request);
-		ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
-		logger.debug("Rasa Response "+ response.getBody());
-		if (response.getStatusCodeValue() != 200) {
-			return new JSONObject();
-		}
-		return new JSONObject(response.getBody());
-	}
+
 
 	public MessagePayload createErrorTemplateForNoConsumptionDetails(String senderId, String locale, String payload) {
 		List<Element> elementsList = new ArrayList<>();
@@ -820,13 +810,48 @@ public class UtilService {
 	 * @param paramValuesList
 	 * @param paramNames
 	 */
-	public JSONObject setRequestBodyValueForPostCalling(ArrayList<String> paramValuesList, String[] paramNames) {
+	public JSONObject setRequestBodyValueForPostCalling(ArrayList<String> paramValuesList, ArrayList<String> paramNames) {
 		JSONObject jsonParam = new JSONObject();
-		for (int p = 0; p < paramNames.length; p++) {
-			jsonParam.put(paramNames[p], paramValuesList.get(p));
+		for (int p = 0; p < paramNames.size(); p++) {
+			jsonParam.put(paramNames.get(p), paramValuesList.get(p));
 		}
 		return jsonParam;
 	}
 
+	public void interactionLoggingUpdateResponseTime(InteractionLogging interactionLogging) {
+		InteractionLogging updatedInteractionLogging = new InteractionLogging();
+		updatedInteractionLogging.setBotInteraction(interactionLogging.getBotInteraction());
+		updatedInteractionLogging.setAdditionalParam(interactionLogging.getAdditionalParam());
+		updatedInteractionLogging.setCustomerProfile(interactionLogging.getCustomerProfile());
+		updatedInteractionLogging.setInteractionCallingDate(interactionLogging.getInteractionCallingDate());
+		updatedInteractionLogging.setInteractionLoggingId(interactionLogging.getInteractionLoggingId());
+		updatedInteractionLogging.setBotResponseDate(new Timestamp(new Date().getTime()));
+		chatBotService.saveInteractionLogging(updatedInteractionLogging);	
+		
+	}
 
+	/**
+	 * user locale setting
+	 * 
+	 * @param customerProfile  used for update user locale in database
+	 * @param messenger
+	 * @param senderId
+	 * @param payload
+	 */
+	public ArrayList<MessagePayload> userlocaleSetting(CustomerProfile customerProfile,  String senderId, String payload) {
+		ArrayList<MessagePayload> messagePayloadList = new ArrayList<>();
+		if (payload.equalsIgnoreCase(Constants.LOCALE_EN)) {
+			setCustomerProfileLocal(customerProfile, Constants.LOCALE_EN);
+			messagePayloadList.add(changeLanguageResponse(Constants.LOCALE_EN, senderId));
+				//interactionHandlingService.sendMultipleMessages(messagePayloadList, senderId, messenger, null);
+			
+		} else if (payload.equalsIgnoreCase(Constants.LOCALE_AR)) {
+			setCustomerProfileLocal(customerProfile, Constants.LOCALE_AR);
+			messagePayloadList.add(changeLanguageResponse(Constants.LOCALE_AR, senderId));
+				//interactionHandlingService.sendMultipleMessages(messagePayloadList, senderId, messenger, null);
+			
+		}
+		return messagePayloadList;
+	}
+	
 }

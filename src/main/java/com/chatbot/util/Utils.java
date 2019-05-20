@@ -11,6 +11,9 @@ import java.sql.Timestamp;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -44,6 +47,9 @@ import com.github.messenger4j.send.SenderActionPayload;
 import com.github.messenger4j.send.senderaction.SenderAction;
 import com.github.messenger4j.userprofile.UserProfile;
 
+/**
+ * @author Amin Eisa
+ */
 public class Utils {
 
 	private static final Logger logger = LoggerFactory.getLogger(UtilService.class);
@@ -75,7 +81,7 @@ public class Utils {
 		}
 	}
 
-	// Get Text Value
+	// Get Text Value For Button Label
 	public static String getTextValueForButtonLabel(String local, BotButton botButton) {
 		String text = Constants.EMPTY_STRING;
 		if (local.equalsIgnoreCase(Constants.LOCALE_AR)) {
@@ -110,7 +116,13 @@ public class Utils {
 		return DatatypeConverter.printBase64Binary(enc);
 	}
 
-	public static void updateCustomerLastSeen(CustomerProfile customerProfile, String phoneNumber, ChatBotService chatBotService) {
+	/**
+	 * Update last seen property for last time of user interact with Bot
+	 * 
+	 * @param customerProfile
+	 * @param chatBotService
+	 */
+	public static void updateCustomerLastSeen(CustomerProfile customerProfile, ChatBotService chatBotService) {
 		Date date = new Date();
 		CustomerProfile updatedCustomerProfile = new CustomerProfile();
 		updatedCustomerProfile.setLastName(customerProfile.getLastName());
@@ -127,8 +139,11 @@ public class Utils {
 	}
 
 	/**
+	 * Normal interaction saving handling in database
+	 * 
 	 * @param customerProfile
 	 * @param botInteraction
+	 * @param chatBotService
 	 */
 	public static InteractionLogging interactionLogginghandling(CustomerProfile customerProfile, BotInteraction botInteraction, ChatBotService chatBotService) {
 		Date date = new Date();
@@ -141,6 +156,13 @@ public class Utils {
 		return chatBotService.saveInteractionLogging(interactionLogging);
 	}
 
+	/**
+	 * Free text saving handling in database
+	 * 
+	 * @param interactionLogging
+	 * @param text
+	 * @param chatBotService
+	 */
 	public static void freeTextinteractionLogginghandling(InteractionLogging interactionLogging, String text, ChatBotService chatBotService) {
 		Date date = new Date();
 		Timestamp timeStamp = new Timestamp(date.getTime());
@@ -151,6 +173,12 @@ public class Utils {
 		chatBotService.saveFreeTextLogging(freeTextLogging);
 	}
 
+	/**
+	 * Handling user logging out in database
+	 * 
+	 * @param senderId
+	 * @param chatBotService
+	 */
 	public static CustomerProfile userLogout(final String senderId, ChatBotService chatBotService) {
 		CustomerProfile storedCustomerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 		CustomerProfile logoutCustomerProfile = new CustomerProfile();
@@ -166,6 +194,15 @@ public class Utils {
 		return chatBotService.saveCustomerProfile(logoutCustomerProfile);
 	}
 
+	/**
+	 * Saving || updating if it exist Customer information
+	 * 
+	 * @param chatBotService
+	 * @param senderId
+	 * @param userLocale
+	 * @param firstName
+	 * @param lastName
+	 */
 	public static CustomerProfile saveCustomerInformation(ChatBotService chatBotService, String senderId, String userLocale, String firstName, String lastName) {
 		CustomerProfile cProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 		if (cProfile == null) {
@@ -196,6 +233,12 @@ public class Utils {
 		}
 	}
 
+	/**
+	 * Mark message as seen in messenger tab
+	 * 
+	 * @param messenger
+	 * @param userId
+	 */
 	public static void markAsSeen(Messenger messenger, String userId) {
 		try {
 			String recipientId = userId;
@@ -208,6 +251,12 @@ public class Utils {
 		}
 	}
 
+	/**
+	 * Mark in messenger as bot typing a response to client during sending reply
+	 * 
+	 * @param messenger
+	 * @param userId
+	 */
 	public static void markAsTypingOn(Messenger messenger, String userId) {
 		try {
 			String recipientId = userId;
@@ -222,6 +271,12 @@ public class Utils {
 		}
 	}
 
+	/**
+	 * Mark in messenger as bot is stop typing after sending reply
+	 * 
+	 * @param messenger
+	 * @param userId
+	 */
 	public static void markAsTypingOff(Messenger messenger, String userId) {
 		try {
 			String recipientId = userId;
@@ -235,8 +290,14 @@ public class Utils {
 		}
 	}
 
+	/**
+	 * Save user linked dial in database
+	 * 
+	 * @param customerProfile
+	 * @param chatBotService
+	 */
 	public static CustomerLinkingDial setLinkedDial(CustomerProfile customerProfile, ChatBotService chatBotService) {
-		
+
 		CustomerLinkingDial customerLinkingDial = new CustomerLinkingDial();
 		Date linkingDate = new Date();
 		Timestamp timestamp = new Timestamp(linkingDate.getTime());
@@ -246,12 +307,18 @@ public class Utils {
 		customerLinkingDial.setCustomerProfile(customerProfile);
 		return chatBotService.saveCustomerLinkingDial(customerLinkingDial);
 	}
-	
+
+	/**
+	 * Update unlinking time for specific user's dial
+	 * 
+	 * @param chatBotService
+	 * @param msisdn
+	 */
 	public static CustomerLinkingDial updateUnlinkindDate(ChatBotService chatBotService, String msisdn) {
 		Date unLinkingDate = new Date();
 		Timestamp unLinkingTime = new Timestamp(unLinkingDate.getTime());
-		CustomerLinkingDial storedObject = chatBotService.getCustomerLinkingDialById(msisdn); 
-		CustomerLinkingDial newCustomerLinkingDial = new  CustomerLinkingDial();
+		CustomerLinkingDial storedObject = chatBotService.getCustomerLinkingDialById(msisdn);
+		CustomerLinkingDial newCustomerLinkingDial = new CustomerLinkingDial();
 		newCustomerLinkingDial.setCustomerProfile(storedObject.getCustomerProfile());
 		newCustomerLinkingDial.setDial(storedObject.getDial());
 		newCustomerLinkingDial.setLinkingDate(storedObject.getLinkingDate());
@@ -259,6 +326,10 @@ public class Utils {
 		return chatBotService.saveCustomerLinkingDial(newCustomerLinkingDial);
 	}
 
+	/**
+	 * DashBoard encryption for channel param
+	 * 
+	 */
 	public static String encryptChannelParam(String url)
 			throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, UnsupportedEncodingException {
 		String key = "etisalatetisalat";
@@ -281,14 +352,19 @@ public class Utils {
 		return toBeSentParams;
 	}
 
-	public static Map<String, String> callGetWebServiceByRestTemplate(URI uri, ChatBotService chatBotService) {
+	/**
+	 * Get WebService Calling
+	 * 
+	 * @param uri
+	 */
+	public static Map<String, String> callGetWebServiceByRestTemplate(URI uri) {
 		Map<String, String> responseMap = new HashMap<>();
 		HttpHeaders headers = new HttpHeaders();
 		headers.set("Accept", MediaType.APPLICATION_JSON_UTF8_VALUE);
 		int statusId = 0;
 		try {
 			HttpEntity entity = new HttpEntity<>(headers);
-			RestTemplate restTemplate = new RestTemplate(/*getClientHttpRequestFactory(chatBotService)*/);
+			RestTemplate restTemplate = new RestTemplate(/* getClientHttpRequestFactory(chatBotService) */);
 			ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.GET, entity, String.class);
 			statusId = response.getStatusCodeValue();
 			responseMap.put(Constants.RESPONSE_STATUS_KEY, String.valueOf(statusId));
@@ -298,11 +374,14 @@ public class Utils {
 			responseMap.put(Constants.RESPONSE_STATUS_KEY, String.valueOf(statusId));
 			logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
 			e.printStackTrace();
-
 		}
 		return responseMap;
 	}
 
+	/**
+	 * URI creation for Get Webservice Calling
+	 * 
+	 */
 	public static URI createURI(BotWebserviceMessage botWebserviceMessage, String senderId, ChatBotService chatBotService, String phoneNumber) {
 		URI uri = null;
 		try {
@@ -310,8 +389,7 @@ public class Utils {
 			String dialNumber = customerProfile.getMsisdn();
 
 			String paramChannel = Utils.encryptChannelParam(Constants.URL_PARAM_MSISDN_KEY + dialNumber + Constants.URL_TIME_CHANNEL_KEY + Constants.CHANEL_PARAM);
-			String realParameter =Constants.URL_PARAM_CHANNEL_KEY + paramChannel;
-					//"paramChannel:74524b535742674c35536b693443454c696f45486f645a3676654b59756f4d573479677558446d673266416944446258793530367634734b43625a3868556b76467659472b706c657a5764590a6979747a4c6f594266413d3d";
+			String realParameter = Constants.URL_PARAM_CHANNEL_KEY + paramChannel;
 			uri = new URI(botWebserviceMessage.getWsUrl() + "?dial=" + realParameter);
 		} catch (URISyntaxException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException | UnsupportedEncodingException e1) {
 			logger.error(Constants.LOGGER_DIAL_IS + phoneNumber + Constants.LOGGER_SENDER_ID + senderId + Constants.LOGGER_EXCEPTION_MESSAGE + e1);
@@ -320,20 +398,35 @@ public class Utils {
 		return uri;
 	}
 
+	/**
+	 * Retrieve View Button label according to locale
+	 * 
+	 * @param locale
+	 */
 	public static String getLabelForViewButton(String locale) {
 		if (locale.contains(Constants.LOCALE_AR)) {
-			return "عرض";
+			return Constants.BUTTON_LABEL_VIEW_AR;
 		}
-		return "View";
+		return Constants.BUTTON_LABEL_VIEW_EN;
 	}
 
+	/**
+	 * Retrieve pay Bill Button label according to locale
+	 * 
+	 * @param locale
+	 */
 	public static String getLabelForPayBillButton(String locale) {
 		if (locale.contains(Constants.LOCALE_AR)) {
-			return "ادفع الان";
+			return Constants.BUTTON_LABEL_PAY_BILL_AR;
 		}
-		return "Pay Now";
+		return Constants.BUTTON_LABEL_PAY_BILL_EN;
 	}
 
+	/**
+	 * Retrieve title for pay bill template according to locale
+	 * 
+	 * @param locale
+	 */
 	public static String getTitleForPayBillButton(String locale) {
 		if (locale.contains(Constants.LOCALE_AR)) {
 			return "هل تريد ان تدفع الان ";
@@ -341,18 +434,28 @@ public class Utils {
 		return "Do you want to pay yor bill now ?";
 	}
 
+	/**
+	 * Retrieve Back Button label according to locale
+	 * 
+	 * @param locale
+	 */
 	public static String getLabelForBackButton(String locale) {
 		if (locale.contains(Constants.LOCALE_AR)) {
-			return "عودة";
+			return Constants.BUTTON_LABEL_BACK_AR;
 		}
-		return "Back";
+		return Constants.BUTTON_LABEL_BACK_EN;
 	}
 
-	public static String getLabelForٍSubscribeButton(String locale) {
+	/**
+	 * Retrieve Subscription Button label according to locale
+	 * 
+	 * @param locale
+	 */
+	public static String subscribeButtonLabel(String locale) {
 		if (locale.contains(Constants.LOCALE_AR)) {
-			return "اشترك";
+			return Constants.BUTTON_LABEL_SUBSCRIBE_AR;
 		}
-		return "Subscribe";
+		return Constants.BUTTON_LABEL_BACK_SUBSCRIBE_EN;
 	}
 
 	public static String informUserThatHeDoesnotSubscribeAtAnyMIBundle(String locale) {
@@ -372,40 +475,86 @@ public class Utils {
 		return userProfile;
 	}
 
-	/*private static ClientHttpRequestFactory getClientHttpRequestFactory(ChatBotService chatBotService) {
-		String sTimeOut = chatBotService.getBotConfigurationByKey(Constants.REQUEST_TIME_OUT_VALUE).getValue();
-		int timeout = Integer.parseInt(sTimeOut);
-		logger.debug("Time Out " + timeout);
-		HttpComponentsClientHttpRequestFactory clientHttpRequestFactory = new HttpComponentsClientHttpRequestFactory();
-		clientHttpRequestFactory.setConnectTimeout(timeout);
-		return clientHttpRequestFactory;
-	}*/
-	
-	
+	/**
+	 * Retrieve More Button label according to locale
+	 * 
+	 * @param locale
+	 */
 	public static String moreButtonLabel(String locale) {
-		if(locale.contains(Constants.LOCALE_AR)) {
+		if (locale.contains(Constants.LOCALE_AR)) {
 			return Constants.MORE_BUTTON_LABEL_AR;
-		}else {
+		} else {
 			return Constants.MORE_BUTTON_LABEL_EN;
 		}
-		
+
 	}
-	
+
 	public static String moreElementTitle(String locale) {
-		if(locale.contains(Constants.LOCALE_AR)) {
-			return	"المزيد من الباقات ";
-		}else {
+		if (locale.contains(Constants.LOCALE_AR)) {
+			return "المزيد من الباقات ";
+		} else {
 			return "More rateplans";
 		}
 	}
-	
+
 	public static String moreElementSubTitle(String locale) {
-		if(locale.contains(Constants.LOCALE_AR)) {
-			return	"المزيد من الباقات الاخري ";
-		}else {
-			return "Check more rateplans";
+		if (locale.contains(Constants.LOCALE_AR)) {
+			return "يمكنك رؤية المزيد من الباقات الاخري بالضغط علي زرار أكثر ";
+		} else {
+			return "You can check more rateplans by press More Button";
 		}
-}
+	}
+
+	public static String replacePlaceholderByNameValue(String text, String userFirstName , String phoneNumber) {		
+		if(text.contains(Constants.NUMBER_PLACEHOLDER) && phoneNumber != null) {
+			text = text.replaceFirst(Constants.NUMBER_PLACEHOLDER, phoneNumber);
+		}else if(text.contains(Constants.NUMBER_PLACEHOLDER) && phoneNumber == null || phoneNumber =="") {
+			text = text.replaceFirst(Constants.NUMBER_PLACEHOLDER, "");
+		}else if (text.contains(Constants.NAME_PLACEHOLDER) && userFirstName != null) {
+			text = text.replaceFirst(Constants.NAME_PLACEHOLDER, userFirstName);
+		} else if (text.contains(Constants.NAME_PLACEHOLDER) && (userFirstName == null || userFirstName == "")) {
+			text = text.replaceFirst(Constants.NAME_PLACEHOLDER, "");
+		}
+		return text;
+	}
+	
+	
+	
+	
+	static String generateActivationCode(){
+		Random random = new Random();
+		return String.format("%04d", random.nextInt(10000));
+		//System.out.printf("%04d%n", random.nextInt(10000));
+	}
+	
+	
+	public static String extractPhoneNumbers(String text) {
+		String dial ="";
+		 Pattern p = Pattern.compile("\\d+");
+	        Matcher m = p.matcher(text);
+	        while(m.find()) {
+	            dial = m.group();
+	        }
+	        return dial;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+/*	public static void main(String[] args) {
+		System.out.println(generateActivationCode());
+		String text = "this is my phoneNumber 0110113960 and my second number is 01122200685";
+		System.out.println("Number is "+extractPhoneNumbers(text));
+		
+	}
+	*/
+	
+	
+	
 	
 	
 }

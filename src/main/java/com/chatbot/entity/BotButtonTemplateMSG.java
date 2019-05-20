@@ -2,8 +2,10 @@ package com.chatbot.entity;
 
 import java.io.Serializable;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -31,7 +33,7 @@ public class BotButtonTemplateMSG implements Serializable{
 	private Boolean isStatic;
 
 	// bi-directional many-to-one association to BotText
-	@ManyToOne
+	@ManyToOne()
 	@JoinColumn(name = "TEXT_ID")
 	private BotText botText;
 

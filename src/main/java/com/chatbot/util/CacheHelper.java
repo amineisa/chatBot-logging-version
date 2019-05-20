@@ -10,7 +10,9 @@ import org.ehcache.config.builders.ResourcePoolsBuilder;
 import org.ehcache.expiry.Duration;
 import org.ehcache.expiry.Expirations;
 
-
+/**
+ * @author Amin Eisa 
+ */
 public class CacheHelper <K extends Object,V extends Object> {
 	
 	private CacheManager cacheManager;

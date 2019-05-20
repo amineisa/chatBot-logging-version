@@ -62,10 +62,10 @@ public class BotWebserviceMessage implements Serializable {
 	@JoinColumn(name = "OUT_TYPE_ID")
 	private BotInOutType outType;
 	
-	/*@ManyToOne
+	@ManyToOne
 	@JoinColumn(name = "SUBTITLE_TEXT_ID")
 	private BotText subTitle;
-	*/
+	
 	
 	@ManyToOne
 	@JoinColumn(name = "TITLE_TEXT_ID")
@@ -73,8 +73,13 @@ public class BotWebserviceMessage implements Serializable {
 
 	@Column(name = "IS_STATIC")
 	private Boolean isStatic;
-
+	
+	
+	/**
+	 * 
+	 */
 	public BotWebserviceMessage() {
+		// TODO Auto-generated constructor stub
 	}
 
 	public Long getWsMsgId() {
@@ -199,4 +204,14 @@ public class BotWebserviceMessage implements Serializable {
 		this.isStatic = isStatic;
 	}
 
+	public BotText getSubTitle() {
+		return subTitle;
+	}
+
+	public void setSubTitle(BotText subTitle) {
+		this.subTitle = subTitle;
+	}
+
+	
+	
 }

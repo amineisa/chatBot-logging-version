@@ -33,6 +33,11 @@ public class EnabledCategoryConfiguration implements Serializable {
 	@JoinColumn(name = "category_label" , referencedColumnName="TEXT_ID" , nullable=true)
 	private BotText categoryLabel;
 
+	
+	@OneToOne()
+	@JoinColumn(name = "category_description" , referencedColumnName="TEXT_ID" , nullable=true)
+	private BotText categoryDescriptionId;
+	
 	public Long getId() {
 		return id;
 	}
@@ -63,6 +68,14 @@ public class EnabledCategoryConfiguration implements Serializable {
 
 	public void setCategoryLabel(BotText categoryLabel) {
 		this.categoryLabel = categoryLabel;
+	}
+
+	public BotText getCategoryDescriptionId() {
+		return categoryDescriptionId;
+	}
+
+	public void setCategoryDescriptionId(BotText categoryDescriptionId) {
+		this.categoryDescriptionId = categoryDescriptionId;
 	}
 
 	

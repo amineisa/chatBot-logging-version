@@ -5,13 +5,10 @@ import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 
@@ -23,8 +20,8 @@ public class FreeTextLogging implements Serializable {
 	
 	@Id
 	@Column(name = "ID")
-	@GeneratedValue(strategy=GenerationType.AUTO, generator="FREE_TEXT_seq_gen")
-	@SequenceGenerator(name="FREE_TEXT_seq_gen", sequenceName="FREE_TEXT_SEQ")
+	//@GeneratedValue(strategy=GenerationType.AUTO, generator="FREE_TEXT_seq_gen")
+	//@SequenceGenerator(name="FREE_TEXT_seq_gen", sequenceName="FREE_TEXT_SEQ")
 	private Long freeTextLoggingId;
 	
 	@Column(name="RECEIVED_TEXT")

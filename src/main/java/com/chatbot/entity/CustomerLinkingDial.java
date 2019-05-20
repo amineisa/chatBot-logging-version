@@ -5,13 +5,10 @@ import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQuery;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 @Entity
@@ -22,8 +19,8 @@ public class CustomerLinkingDial implements Serializable{
 
 	@Id
 	@Column(name="ID")
-	@GeneratedValue(strategy=GenerationType.AUTO, generator="LINKINK_DIALS_seq_gen")
-	@SequenceGenerator(name="LINKINK_DIALS_seq_gen", sequenceName="LINKINK_DIALS_SEQ")
+	//@GeneratedValue(strategy=GenerationType.AUTO, generator="LINKINK_DIALS_seq_gen")
+	//@SequenceGenerator(name="LINKINK_DIALS_seq_gen", sequenceName="LINKINK_DIALS_SEQ")
 	private Long id;
 	
 	@Column(name="DIAL")

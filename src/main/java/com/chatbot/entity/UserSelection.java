@@ -2,50 +2,31 @@ package com.chatbot.entity;
 
 import java.io.Serializable;
 
+import lombok.ToString;
 
-/*@Entity
-@Table(name="USER_SELECTIONS")
-@NamedQuery( query="SELECT u FROM UserSelection u ", name = "UserSelection.findAll")*/
+@ToString
 public class UserSelection implements Serializable{
 
 	private static final long serialVersionUID = 1L;
 	
-	/*@Id
-	@Column(name="SENDER_ID")*/
 	private String senderId;
-	
-	/*@Column(name="ORIGINAL_PAYLOAD")*/
 	private String originalPayLoad;
-
-	/*@Column(name="PHONE_NUMBER")*/
 	private String phoneNumber;
-
-	/*@Column(name="PRODUCT_ID_OPERATION_NAME")*/
 	private String productIdAndOperationName;
-
-	/*@Column(name="AADON_ID")*/
 	private String addonId;
-
-	/*@Column(name="PARENT_PAYLOAD")*/
 	private String parentPayLoad;
-
-	/*@Column(name="PRODUCT_ID_FOR_RENEW")*/
 	private String productIdForRenew;
-
-	/*@Column(name="IS_SUBSCRIBE")*/
-	private boolean isSubscribed;
-
-	/*@Column(name="PARAMETER_FOR_RP")*/
 	private String parametersListForRelatedProducts;
-
-	/*@Column(name="FREE_TEXT")*/
 	private String freeText;
-	
-	/*@Column(name="MIGRATION_ID")*/
 	private String rateplanNameForMigration;
-	
-	/*@Column(name="MIGRATION_NAME")*/
+	private String productNameForSallefny;	
+	private String userDialForAuth;	
+	private String activationCode;	
+	private String scratcheddNumberForRecharge;
+	private String akwaKartCategoryName;
 	private int rateplanIdForMigration;
+	private boolean isSubscribed;
+	private String akwakartProductName;
 	
 	public String getSenderId() {
 		return senderId;
@@ -146,6 +127,56 @@ public class UserSelection implements Serializable{
 		this.rateplanIdForMigration = rateplanIdForMigration;
 	}
 
+	public String getProductNameForSallefny() {
+		return productNameForSallefny;
+	}
+
+	public void setProductNameForSallefny(String productNameForSallefny) {
+		this.productNameForSallefny = productNameForSallefny;
+	}
+
+	public String getUserDialForAuth() {
+		return userDialForAuth;
+	}
+
+	public void setUserDialForAuth(String userDialForAuth) {
+		this.userDialForAuth = userDialForAuth;
+	}
+
+	public String getActivationCode() {
+		return activationCode;
+	}
+
+	public void setActivationCode(String activationCode) {
+		this.activationCode = activationCode;
+	}
+
+	public String getScratcheddNumberForRecharge() {
+		return scratcheddNumberForRecharge;
+	}
+
+	public void setScratcheddNumberForRecharge(String scratcheddNumberForRecharge) {
+		this.scratcheddNumberForRecharge = scratcheddNumberForRecharge;
+	}
+
+	public String getAkwaKartCategoryName() {
+		return akwaKartCategoryName;
+	}
+
+	public void setAkwaKartCategoryName(String akwaKartCategoryName) {
+		this.akwaKartCategoryName = akwaKartCategoryName;
+	}
+
+	public String getAkwakartProductName() {
+		return akwakartProductName;
+	}
+
+	public void setAkwakartProductName(String akwakartProductName) {
+		this.akwakartProductName = akwakartProductName;
+	}
+
+	
+	
 	
 	
 

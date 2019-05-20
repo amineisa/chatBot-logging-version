@@ -1,8 +1,12 @@
 package com.chatbot.util;
 
+/**
+ * @author Amin Eisa 
+ */
 public class Constants {
 
 	public static final String CHANEL_PARAM = "CHATBOT";
+	public static final String PREFIX_SALLEFNY_INTERACTION = "SALL_";
 	public static final String PREFIX_ADDONSUBSCRIPE = "subaddon_";
 	public static final String PREFIX_RATEPLAN_SUBSCRIPTION = "sub_";
 	public static final String PREFIX_MOBILEINTERNET_ADDON = "MIAddon";
@@ -10,12 +14,12 @@ public class Constants {
 	public static final String PREFIX_CONFIRM_MOBILEINTERNET_SUBSCRIPTION = "mi_yes_subscripe";
 	public static final String PREFIX_RELATED_PRODUCTS_SUBSCRIPTION = "relatedproductsubscription";
 	public static final String PREFIX_BUNDLE_UNSUBSCRIPTION ="mi_yes_unsubscribe";
-	
-
 	public static final String PAYLOAD_MOBILE_INTERNET_SUBSCRIPTION_CANCEL = "mi_no_subscripe";
 	public static final String PAYLOAD_CHANGE_BUNDLE = "change bundle";
 	public static final String PAYLOAD_ADDON_SUBSCRIPTION = "subscribe addon";
 	public static final String PAYLOAD_BUY_ADDONS = "buy addons";
+	public static final String PAYLOAD_SALLEFNY_CONFIRMATION_YES = "salefny_yes";
+	public static final String PAYLOAD_RENEWAL_BUNDLE = "renew bundle";
 	public static final String PAYLOAD_MI_CONSUMTION_PARENT = "MI consumption parent";
 	public static final String PAYLOAD_RELATED_PRODUCTS = "related product";
 	public static final String PAYLOAD_MOBILE_INTERNET_CONFIRMATION_MSG = "MI Bundle subscription confirmation msg";
@@ -25,6 +29,10 @@ public class Constants {
 	public static final String PAYLOAD_FAULT_MSG = "fault MSG";
 	public static final String PAYLOAD_ACCOUNT_DETAILS = "account details";
 	public static final String PAYLOAD_PREPAID = "prepaid";
+	public static final String PAYLOAD_AKWAKART_CATEGORY_MIN ="MIN";
+	public static final String PAYLOAD_AKWAKART_CATEGORY_MIX = "MIX";
+	public static final String PAYLOAD_DIAL_VALIDITY = "dial validity";
+	public static final String PAYLOAD_RATEPLAN_WITHOUT_METER = "rateplan without meters";
 	public static final String PAYLOAD_VIEW_CONNECT_DETAILS = "view connect details";
 	public static final String PAYLOAD_VIEW_RATEPLAN_DETAILS = "view rateplan details";
 	public static final String PAYLOAD_RATEPLAN_AND_CONNECT = "view rateplan and connect details";
@@ -41,23 +49,22 @@ public class Constants {
 	public static final String PAYLOAD_TALK_TO_AGENT = "Talk to Agent";
 	public static final String PAYLOAD_WELCOME_AGAIN = "welcome again";
 	public static final String PAYLOAD_FREE_TEXT = "freetext";
+	public static final String PAYLOAD_LOGIN_INTERACTION ="login";
+	public static final String NEW_PAYLOAD_LOGIN_INTERACTION = "new_login";
+	public static final String PAYLOAD_VERIFICATION_CODE = "verify code";
+	public static final String PAYLOAD_GET_STARTED = "welcome";  
 	public static final String PAYLOAD_MIGRATE_MORE = "Migrate More";
 	public static final String NOTELIGIBLE_ELEMENT_TITLE_EN = "Sorry !";
 	public static final String NOTELIGIBLE_ELEMENT_TITLE_AR = "! عفوا";
 	public static final String PAYLOAD_MIGRATE = "Migrate";
 	public static final String NOCONSUMPTION_ELEMENT_SUBTITLE_EN = " Your current rateplan is not have consumption  ";
 	public static final String NOCONSUMPTION_ELEMENT_SUBTITLE_AR = "باقتك ليس عليها اي استهلاك";
-	
-	
-	
 	public static final String NOTELIGIBLE_ELEMENT_SUBTITLE_EN = " Your Dial Not Eligible to any addons ";
-	public static final String NOTELIGIBLE_ELEMENT_SUBTITLE_AR = " عفوا رقمك ليس له اي اضافات";
-	
+	public static final String NOTELIGIBLE_ELEMENT_SUBTITLE_AR = "عفوا انت ما عندكش باقات اضافية ";
 	public static String profilePayloads = PAYLOAD_VIEW_CONNECT_DETAILS + Constants.COMMA_CHAR + PAYLOAD_RATEPLAN_AND_CONNECT + "," + PAYLOAD_VIEW_RATEPLAN_DETAILS + "," + PAYLOAD_RATEPLAN_DETAILS
 			+ "," + PAYLOAD_CONSUMPTION;
 	public static final String RESPOSE_MSG_CHANGE_LOCALE_AR = "تم تغير اللغة الي اللغة العربيه ";
 	public static final String RESPOSE_MSG_CHANGE_LOCALE_EN = "Language has been changed to English language";
-
 	// logger prefixes
 	public static final String LOGGER_SENDER_ID = " SENDER ID IS ";
 	public static final String LOGGER_METHOD_NAME = " METHOD NAME IS ";
@@ -72,15 +79,12 @@ public class Constants {
 	public static final String LOGGER_MOBILE_INTERENET_CONSUMPTION = "Mobile Internet Consumption ";
 	public static final String LOGGER_RATEPLAN_CONSUMPTION = "RatePlan Consumption ";
 	public static final String LOGGER_SERVICE_URL = "Service URL ";
-
 	// json response keys
 	public static final String IS_ARRAY_KEY_IN_JSON_RESPONSE = "#";
 	public static final String CACHED_MAP_PROFILE_KEY_SUFFIX = "_PROFILE";
 	public static final String CACHED_MAP_ELIGIPLE_PRODUCT_KEY_SUFFIX = "_PRODUCT";
 	public static final String CACHED_MAP_ELIGIPLE_EXTRA_KEY_SUFFIX = "_EXTRA";
-
 	public static final String SOCIAL_CONSUMPTION = "socialConsumption";
-
 	public static final String JSON_KEY_NAME_EN = "englishName";
 	public static final String JSON_KEY_NAME_AR = "arabicName";
 	public static final String JSON_KEY_FOR_PRODUCT = "products";
@@ -121,18 +125,11 @@ public class Constants {
 	public static final String FB_JSON_KEY_SENDER = "sender";
 	public static final String FB_JSON_KEY_ID = "id";
 	public static final String FB_JSON_KEY_FREE_TEXT = "text";
-	
-	
-
-	
 	public static final String RESPONSE_STATUS_KEY = "status";
 	public static final String RESPONSE_KEY = "response" ;
 	public static final String RESPONSE_PERCENTAGE_KEY ="percentage";
-	
 	public static final String JSON_KEY_VALUE_AR = "arabicValue";
-	public static final String JSON_KEY_VALUE_EN = "englishValue";
-	
-	
+	public static final String JSON_KEY_VALUE_EN = "englishValue";	
 	public static final String URL_KEYWORD_PROFILE = "profile";
 	public static final String URL_KEYWORD_BUNDLE = "bundle";
 	public static final String URL_KEYWORD_EXTRA = "extra";
@@ -147,20 +144,18 @@ public class Constants {
 	public static final String MOBILE_INTERNET_CONSUMPTION_NAME_EN = "Mobile Internet";
 	public static final String MOBILE_INTERNET_CONSUMPTION_NAME_AR = "موبايل انترنت";
 	public static final String OPERATION_NAME_RENEW = ",RENEW";
-
 	public static final String RESPONSE_MAP_MESSAGE_KEY = "msg";
 	public static final String RESPONSE_MAP_TITLE_KEY = "title";
+	public static final String RESPONSE_MAP_SUBTITLE_KEY ="subtitle";
+	public static final String RESPONSE_MAP_LABEL_KEY = "label";
 	public static final String INTERNET_BUNDLE_AR = "باقات الانترنت";
-
 	public static final String CONFIGURATION_TABLE_MESSENGER_OBJECT = "MESSENGER_OBJECT";
 	public static final String CONFIGURATION_TABLE_APP_SECRET = "APP_SECRET";
 	public static final String CONFIGURATION_TABLE_PAGE_ACCESS_TOKEN = "PAGE_ACCESS_TOKEN";
 	public static final String CONFIGURATION_TABLE_VERIFY_TOKEN = "VERIFY_TOKEN";
 	public static final String CONFIGURATION_TABLE_WARNING_I0MAGE_URL = "WARNING_IMAGE";
 	public static final String SECONDRY_APP_ID = "SECONDRY_APP_ID";
-
 	public static final String CONFIGURATION_CACHE_KEY = "configurationCache";
-	
 	public static final String LOCALE_EN = "en_us";
 	public static final String LOCALE_AR = "ar";
 	public static final String IS_KEY_HAS_DOT = ".";
@@ -170,32 +165,34 @@ public class Constants {
 	public static final String ADDON_SUBSCRIPTION_ACTION = "Action is Add-on Subscription";
 	public static final String RENEW_BUNDLE_ACTION = "Action is Renew Subscribed Bundle ";
 	public static final String MI_BUNDLE_SUBSCRIPTION = "Action is Mobile Internet Bundle Subscription";
-	
 	public static final String BUTTON_LABEL_CHARGE_AR = "اشحن الان";
 	public static final String BUTTON_LABEL_CHARGE_EN = "Recharge Now";
+	public static final String BUTTON_LABEL_PAY_BILL_AR = "ادفع الان";
+	public static final String BUTTON_LABEL_PAY_BILL_EN = "Pay Now";
+	public static final String BUTTON_LABEL_VIEW_EN = "View";
+	public static final String BUTTON_LABEL_VIEW_AR = "عرض";
+	public static final String BUTTON_LABEL_BACK_AR = "عودة";
+	public static final String BUTTON_LABEL_BACK_EN = "Back";
+	public static final String BUTTON_LABEL_SUBSCRIBE_AR ="اشترك";
+	public static final String BUTTON_LABEL_BACK_SUBSCRIBE_EN ="Subscribe";
 	public static final String JSON_KEY_RATEPLAN_ADON = "ratePlanAddons";
 	public static final String JSON_KEY_MOBILE_INTERNET_ADON = "addons";
 	public static final String TELL_CLIENT_WAIT_FOR_AGENT_RESPONSE = "WAIT_FOR_AGENT_RESPONSE";
 	public static final String REQUEST_TIME_OUT_VALUE = "REQUEST_TIME_OUT_VALUE";
 	public static final String JSON_KEY_BIILAMOUNT = "billAmount";
 	public static final String PAY_BILL_BASE_URL = "PAY_BILL_BASE_URL";
-	
-	
 	public static final String HAZEL_OBJECT_NAME = "CASH_OBJECT_NAME";
-	
 	public static final String HAZEL_CACHE_MAP_CONTAINER_NAME = "CACHES";
 	public static final String USER_SELECTION_MAP_KEY = "USERS_SELCTIONS";
-	
-	
 	public static final String FIRST_CACHING_SERVER_IP = "FIRST_SEVER_IP";
 	public static final String SECOND_CACHING_SERVER_IP = "SECOND_SERVER_IP";
 	public static final String COMMUNICATE_PORT_BETWEEN_CACHING_SERVERES = "COMMUNICATE_PORT";
-	
 	public static final String MIGRATION_RATEPLANS_KEY = "rateplans";
 	public static final String MIGRATION_DISPLAY_MOREBUTTON = "displayMoreBtn";
 	public static final String MORE_BUTTON_LABEL_AR = "أكثر";
 	public static final String MORE_BUTTON_LABEL_EN = "More";
-	public static final String MIGRATE_BUTTON_LABEL= "Migrate";
+	public static final String MIGRATE_BUTTON_LABEL_EN = "Migrate";
+	public static final String MIGRATE_BUTTON_LABEL_AR = "تغير";
 	public static final String PREFIX_MIGRATE_ID = "MigrateID,";
 	public static final String PREFIX_MIGRATE_NAME = "MigrateName,";
 	public static final String PAYLOAD_MIGRATE_BY_ID = "Migratebyid";
@@ -209,11 +206,47 @@ public class Constants {
 	public static final String PAYLOAD_RATEPLAN_ACTIONS = "rateplan actions";
 	public static final String PAYLOAD_MOBILE_INTERNET_CONTROLLER = "Mobile Internet controller";
 	public static final String PAYLOAD_NO_MI_BUNDLE_FOUND = "No MI Bundle Found";
+	public static final String GET_SUBSCRIPER_PROFILE_URL_KEY = "SUBSCRIPER_PROFILE_WS_URL";
+	public static final String RENEW_OPERATION_VALUE = "Renew";
+	public static final String NAME_PLACEHOLDER = "#name";
+	public static final String NUMBER_PLACEHOLDER = "#num";
+	public static final String NOT_ELIGIBLE_RATEPLAN_SUBTITLE_EN ="NOT_ELIGIBLE_RP_EN";
+	public static final String NOT_ELIGIBLE_SALLEFNY_SUBTITLE_EN ="NOT_ELIGIBLE_SALLEFNY_SUBTITLE_EN";
+	public static final String NOT_ELIGIBLE_SALLEFNY_SUBTITLE_AR ="NOT_ELIGIBLE_SALLEFNY_SUBTITLE_AR"; 		
+	public static final String NOT_ELIGIBLE_RATEPLAN_SUBTITLE_AR ="NOT_ELIGIBLE_RP_AR";
+	public static final String UPDATE_PERSISTENCE_MENU_KEY = "UPDATE_PERSISTENCE_MENU";
+	public static final String AUDIO_API_URL = "AUDIO_API_URL";
+	public static final String PALOAD_SALLEFNY = "Salefny";
+	public static final String SALLEFNY_BUTTON_LABEL_AR = "سلفني";
+	public static final String SALLEFNY_BUTTON_LABEL_EN = "Sallefny";
+	public static final String SALLEFNY_ELEMENT_TITLE_KEY_AR = "shortDescArabic";
+	public static final String SALLEFNY_ELEMENT_TITLE_KEY_EN = "shortDescEnglish";
+	public static final String SALLEFNY_ELEMENT_SUBTITLE_KEY_AR = "longDescArabic";
+	public static final String SALLEFNY_ELEMENT_SUBTITLE_KEY_EN = "longDescEnglish"; 
+	public static final String SALLEFNY_PRODUCT_NAME_KEY = "productName";
+	public static final String AUTH_TIME_STAMP_VALUE = "timeStamp";
+	public static final String PAYLOAD_RECHARGE = "native recharge";
+	public static final String PAYLOAD_ALREADY_LOGGED_IN = "already loggedin";
+	//Rasa Constants 
+	public static final String RASA_PAYLOAD = "rasa";
+	public static final String RASA_RESPONSE_ACTION_KEY = "action";
+	public static final String RASA_RESPONSE_DIAL_KEY = "dial";
+	public static final String RASA_RESPONSE_VERIFICATION_KEY = "activation_code";
+	public static final String RASA_RESPONSE_SCRATCHED_NUMBER = "scratched_number";
+	public static final String RASA_RESPONSE_TEXT_KEY = "text";
+	public static final String RASA_RESPONSE_ARRAY_KEY = "bot_responses";
+	public static final String SEND_VERFICATION_CODE_SERVICE = "sendVerificationCode";
+	public static final String VERFICATION_CODE_VALIDITY_SERVICE = "verify";
+	public static final String AKWAKART_CATEGORY_KEY = "typeOfRecharge";
+	public static final String AKWAKART_PRODUCT_NAME = "productName";
+	public static final String AKWAKART_PRODUCT_IMAGE_NAME = "imageUrl";
+	public static final String BALANCE_DEDUCTION_AKWAKART = "akwakart deduct";
+	public static final String AKWAKART_PRODUCT_AR_NAME = "productArabicName";
+	public static final String AKWAKART_PRODUCT_AR_DESCRITION = "productArabicName";
+	public static final String AKWAKART_PRODUCT_EN_NAME = "productEnglishName";
+	public static final String AKWAKART_PRODUCT_EN_DESCRITION = "productEnglishName";
+	public static final String PAYLOAD_RREFIX_TESLA = "Tesla_Bundle";
+	public static final String IMAGES_URL_KEY ="IMAGES_BASEURL";
+	public static final String ACTIVATE_OPERATION = "ACTIVATE";
 	
-	
-
-	
-
-	
-
 }

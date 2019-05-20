@@ -2,8 +2,10 @@ package com.chatbot.entity;
 
 import java.io.Serializable;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -43,12 +45,12 @@ public class BotButton implements Serializable {
 	private Boolean isStatic;
 
 	// bi-directional many-to-one association to BotText
-	@ManyToOne
+	@ManyToOne(fetch=FetchType.LAZY , cascade=CascadeType.MERGE)
 	@JoinColumn(name = "TEXT_ID")
 	private BotText botText;
 
 	// bi-directional many-to-one association to BotQuickReplyMessage
-	@ManyToOne
+	@ManyToOne()
 	@JoinColumn(name = "QUICK_MSG_ID")
 	private BotQuickReplyMessage botQuickReplyMessage;
 
