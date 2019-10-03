@@ -1,12 +1,8 @@
 package com.chatbot.util;
 
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.HashMap;
@@ -15,13 +11,6 @@ import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.SecretKeySpec;
-import javax.xml.bind.DatatypeConverter;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
@@ -29,11 +18,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 import com.chatbot.entity.BotButton;
 import com.chatbot.entity.BotInteraction;
-import com.chatbot.entity.BotWebserviceMessage;
 import com.chatbot.entity.CustomerLinkingDial;
 import com.chatbot.entity.CustomerProfile;
 import com.chatbot.entity.FreeTextLogging;
@@ -52,6 +42,7 @@ import com.github.messenger4j.userprofile.UserProfile;
  */
 public class Utils {
 
+	
 	private static final Logger logger = LoggerFactory.getLogger(UtilService.class);
 
 	public enum ButtonTypeEnum {
@@ -81,6 +72,9 @@ public class Utils {
 		}
 	}
 
+
+	
+
 	// Get Text Value For Button Label
 	public static String getTextValueForButtonLabel(String local, BotButton botButton) {
 		String text = Constants.EMPTY_STRING;
@@ -105,16 +99,7 @@ public class Utils {
 
 	}
 
-	// DashBoard encryption Utils
-	public static String encryptDPIParam(String encryptedString) throws Exception {
-		byte[] decryptionKey = new byte[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
-		Cipher c = Cipher.getInstance("AES");
-		SecretKeySpec k = new SecretKeySpec(decryptionKey, "AES");
-		c.init(Cipher.ENCRYPT_MODE, k);
-		byte[] utf8 = encryptedString.getBytes("UTF8");
-		byte[] enc = c.doFinal(utf8);
-		return DatatypeConverter.printBase64Binary(enc);
-	}
+	
 
 	/**
 	 * Update last seen property for last time of user interact with Bot
@@ -314,90 +299,20 @@ public class Utils {
 	 * @param chatBotService
 	 * @param msisdn
 	 */
-	public static CustomerLinkingDial updateUnlinkindDate(ChatBotService chatBotService, String msisdn) {
+	public static void updateUnlinkindDate(ChatBotService chatBotService, String msisdn) {
 		Date unLinkingDate = new Date();
 		Timestamp unLinkingTime = new Timestamp(unLinkingDate.getTime());
 		CustomerLinkingDial storedObject = chatBotService.getCustomerLinkingDialById(msisdn);
+		if(storedObject != null) {
 		CustomerLinkingDial newCustomerLinkingDial = new CustomerLinkingDial();
 		newCustomerLinkingDial.setCustomerProfile(storedObject.getCustomerProfile());
 		newCustomerLinkingDial.setDial(storedObject.getDial());
 		newCustomerLinkingDial.setLinkingDate(storedObject.getLinkingDate());
 		newCustomerLinkingDial.setUnlinkingDate(unLinkingTime);
-		return chatBotService.saveCustomerLinkingDial(newCustomerLinkingDial);
-	}
-
-	/**
-	 * DashBoard encryption for channel param
-	 * 
-	 */
-	public static String encryptChannelParam(String url)
-			throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, UnsupportedEncodingException {
-		String key = "etisalatetisalat";
-		byte[] keyBytes = key.getBytes();
-		SecretKeySpec secretKey = new SecretKeySpec(keyBytes, "AES");
-		Cipher ecipher = Cipher.getInstance("AES");
-		ecipher.init(Cipher.ENCRYPT_MODE, secretKey);
-		byte[] utf8 = url.getBytes("UTF8");
-		byte[] enc = ecipher.doFinal(utf8);
-		String encryptedParams = new sun.misc.BASE64Encoder().encode(enc);
-		byte[] encryptedBytes = encryptedParams.getBytes();
-		StringBuilder strbuf = new StringBuilder(encryptedBytes.length * 2);
-		for (int i = 0; i < encryptedBytes.length; i++) {
-			if (((int) encryptedBytes[i] & 0xff) < 0x10) {
-				strbuf.append("0");
-			}
-			strbuf.append(Long.toString((int) encryptedBytes[i] & 0xff, 16));
 		}
-		String toBeSentParams = strbuf.toString();
-		return toBeSentParams;
+		
 	}
-
-	/**
-	 * Get WebService Calling
-	 * 
-	 * @param uri
-	 */
-	public static Map<String, String> callGetWebServiceByRestTemplate(URI uri) {
-		Map<String, String> responseMap = new HashMap<>();
-		HttpHeaders headers = new HttpHeaders();
-		headers.set("Accept", MediaType.APPLICATION_JSON_UTF8_VALUE);
-		int statusId = 0;
-		try {
-			HttpEntity entity = new HttpEntity<>(headers);
-			RestTemplate restTemplate = new RestTemplate(/* getClientHttpRequestFactory(chatBotService) */);
-			ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.GET, entity, String.class);
-			statusId = response.getStatusCodeValue();
-			responseMap.put(Constants.RESPONSE_STATUS_KEY, String.valueOf(statusId));
-			responseMap.put(Constants.RESPONSE_KEY, response.getBody());
-			responseMap.put(Constants.RESPONSE_STATUS_KEY, String.valueOf(statusId));
-		} catch (Exception e) {
-			responseMap.put(Constants.RESPONSE_STATUS_KEY, String.valueOf(statusId));
-			logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
-			e.printStackTrace();
-		}
-		return responseMap;
-	}
-
-	/**
-	 * URI creation for Get Webservice Calling
-	 * 
-	 */
-	public static URI createURI(BotWebserviceMessage botWebserviceMessage, String senderId, ChatBotService chatBotService, String phoneNumber) {
-		URI uri = null;
-		try {
-			CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
-			String dialNumber = customerProfile.getMsisdn();
-
-			String paramChannel = Utils.encryptChannelParam(Constants.URL_PARAM_MSISDN_KEY + dialNumber + Constants.URL_TIME_CHANNEL_KEY + Constants.CHANEL_PARAM);
-			String realParameter = Constants.URL_PARAM_CHANNEL_KEY + paramChannel;
-			uri = new URI(botWebserviceMessage.getWsUrl() + "?dial=" + realParameter);
-		} catch (URISyntaxException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException | UnsupportedEncodingException e1) {
-			logger.error(Constants.LOGGER_DIAL_IS + phoneNumber + Constants.LOGGER_SENDER_ID + senderId + Constants.LOGGER_EXCEPTION_MESSAGE + e1);
-			e1.printStackTrace();
-		}
-		return uri;
-	}
-
+	
 	/**
 	 * Retrieve View Button label according to locale
 	 * 
@@ -429,9 +344,9 @@ public class Utils {
 	 */
 	public static String getTitleForPayBillButton(String locale) {
 		if (locale.contains(Constants.LOCALE_AR)) {
-			return "هل تريد ان تدفع الان ";
+			return "عاوز تدفع فاتورتك دلوقتي ؟";
 		}
-		return "Do you want to pay yor bill now ?";
+		return "Do you want to pay your bill now ?";
 	}
 
 	/**

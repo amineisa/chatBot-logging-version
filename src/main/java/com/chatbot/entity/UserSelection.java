@@ -27,6 +27,8 @@ public class UserSelection implements Serializable{
 	private int rateplanIdForMigration;
 	private boolean isSubscribed;
 	private String akwakartProductName;
+	private int accountDeductionHistory; 
+	private String balanceValue;
 	
 	public String getSenderId() {
 		return senderId;
@@ -173,6 +175,22 @@ public class UserSelection implements Serializable{
 
 	public void setAkwakartProductName(String akwakartProductName) {
 		this.akwakartProductName = akwakartProductName;
+	}
+
+	public int getAccountDeductionHistory() {
+		return accountDeductionHistory;
+	}
+
+	public void setAccountDeductionHistory(int accountDeductionHistory) {
+		this.accountDeductionHistory = accountDeductionHistory;
+	}
+
+	public String getBalanceValue() {
+		return balanceValue;
+	}
+
+	public void setBalanceValue(String balanceValue) {
+		this.balanceValue = balanceValue;
 	}
 
 	

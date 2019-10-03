@@ -43,7 +43,9 @@ import com.github.messenger4j.send.message.template.button.UrlButton;
 public class PostPaidService {
 	
 	@Autowired
-	ChatBotService chatBotService;
+	private ChatBotService chatBotService;
+	@Autowired
+	private UtilService utilService;
 
 	private static final Logger logger = LoggerFactory.getLogger(PostPaidService.class);
 	
@@ -72,22 +74,23 @@ public class PostPaidService {
 			String billAmount) {
 		MessagePayload messagePayload;
 		String billingParam = billProfile.getJSONArray(Constants.JSON_KEY_ACTION_BUTTONS).getJSONObject(0).getString(Constants.JSON_KEY_PARAM);
-		logger.debug("Billing Param " + billingParam);
+		logger.debug(Constants.LOGGER_INFO_PREFIX+"Billing Param " + billingParam);
 		messagePayload = createBillingProfileInformationMessage(userLocale, senderId, billAmount);
 		messagePayloadList.add(messagePayload);
 		BotConfiguration payBillbaseUrlRaw = chatBotService.getBotConfigurationByKey(Constants.PAY_BILL_BASE_URL);
 		String baseUrl = payBillbaseUrlRaw.getValue();
 		String paramChanel;
 		try {
-			paramChanel = Utils.encryptChannelParam(Constants.URL_PARAM_MSISDN_KEY + phoneNumber + Constants.URL_TIME_CHANNEL_KEY + Constants.CHANEL_PARAM);
+			paramChanel = utilService.encryptChannelParam(Constants.URL_PARAM_MSISDN_KEY + phoneNumber + Constants.URL_TIME_CHANNEL_KEY + Constants.CHANEL_PARAM);
 			String webServiceUrl = baseUrl + paramChanel + "&operationParam=" + billingParam + "&lang=" + userLocale;
 			URI uri = new URI(webServiceUrl);
-			Map<String, String> values = Utils.callGetWebServiceByRestTemplate(uri);
-			logger.debug("Status " + values.get(Constants.RESPONSE_STATUS_KEY));
+			Map<String, String> values = utilService.callGetWebServiceByRestTemplate(uri);
+			logger.debug(Constants.LOGGER_INFO_PREFIX+"Status " + values.get(Constants.RESPONSE_STATUS_KEY));
 			if (values.get(Constants.RESPONSE_STATUS_KEY).equals("200")) {
 				List<Button> buttons = new ArrayList<>();
 				JSONObject iframeObject = new JSONObject(values.get(Constants.RESPONSE_KEY));
 				String payBillButtonURl = iframeObject.getString(Constants.JSON_KEY_IFRAME_BILL_PAYMENT_URL);
+				logger.debug(Constants.LOGGER_INFO_PREFIX+" Pay Bill URL is "+payBillButtonURl);
 				UrlButton payButton = UrlButton.create(Utils.getLabelForPayBillButton(userLocale), Utils.createUrl(payBillButtonURl));
 				PostbackButton backButton = PostbackButton.create(Utils.getLabelForBackButton(userLocale), Constants.PAYLOAD_CONSUMPTION);
 				buttons.add(payButton);

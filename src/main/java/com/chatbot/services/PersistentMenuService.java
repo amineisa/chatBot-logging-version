@@ -13,9 +13,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.chatbot.dao.BotButtonRepo;
 import com.chatbot.entity.BotButton;
 import com.chatbot.entity.PersistenceMenuButton;
+import com.chatbot.repo.BotButtonRepo;
 import com.chatbot.util.Constants;
 import com.chatbot.util.Utils;
 import com.github.messenger4j.common.SupportedLocale;
@@ -48,16 +48,20 @@ public class PersistentMenuService {
 	
 	
 	public MessengerSettings initSendPersistenceMenu() {
+		logger.debug(Constants.LOGGER_INFO_PREFIX+"Update persistence Menu ");
 		List<CallToAction> callToActions = getMasterButtons();
+		logger.debug(Constants.LOGGER_INFO_PREFIX+"Parents buttons list size "+callToActions.size());
 		// supported Local as English Language
 		SupportedLocale enlocal = SupportedLocale.en_US;
 		// Optional of call To Action list
 		Optional<List<CallToAction>> otipnalPerBtns = Optional.of(callToActions);
 		// LocalizedPersistentMenu
 		LocalizedPersistentMenu localizedPersistentMenu = LocalizedPersistentMenu.create(enlocal, false, otipnalPerBtns);
+		logger.debug(Constants.LOGGER_INFO_PREFIX+"Localization creation ");
 		final PersistentMenu persistentMenu = PersistentMenu.create(false, otipnalPerBtns, localizedPersistentMenu);
 		Optional<PersistentMenu> persistentMenus = Optional.of(persistentMenu);
 		// Start Button
+		logger.debug(Constants.LOGGER_INFO_PREFIX+"Create GetStarted button ");
 		BotButton startBtn = botButtonRepo.findButtonByButtonTypeId(Utils.ButtonTypeEnum.START.getValue());
 		StartButton startButton = StartButton.create(startBtn.getButtonPayload());
 		Optional<StartButton> opStartButton = Optional.of(startButton);
@@ -66,6 +70,7 @@ public class PersistentMenuService {
 		LocalizedGreeting localizedGreeting = LocalizedGreeting.create(enlocal, greetingMessage);
 		Greeting greeting = Greeting.create(Constants.EMPTY_STRING,  localizedGreeting );
 		Optional<Greeting> optionalGreeting = Optional.of(greeting);
+		logger.debug(Constants.LOGGER_INFO_PREFIX+"Create Messenger Setting ");
 		return MessengerSettings.create(opStartButton, optionalGreeting, persistentMenus, empty(), empty(), empty(), empty());
 		}
 	
@@ -75,9 +80,10 @@ public class PersistentMenuService {
 		List<CallToAction> callToActions = new ArrayList<>();
 		BotButton realButton = new BotButton();
 		for (PersistenceMenuButton buttonRef : masterButtons) {
+			logger.debug(Constants.LOGGER_INFO_PREFIX+"All Real Buttons ");
 			realButton = buttonRef.getButton();
 			// URLBUTTON
-			if (realButton.getButtonType().getId() == Utils.ButtonTypeEnum.URL.getValue()) {
+			if (realButton.getButtonType().getId() == Utils.ButtonTypeEnum.URL.getValue()) {		
 				URL url = null;
 				try {
 					url = new URL(realButton.getButtonUrl());

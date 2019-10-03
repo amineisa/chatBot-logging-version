@@ -8,7 +8,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name ="Bot_BUTTON_TYPES")
+@Table(name ="BOT_BUTTON_TYPES")
 public class ButtonType implements Serializable{
 	/**
 	 * 

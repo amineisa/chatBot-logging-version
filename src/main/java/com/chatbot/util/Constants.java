@@ -6,6 +6,7 @@ package com.chatbot.util;
 public class Constants {
 
 	public static final String CHANEL_PARAM = "CHATBOT";
+	public static final String PREFIX_DEDUCTION_DURATION ="DEDUCTION"; 
 	public static final String PREFIX_SALLEFNY_INTERACTION = "SALL_";
 	public static final String PREFIX_ADDONSUBSCRIPE = "subaddon_";
 	public static final String PREFIX_RATEPLAN_SUBSCRIPTION = "sub_";
@@ -54,6 +55,7 @@ public class Constants {
 	public static final String PAYLOAD_VERIFICATION_CODE = "verify code";
 	public static final String PAYLOAD_GET_STARTED = "welcome";  
 	public static final String PAYLOAD_MIGRATE_MORE = "Migrate More";
+	public static final String PAYLOAD_BALANCE_DEDUCTION = "BALANCE_DEDUCTION";
 	public static final String NOTELIGIBLE_ELEMENT_TITLE_EN = "Sorry !";
 	public static final String NOTELIGIBLE_ELEMENT_TITLE_AR = "! عفوا";
 	public static final String PAYLOAD_MIGRATE = "Migrate";
@@ -61,11 +63,13 @@ public class Constants {
 	public static final String NOCONSUMPTION_ELEMENT_SUBTITLE_AR = "باقتك ليس عليها اي استهلاك";
 	public static final String NOTELIGIBLE_ELEMENT_SUBTITLE_EN = " Your Dial Not Eligible to any addons ";
 	public static final String NOTELIGIBLE_ELEMENT_SUBTITLE_AR = "عفوا انت ما عندكش باقات اضافية ";
-	public static String profilePayloads = PAYLOAD_VIEW_CONNECT_DETAILS + Constants.COMMA_CHAR + PAYLOAD_RATEPLAN_AND_CONNECT + "," + PAYLOAD_VIEW_RATEPLAN_DETAILS + "," + PAYLOAD_RATEPLAN_DETAILS
+	public static final String profilePayloads = PAYLOAD_VIEW_CONNECT_DETAILS + Constants.COMMA_CHAR + PAYLOAD_RATEPLAN_AND_CONNECT + "," + PAYLOAD_VIEW_RATEPLAN_DETAILS + "," + PAYLOAD_RATEPLAN_DETAILS
 			+ "," + PAYLOAD_CONSUMPTION;
 	public static final String RESPOSE_MSG_CHANGE_LOCALE_AR = "تم تغير اللغة الي اللغة العربيه ";
 	public static final String RESPOSE_MSG_CHANGE_LOCALE_EN = "Language has been changed to English language";
 	// logger prefixes
+	public static final String LOGGER_INFO_PREFIX = "Chatbot logger info : ";
+	public static final String LOGGER_ERROR_PREFIX = "Chatbot logger error : ";
 	public static final String LOGGER_SENDER_ID = " SENDER ID IS ";
 	public static final String LOGGER_METHOD_NAME = " METHOD NAME IS ";
 	public static final String LOGGER_DIAL_IS = " DIAL IS ";
@@ -79,6 +83,7 @@ public class Constants {
 	public static final String LOGGER_MOBILE_INTERENET_CONSUMPTION = "Mobile Internet Consumption ";
 	public static final String LOGGER_RATEPLAN_CONSUMPTION = "RatePlan Consumption ";
 	public static final String LOGGER_SERVICE_URL = "Service URL ";
+	public static final String LOGGER_BOT_PREFIX="Bot logging {} message ";
 	// json response keys
 	public static final String IS_ARRAY_KEY_IN_JSON_RESPONSE = "#";
 	public static final String CACHED_MAP_PROFILE_KEY_SUFFIX = "_PROFILE";
@@ -195,6 +200,7 @@ public class Constants {
 	public static final String MIGRATE_BUTTON_LABEL_AR = "تغير";
 	public static final String PREFIX_MIGRATE_ID = "MigrateID,";
 	public static final String PREFIX_MIGRATE_NAME = "MigrateName,";
+	public static final String PAYLOAD_MAIN_MENU = "list welcome again";
 	public static final String PAYLOAD_MIGRATE_BY_ID = "Migratebyid";
 	public static final String PAYLOAD_MIGRATE_BY_NAME = "Migratebyname";
 	public static final String PAYLOAD_CONFIRMATION_MIGRATE = "Migrate_Confirmation";
@@ -228,9 +234,12 @@ public class Constants {
 	public static final String PAYLOAD_RECHARGE = "native recharge";
 	public static final String PAYLOAD_ALREADY_LOGGED_IN = "already loggedin";
 	//Rasa Constants 
+	public static final String RASA_ENABLED_KEY = "RASA_ENABLED_KEY";
 	public static final String RASA_PAYLOAD = "rasa";
 	public static final String RASA_RESPONSE_ACTION_KEY = "action";
 	public static final String RASA_RESPONSE_DIAL_KEY = "dial";
+	public static final String RASA_RUNTIME_OPTIONS_TEXT_AR_KEY = "RASA_RUNTIME_OPTIONS_TEXT_AR";
+	public static final String RASA_RUNTIME_OPTIONS_TEXT_EN_KEY = "RASA_RUNTIME_OPTIONS_TEXT_EN";
 	public static final String RASA_RESPONSE_VERIFICATION_KEY = "activation_code";
 	public static final String RASA_RESPONSE_SCRATCHED_NUMBER = "scratched_number";
 	public static final String RASA_RESPONSE_TEXT_KEY = "text";
@@ -248,5 +257,10 @@ public class Constants {
 	public static final String PAYLOAD_RREFIX_TESLA = "Tesla_Bundle";
 	public static final String IMAGES_URL_KEY ="IMAGES_BASEURL";
 	public static final String ACTIVATE_OPERATION = "ACTIVATE";
+	//encryption keys
+	public static final String SECURE_KEY = "SECURE_KEY";
+	public static final String PAYMENT_ENCRYPTION_KEY = "PAYMENT_ENCRYPTION_KEY";
+	public static final String ENCRYPTION_KEY = "ENCRYPTION_KEY";
+	public static final String RAZA_RESPONSE_BUTTON_OPTIONS_KEY = "buttons";
 	
 }

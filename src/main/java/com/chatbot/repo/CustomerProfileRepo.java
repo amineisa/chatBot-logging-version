@@ -1,4 +1,4 @@
-package com.chatbot.dao;
+package com.chatbot.repo;
 
 
 import org.springframework.data.repository.CrudRepository;

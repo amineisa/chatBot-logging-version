@@ -89,10 +89,10 @@ public class MigrationService {
 
 			}
 			responseMap.put(Constants.MIGRATION_RATEPLANS_KEY, ratePlansToDisplay.toString());
-			logger.debug("Migration Rateplans To Display " + ratePlansToDisplay);
+			logger.debug(Constants.LOGGER_INFO_PREFIX+"Migration Rateplans To Display " + ratePlansToDisplay);
 			responseMap.put(Constants.MIGRATION_DISPLAY_MOREBUTTON, displayMoreButton);
 			ratePlanForMigrationCache.put(dial, jsonArrToBeCached.toString());
-			logger.debug("Cached Migration Rateplans " + jsonArrToBeCached);
+			logger.debug(Constants.LOGGER_INFO_PREFIX+"Cached Migration Rateplans " + jsonArrToBeCached);
 			return responseMap;
 		} else {
 			responseMap.put(Constants.MIGRATION_RATEPLANS_KEY, originalRateplans.toString());

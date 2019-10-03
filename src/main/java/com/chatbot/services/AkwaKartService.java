@@ -28,7 +28,6 @@ import com.github.messenger4j.send.message.template.Template;
 import com.github.messenger4j.send.message.template.button.Button;
 import com.github.messenger4j.send.message.template.button.PostbackButton;
 import com.github.messenger4j.send.message.template.common.Element;
-import com.google.gson.JsonObject;
 
 /**
  * @author A.Eissa 
@@ -39,6 +38,8 @@ public class AkwaKartService {
 	
 	@Autowired
 	private ChatBotService chatBotService;
+	@Autowired
+	private JSONUtilsService jsonUtilsService;
 	
 	
 	Logger logger = LoggerFactory.getLogger(AkwaKartService.class);
@@ -56,21 +57,20 @@ public class AkwaKartService {
 			List<Element> elements = new ArrayList<>();
 			for (int i = 0; i < products.length(); i++) {
 				JSONObject product = products.getJSONObject(i);
-				logger.debug("Deduct from balance product # "+i+" "+product );
+				logger.debug(Constants.LOGGER_INFO_PREFIX+"Deduct from balance product # "+i+" "+product );
 				List<Button> buttons = new ArrayList<>();
 				String label = getElementInfo(userLocale, product).get(Constants.RESPONSE_MAP_LABEL_KEY);
 				String title = getElementInfo(userLocale, product).get(Constants.RESPONSE_MAP_TITLE_KEY);
 				String subtitle = getElementInfo(userLocale, product).get(Constants.RESPONSE_MAP_SUBTITLE_KEY);
 				PostbackButton button = PostbackButton.create(label,product.getString(Constants.AKWAKART_PRODUCT_NAME));
 				URL imageUrl = Utils.createUrl(chatBotService.getBotConfigurationByKey(Constants.IMAGES_URL_KEY).getValue()+product.getString(Constants.AKWAKART_PRODUCT_IMAGE_NAME));
-				logger.debug("Product image url "+imageUrl);
 				buttons.add(button);
 				Element element = Element.create(title, Optional.of(subtitle), Optional.of(imageUrl), empty(), Optional.of(buttons));
 				elements.add(element);
 			}
 			return GenericTemplate.create(elements); 
 		}else {
-			logger.debug("AkwaKart No eligible deduct from balance products ");
+			logger.debug(Constants.LOGGER_INFO_PREFIX+"AkwaKart No eligible deduct from balance products ");
 			return  noEligibleForDeductTemplate(userLocale);
 		}
 	}
@@ -135,12 +135,42 @@ public class AkwaKartService {
 	 */
 	public JSONObject deductFromBalanceRequestBody(ArrayList<String> paramNames, ArrayList<String> paramValuesList) {
 		JSONObject body = new JSONObject();
-		logger.debug("Deduct from balance request body size "+paramNames.size());
+		logger.debug(Constants.LOGGER_INFO_PREFIX+"Deduct from balance request body size "+paramNames.size());
 		for(int i = 0 ; i < paramNames.size() ;i++) {
-			logger.debug(" Deduct from balance  param key "+paramNames.get(i) +" Deduct from balance param value "+paramValuesList.get(i));
+			logger.debug(Constants.LOGGER_INFO_PREFIX+Constants.LOGGER_INFO_PREFIX+" Deduct from balance  param key "+paramNames.get(i) +" Deduct from balance param value "+paramValuesList.get(i));
 			body.put(paramNames.get(i), paramValuesList.get(i));
 		}
 		return body;
+	}
+	
+	
+	public Element getAkwaKartConsumptionValue(JSONObject jsonObject,String userLocale) {
+		JSONObject remaining = jsonObject.getJSONObject("remaining");
+		JSONObject total = jsonObject.getJSONObject("total");
+		String title = jsonUtilsService.getNameValue(total,userLocale);
+		logger.debug(Constants.LOGGER_INFO_PREFIX+" AkwaKart values  "+total + " || "+remaining +"  || "+total);
+		String unit = userLocale.contains(Constants.LOCALE_AR) ? remaining.getString("arabicUnit") : remaining.getString("englishUnit") ;
+		String remainingVAlue = userLocale.contains(Constants.LOCALE_AR) ? remaining.getString(Constants.JSON_KEY_VALUE_AR) : remaining.getString(Constants.JSON_KEY_VALUE_EN) ;
+		String expirationDate = total.getString("value") ;
+		List<Button> buttonsList = new ArrayList<>();
+		String subtitle = getFinalSubtitle(unit , remainingVAlue , expirationDate,userLocale);
+		return  Element.create(title, Optional.of(subtitle), empty(), empty(), Optional.of(buttonsList));
+	}
+
+
+
+	/**
+	 * @param unit
+	 * @param remainingVAlue
+	 * @param expirationDate
+	 * @return
+	 */
+	private String getFinalSubtitle(String unit, String remainingVAlue, String expirationDate,String userLocale) {
+		if(userLocale.contains(Constants.LOCALE_AR)) {
+			return "You have "+remainingVAlue +" "+ unit +" "+expirationDate;
+		}else {
+			return "لديك "+remainingVAlue+ " "+unit + " حتي " + expirationDate;
+					}
 	}
 
 

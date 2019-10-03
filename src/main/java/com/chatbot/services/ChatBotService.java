@@ -35,6 +35,7 @@ public interface ChatBotService {
 	public List<BotButton> findButtonsByQuickReplyMessageId(Long quickMsgId);
 	public List<BotButton> findButtonsByTemplateElementId(Long elementId);
 	public BotButton findButtonById(Long buttonId);
+	public BotButton findButtonByPayload(String payload);
 	public BotButton findStartButton(Long id);
 	public BotWebserviceMessage findWebserviceMessageByMessageId(Long messageId);
 	public List<BotWebserviceMapping> findWebserviceMappingByWsId(Long wsId);

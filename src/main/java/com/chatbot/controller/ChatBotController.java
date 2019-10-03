@@ -24,7 +24,6 @@ import org.springframework.web.context.annotation.SessionScope;
 import com.chatbot.entity.BotConfiguration;
 import com.chatbot.entity.BotInteraction;
 import com.chatbot.entity.CustomerProfile;
-import com.chatbot.entity.InteractionLogging;
 import com.chatbot.entity.UserSelection;
 import com.chatbot.services.ChatBotService;
 import com.chatbot.services.InteractionHandlingService;
@@ -80,14 +79,14 @@ public class ChatBotController {
 	@RequestMapping(method = RequestMethod.GET)
 	public ResponseEntity<String> verifyWebhook(HttpServletRequest req, @RequestParam("hub.mode") final String mode, @RequestParam("hub.verify_token") final String verifyToken,
 			@RequestParam("hub.challenge") final String challenge) {
-		logger.debug("Received Webhook event verification request - mode: {} | verifyToken: {} | challenge: {}", mode, verifyToken, challenge);
+		logger.debug(Constants.LOGGER_INFO_PREFIX +"Received Webhook event verification request - mode: {} | verifyToken: {} | challenge: {}", mode, verifyToken, challenge);
 		try {
 			Entry<String, Messenger> entry = this.messengerObjectsMap.entrySet().iterator().next();
 			this.messenger = this.messengerObjectsMap.get(entry.getKey());
 			messenger.verifyWebhook(mode, verifyToken);
 			return ResponseEntity.status(HttpStatus.OK).body(challenge);
 		} catch (MessengerVerificationException e) {
-			logger.warn("Webhook verification failed: {}", e.getMessage());
+			logger.warn(Constants.LOGGER_INFO_PREFIX +"Webhook verification failed: {}", e.getMessage());
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
 		}
 	}
@@ -95,7 +94,7 @@ public class ChatBotController {
 	@RequestMapping(method = RequestMethod.POST)
 	public ResponseEntity<Void> handleCallback(@RequestBody final String payload, @RequestHeader("X-Hub-Signature") final String signature) {
 
-		logger.debug("Received Messenger Platform callback - payload: {} | signature: {}", payload, signature);
+		logger.debug(Constants.LOGGER_INFO_PREFIX+"Received Messenger Platform callback - payload: {} | signature: {}", payload, signature);
 		if (payload.contains(Constants.FB_JSON_KEY_STANDBY)) {
 			return botStandbyHandling(payload);
 		} else {
@@ -118,6 +117,7 @@ public class ChatBotController {
 				// interactionHandlingService.getUserSelections(senderId);
 				Utils.markAsSeen(messenger, senderId);
 				if (event.isPostbackEvent()) {
+					//interactionHandlingService.takeThreadControl(senderId, messenger);
 					PostbackEvent postbackEvent = event.asPostbackEvent();
 					String pLoad = postbackEvent.payload().get();
 					if (pLoad.equalsIgnoreCase(Constants.PAYLOAD_TALK_TO_AGENT)) {
@@ -127,10 +127,11 @@ public class ChatBotController {
 						if (customerProfile != null) {
 							phoneNumber = customerProfile.getMsisdn();
 						}
+						logger.debug(Constants.LOGGER_INFO_PREFIX +"Send thread control to second app ");
 						interactionHandlingService.callSecondryHandover(senderId, phoneNumber, messenger);
 					} else {
 						if (pLoad.equalsIgnoreCase(Constants.PAYLOAD_WELCOME_AGAIN)) {
-							logger.debug("TAke Thread Control");
+							logger.debug(Constants.LOGGER_INFO_PREFIX +"Take Thread Control");
 							try {
 								interactionHandlingService.takeThreadControl(senderId, messenger);
 							} catch (Exception e) {
@@ -141,40 +142,46 @@ public class ChatBotController {
 					}
 				} else if (event.isAccountLinkingEvent()) {
 					AccountLinkingEvent accountLinkingEvent = event.asAccountLinkingEvent();
-					logger.debug("ACCOUNT LINKING EVENT");
+					logger.debug(Constants.LOGGER_INFO_PREFIX+"ACCOUNT LINKING EVENT");
+					CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 					if ((accountLinkingEvent.status().equals(AccountLinkingEvent.Status.LINKED))) {
 						String msisdn = accountLinkingEvent.authorizationCode().get();
-						logger.debug("LINKED MSISDN " + msisdn);
+						logger.debug(Constants.LOGGER_INFO_PREFIX +"Linked  msisdn " + msisdn);
 						utilService.setLinkingInfoForCustomer(senderId, accountLinkingEvent.authorizationCode().get());
-						// Utils.setLinkedDial(customerProfile, chatBotService);
-						interactionHandlingService.handlePayload(userSelections.getOriginalPayLoad(), messenger, senderId);
+					//	Utils.setLinkedDial(customerProfile , chatBotService);
+						String orginalPayload = userSelections.getOriginalPayLoad() == null ? Constants.PAYLOAD_GET_STARTED : userSelections.getOriginalPayLoad(); 
+						interactionHandlingService.handlePayload(orginalPayload, messenger, senderId);
 					} else if (accountLinkingEvent.status().equals(AccountLinkingEvent.Status.UNLINKED)) {
 						String msisdn = chatBotService.getCustomerProfileBySenderId(senderId).getMsisdn();
-						logger.debug("UNLINKING MSISDN " + msisdn);
-						// Utils.updateUnlinkindDate( chatBotService,msisdn);
-						interactionHandlingService.handlePayload(Constants.PAYLOAD_WELCOME_AGAIN, messenger, senderId);
+						logger.debug(Constants.LOGGER_INFO_PREFIX +"UNLINKING MSISDN " + msisdn);
+						//Utils.updateUnlinkindDate(chatBotService,msisdn);
+						customerProfile.setMsisdn("");
+						chatBotService.saveCustomerProfile(customerProfile);
+						interactionHandlingService.handlePayload(Constants.PAYLOAD_LOGIN_INTERACTION, messenger, senderId);
 					}
 				} else if (event.isTextMessageEvent()) {
 					final TextMessageEvent textMessageEvent = event.asTextMessageEvent();
 					String text = textMessageEvent.text();
 					interactionHandlingService.handlePayload(text, messenger, senderId);
 				} else if (event.isQuickReplyMessageEvent()) {
+					//interactionHandlingService.takeThreadControl(senderId, messenger);
 					final QuickReplyMessageEvent quickReplyMessageEvent = event.asQuickReplyMessageEvent();
 					interactionHandlingService.handlePayload(quickReplyMessageEvent.payload(), messenger, senderId);
 				} else if (event.isReferralEvent()) {
+					//interactionHandlingService.takeThreadControl(senderId, messenger);
 					final ReferralEvent referralEvent = event.asReferralEvent();
 					Referral referral = referralEvent.referral();
-					logger.debug("SOURCE IS " + referral.source());
-					logger.debug("REFERRAL PAYLOAD " + referral.refPayload());
-					logger.debug("REFERRAL TYPE " + referral.type());
+					logger.debug(Constants.LOGGER_INFO_PREFIX +"SOURCE IS " + referral.source());
+					logger.debug(Constants.LOGGER_INFO_PREFIX +"REFERRAL PAYLOAD " + referral.refPayload());
+					logger.debug(Constants.LOGGER_INFO_PREFIX +"REFERRAL TYPE " + referral.type());
 				} else if (event.isAttachmentMessageEvent()) {
+					//interactionHandlingService.takeThreadControl(senderId, messenger);
 					AttachmentMessageEvent attachmentEvent = event.asAttachmentMessageEvent();
 					List<Attachment> attachements = attachmentEvent.attachments();
 					for (Attachment attachment : attachements) {
 						if (attachment.isRichMediaAttachment()) {
 							BotConfiguration audioURlRaw = chatBotService.getBotConfigurationByKey(Constants.AUDIO_API_URL);
 							String  url = audioURlRaw.getValue();
-							
 							rasaIntegration.richMediaAttachment(attachment, senderId,messenger,url);
 						}
 					}
@@ -191,10 +198,10 @@ public class ChatBotController {
 				}
 
 			});
-			logger.debug(" Processed callback payload successfully");
+			logger.debug(Constants.LOGGER_INFO_PREFIX +" Processed callback payload successfully");
 			return ResponseEntity.status(HttpStatus.OK).build();
 		} catch (MessengerVerificationException e) {
-			logger.warn("sProcessing of callback payload failed: {}", e.getMessage());
+			logger.warn(Constants.LOGGER_ERROR_PREFIX +"sProcessing of callback payload failed: {}", e.getMessage());
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 		}
 	}
@@ -206,18 +213,16 @@ public class ChatBotController {
 	public ResponseEntity<Void> botStandbyHandling(final String payload) {
 		counter++;
 		if (payload.contains(Constants.FB_JSON_KEY_MESSAGE) && counter == 1) {
-			logger.debug("Counter in if statement " + counter); 
-			logger.debug("Bot is standby mode thread controlle is with agent ");
-			logger.debug("PAYLOAD in case standby status " + payload);
+			logger.debug(Constants.LOGGER_INFO_PREFIX+"Bot is standby mode thread controlle is with agent ");
 			JSONObject standbyJsonObject = new JSONObject(payload);
 			BotInteraction botInteraction = chatBotService.findInteractionByPayload(Constants.PAYLOAD_FREE_TEXT);
-			String recivedFreeText = standbyJsonObject.getJSONArray(Constants.FB_JSON_KEY_ENTRY).getJSONObject(0).getJSONArray(Constants.FB_JSON_KEY_STANDBY).getJSONObject(0)
-					.getJSONObject(Constants.FB_JSON_KEY_MESSAGE).getString(Constants.FB_JSON_KEY_FREE_TEXT);
+			//String recivedFreeText = standbyJsonObject.getJSONArray(Constants.FB_JSON_KEY_ENTRY).getJSONObject(0).getJSONArray(Constants.FB_JSON_KEY_STANDBY).getJSONObject(0)
+				//	.getJSONObject(Constants.FB_JSON_KEY_MESSAGE).getString(Constants.FB_JSON_KEY_FREE_TEXT);
 			String senderId = standbyJsonObject.getJSONArray(Constants.FB_JSON_KEY_ENTRY).getJSONObject(0).getJSONArray(Constants.FB_JSON_KEY_STANDBY).getJSONObject(0)
 					.getJSONObject(Constants.FB_JSON_KEY_SENDER).getString(Constants.FB_JSON_KEY_ID);
 			CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 			if (customerProfile != null) {
-				InteractionLogging interactionLogging = Utils.interactionLogginghandling(customerProfile, botInteraction, chatBotService);
+				 Utils.interactionLogginghandling(customerProfile, botInteraction, chatBotService);
 				// Utils.freeTextinteractionLogginghandling(interactionLogging, recivedFreeText
 				// , chatBotService);
 			}

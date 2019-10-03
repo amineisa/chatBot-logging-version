@@ -5,24 +5,6 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.chatbot.dao.BotButtonRepo;
-import com.chatbot.dao.BotButtonTemplateMSGRepo;
-import com.chatbot.dao.BotConfigurationRepo;
-import com.chatbot.dao.BotGTemplateMessageRepo;
-import com.chatbot.dao.BotInteractionRepo;
-import com.chatbot.dao.BotQuickReplyMessageRepo;
-import com.chatbot.dao.BotTemplateElementRepo;
-import com.chatbot.dao.BotTextMessageRepo;
-import com.chatbot.dao.BotTextResponseMappingRepo;
-import com.chatbot.dao.BotWebserviceMappingRepo;
-import com.chatbot.dao.BotWebserviceMessageRepo;
-import com.chatbot.dao.CustomerLinkingDialDao;
-import com.chatbot.dao.CustomerProfileRepo;
-import com.chatbot.dao.EnabledCategoryConfigurationRepo;
-import com.chatbot.dao.FreeTextLoggingDao;
-import com.chatbot.dao.InteractionLoggingRepo;
-import com.chatbot.dao.InteractionMessageRepo;
-import com.chatbot.dao.PersistenceMenuButtonRepo;
 import com.chatbot.entity.BotButton;
 import com.chatbot.entity.BotButtonTemplateMSG;
 import com.chatbot.entity.BotConfiguration;
@@ -41,6 +23,24 @@ import com.chatbot.entity.EnabledCategoryConfiguration;
 import com.chatbot.entity.FreeTextLogging;
 import com.chatbot.entity.InteractionLogging;
 import com.chatbot.entity.PersistenceMenuButton;
+import com.chatbot.repo.BotButtonRepo;
+import com.chatbot.repo.BotButtonTemplateMSGRepo;
+import com.chatbot.repo.BotConfigurationRepo;
+import com.chatbot.repo.BotGTemplateMessageRepo;
+import com.chatbot.repo.BotInteractionRepo;
+import com.chatbot.repo.BotQuickReplyMessageRepo;
+import com.chatbot.repo.BotTemplateElementRepo;
+import com.chatbot.repo.BotTextMessageRepo;
+import com.chatbot.repo.BotTextResponseMappingRepo;
+import com.chatbot.repo.BotWebserviceMappingRepo;
+import com.chatbot.repo.BotWebserviceMessageRepo;
+import com.chatbot.repo.CustomerLinkingDialDao;
+import com.chatbot.repo.CustomerProfileRepo;
+import com.chatbot.repo.EnabledCategoryConfigurationRepo;
+import com.chatbot.repo.FreeTextLoggingDao;
+import com.chatbot.repo.InteractionLoggingRepo;
+import com.chatbot.repo.InteractionMessageRepo;
+import com.chatbot.repo.PersistenceMenuButtonRepo;
 
 /**
  * @author Amin Eisa 
@@ -247,6 +247,14 @@ public class ChatBotServiceImpl implements ChatBotService {
 	@Override
 	public CustomerLinkingDial getCustomerLinkingDialById(String dial) {
 		return customerLinkingDialDao.getCustomerLinkingDialByDial(dial);
+	}
+
+	/* (non-Javadoc)
+	 * @see com.chatbot.services.ChatBotService#findButtonByPayload(java.lang.String)
+	 */
+	@Override
+	public BotButton findButtonByPayload(String payload) {
+		return botButtonRepo.findBotButtonByButtonPayload(payload);
 	}
 	
 

@@ -49,10 +49,11 @@ public class JSONUtilsService {
 		for (int i = 0; i < rootArray.length(); i++) {
 			try {
 				JSONObject childObject = rootArray.getJSONObject(i);
+				logger.debug(Constants.LOGGER_INFO_PREFIX+"Resonse json object "+childObject);
 				values = getValuesFromJson(childObject, keys);
-				titleList.add(values.get(0));
-				mapValues.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
-				mapValues.put(Constants.RESPONSE_MAP_MESSAGE_KEY, textMsgs);
+				//titleList.add(values.get(0));
+				//mapValues.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
+				//mapValues.put(Constants.RESPONSE_MAP_MESSAGE_KEY, textMsgs);
 			} catch (JSONException e) {
 				logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
 				e.printStackTrace();
@@ -60,11 +61,9 @@ public class JSONUtilsService {
 			String finalMsg = replaceValuesByMapping(values, msg, locale);
 			textMsgs.add(finalMsg);
 			titleList.add(values.get(0));
-			textMsgs.add(finalMsg);
-			mapValues.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
-			textMsgs.add(finalMsg);
-			mapValues.put(Constants.RESPONSE_MAP_MESSAGE_KEY, textMsgs);
 		}
+		mapValues.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
+		mapValues.put(Constants.RESPONSE_MAP_MESSAGE_KEY, textMsgs);
 		return mapValues;
 	}
 
@@ -212,7 +211,7 @@ public class JSONUtilsService {
 										percentage = (consumed / total) * 100;
 									}
 								}
-								logger.debug("Meter Percentage : "+percentage);
+								logger.debug(Constants.LOGGER_INFO_PREFIX+"Meter Percentage : "+percentage);
 								percentageList.add(String.valueOf(percentage));
 								String finalMsg = replaceValuesByMapping(values, msg, locale);
 								textMsgs.add(finalMsg);
@@ -416,7 +415,7 @@ public class JSONUtilsService {
 			}
 		}
 		
-		public String getCommercialNameValue(JSONObject jsonObject , String locale) {
+		public String getArabicOrEnglishValue(JSONObject jsonObject , String locale) {
 			return locale.contains(Constants.LOCALE_AR) ? jsonObject.getString(Constants.JSON_KEY_VALUE_AR) :jsonObject.getString(Constants.JSON_KEY_VALUE_EN); 
 		}
 		

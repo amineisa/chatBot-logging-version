@@ -5,6 +5,8 @@
  */
 package com.chatbot.services;
 
+import static java.util.Optional.empty;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,8 +17,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -32,9 +37,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import com.chatbot.entity.BotButton;
 import com.chatbot.entity.BotWebserviceMessage;
 import com.chatbot.entity.CustomerProfile;
+import com.chatbot.entity.InteractionLogging;
 import com.chatbot.entity.UserSelection;
+import com.chatbot.repo.InteractionLoggingRepo;
 import com.chatbot.util.Constants;
 import com.chatbot.util.Utils;
 import com.github.messenger4j.Messenger;
@@ -43,6 +51,8 @@ import com.github.messenger4j.exception.MessengerIOException;
 import com.github.messenger4j.send.MessagePayload;
 import com.github.messenger4j.send.MessagingType;
 import com.github.messenger4j.send.message.TextMessage;
+import com.github.messenger4j.send.message.quickreply.QuickReply;
+import com.github.messenger4j.send.message.quickreply.TextQuickReply;
 import com.github.messenger4j.webhook.event.attachment.Attachment;
 import com.github.messenger4j.webhook.event.attachment.RichMediaAttachment;
 
@@ -53,51 +63,29 @@ import com.github.messenger4j.webhook.event.attachment.RichMediaAttachment;
 public class RasaIntegrationService {
 
 	@Autowired
-	UtilService utilService;
+	private UtilService utilService;
 	@Autowired
-	InteractionHandlingService interactionHandlingService;
+	private InteractionHandlingService interactionHandlingService;
 	@Autowired
-	ChatBotService chatBotService;
+	private ChatBotService chatBotService;
+	@Autowired
+	private InteractionLoggingRepo interactionLoggingRepo;
+
 
 	private static final Logger logger = LoggerFactory.getLogger(RasaIntegrationService.class);
 
-	/**
+	/**Rasa Integration 
 	 * @param messenger
 	 * @param senderId
 	 * @param botWebserviceMessage
 	 * @param userSelections
-	 */
+	 */ 
 	public void rasaCallingForFreeTextHandling(Messenger messenger, String senderId, BotWebserviceMessage botWebserviceMessage) {
-		// Rasa Integration
 		String paramKey = botWebserviceMessage.getListParamName();
 		UserSelection userSelections = utilService.getUserSelectionsFromCache(senderId);
+		logger.debug(Constants.LOGGER_INFO_PREFIX + " Rasa service url "+ botWebserviceMessage.getWsUrl());
 		JSONObject jsonResponse = rasaIntegration(botWebserviceMessage.getWsUrl(), userSelections.getFreeText(), paramKey);
 		rasaResponseHandling(jsonResponse, messenger, senderId);
-	
-		/*
-		 * 
-		 * 
-		 * if (!jsonResponse.keySet().isEmpty()) { // JSONArray intentRanking =
-		 * jsonResponse.getJSONArray("intentRanking"); JSONObject intentObject =
-		 * jsonResponse.getJSONObject("intent"); logger.debug("Intent Ranking " +
-		 * intentObject);
-		 * 
-		 * Map<String, Double> map = new HashMap<>(); for (int i = 0; i <
-		 * intentRanking.length(); i++) { JSONObject intentObject =
-		 * intentRanking.getJSONObject(i); double conf =
-		 * intentObject.getDouble("confidence"); String name =
-		 * intentObject.getString("name"); if (Math.round(conf) > 50) { map.put(name,
-		 * conf); } }
-		 * 
-		 * 
-		 * JSONObject intent = jsonResponse.getJSONObject("intent"); String name =
-		 * intent.getString("name");
-		 * logger.debug("Rasa Response Interaction Name "+name);
-		 * 
-		 * return name; //handlePayload(intentObject.getString("name"), messenger,
-		 * senderId); }else { return Constants.PAYLOAD_UNEXPECTED_PAYLOAD;
-		 * //handlePayload(Constants.PAYLOAD_UNEXPECTED_PAYLOAD, messenger, senderId); }
-		 */
 	}
 
 	
@@ -106,19 +94,28 @@ public class RasaIntegrationService {
 		JSONArray botResponses = jsonResponse.getJSONArray(Constants.RASA_RESPONSE_ARRAY_KEY);
 		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 		UserSelection userSelections = utilService.getUserSelectionsFromCache(senderId);
-		if(botResponses.length()>0) {
+		if(botResponses.length() > 0) { 
 		for (int i = 0; i < botResponses.length(); i++) {
 			JSONObject object = botResponses.getJSONObject(i);
 			if (object.keySet().contains(Constants.RASA_RESPONSE_TEXT_KEY)) {
 				sendTextMessage(messenger, senderId, object);	
 			} else if (object.keySet().contains(Constants.RASA_RESPONSE_ACTION_KEY)) {
 				String action = object.getString(Constants.RASA_RESPONSE_ACTION_KEY);
-				logger.debug("Rasa Action "+action);
+				logger.debug(Constants.LOGGER_INFO_PREFIX +" Rasa returned action is "+action);
+				List<InteractionLogging> interactions = interactionLoggingRepo.findAllByCustomerProfileOrderByInteractionCallingDateDesc(customerProfile);
+				logger.debug(Constants.LOGGER_INFO_PREFIX +" Check double unexpected action "+interactions.get(1).getBotInteraction().getPayload());
+				if(action.equals(interactions.get(1).getBotInteraction().getPayload())) {
+					logger.debug(Constants.LOGGER_INFO_PREFIX+"Double unexpected action have been recieved");
+					logger.debug(Constants.LOGGER_INFO_PREFIX +"Bot gonna route converstion to agent cause of rasa can't help the client ");
+					action=Constants.PAYLOAD_TALK_TO_AGENT;
+				}
 				interactionHandlingService.handlePayload(action, messenger, senderId);
-			}else if(object.keySet().contains(Constants.RASA_RESPONSE_DIAL_KEY)) {
+			}else if(object.keySet().contains(Constants.RAZA_RESPONSE_BUTTON_OPTIONS_KEY)) {
+				logger.debug(Constants.LOGGER_INFO_PREFIX +"Rasa runtime payloads handling ");
+				handleRunTimeRasaOptions(messenger, senderId, customerProfile, object);
+			} else if(object.keySet().contains(Constants.RASA_RESPONSE_DIAL_KEY)) {
 				if(customerProfile.getMsisdn() == null) {
 				String dial = object.getString(Constants.RASA_RESPONSE_DIAL_KEY);
-				logger.debug("Rasa Auth Dial "+dial);
 				userSelections.setUserDialForAuth(dial);
 				utilService.updateUserSelectionsInCache(senderId, userSelections);
 				interactionHandlingService.handlePayload(Constants.PAYLOAD_DIAL_VALIDITY, messenger, senderId);
@@ -127,31 +124,68 @@ public class RasaIntegrationService {
 				}
 			}else if(object.keySet().contains(Constants.RASA_RESPONSE_VERIFICATION_KEY)) {
 				String activationCode = object.getString(Constants.RASA_RESPONSE_VERIFICATION_KEY);
-				logger.debug("Rasa Auth Verification Code "+activationCode);
+				logger.debug(Constants.LOGGER_INFO_PREFIX+"Rasa Auth Verification Code "+activationCode);
 				userSelections.setActivationCode(activationCode);
 				utilService.updateUserSelectionsInCache(senderId, userSelections);
 				interactionHandlingService.handlePayload(Constants.PAYLOAD_VERIFICATION_CODE, messenger, senderId);
 			}else if(object.keySet().contains(Constants.RASA_RESPONSE_SCRATCHED_NUMBER)){
 				String scratchedNumber = object.getString(Constants.RASA_RESPONSE_SCRATCHED_NUMBER);
-				logger.debug("Rasa Recharge Scratched number "+scratchedNumber);
+				logger.debug(Constants.LOGGER_INFO_PREFIX +"Recharge Scratched number "+scratchedNumber);
 				userSelections.setScratcheddNumberForRecharge(scratchedNumber);
 				utilService.updateUserSelectionsInCache(senderId, userSelections);
 				interactionHandlingService.handlePayload(Constants.PAYLOAD_RECHARGE, messenger, senderId);
 			}else {
+				logger.debug(Constants.LOGGER_INFO_PREFIX+"Recieving nothing from rasa response ");
 				interactionHandlingService.handlePayload(Constants.PAYLOAD_FAULT_MSG, messenger, senderId);
 			}
-		}/*
-		if (!action.equals("") && action.length() > 0) {
-			logger.debug("Rasa Action "+action);
-			interactionHandlingService.handlePayload(action, messenger, senderId);
-		}*/
+		}
 		}else {
 			interactionHandlingService.handlePayload(Constants.PAYLOAD_FAULT_MSG, messenger, senderId);
 		}
 	}
+
+
+	/**
+	 * @param messenger
+	 * @param senderId
+	 * @param customerProfile
+	 * @param object
+	 */
+	public void handleRunTimeRasaOptions(Messenger messenger, String senderId, CustomerProfile customerProfile, JSONObject object) {
+		JSONArray payloads = object.getJSONArray(Constants.RAZA_RESPONSE_BUTTON_OPTIONS_KEY);
+		List<QuickReply> quickReplies = new ArrayList<>();
+		for(int index = 0;index < payloads.length();index++) {
+			String payload = payloads.getString(index);
+			BotButton button = chatBotService.findButtonByPayload(payload);
+			if(button != null) {
+			String locale = customerProfile.getLocale();
+			String label = Utils.getTextValueForButtonLabel(locale, button);
+			QuickReply quickReply = TextQuickReply.create(label, payload, empty());
+			quickReplies.add(quickReply);
+			}
+		}
+		Optional<List<QuickReply>> quickRepliesOp = Optional.of(quickReplies);
+		String text = getOptionsHeaderText(customerProfile.getLocale());
+		MessagePayload messagePayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TextMessage.create(text , quickRepliesOp, empty()));
+		ArrayList<MessagePayload> messages = new ArrayList<>();
+		messages.add(messagePayload);
+		interactionHandlingService.sendMultipleMessages(messages, senderId, messenger, null);
+	}
 	
 	
 	
+	/**
+	 * @param locale
+	 * @return
+	 */
+	private String getOptionsHeaderText(String locale) {
+		if(locale.contains(Constants.LOCALE_AR)) {
+			return chatBotService.getBotConfigurationByKey(Constants.RASA_RUNTIME_OPTIONS_TEXT_AR_KEY).getValue();
+		}
+			return chatBotService.getBotConfigurationByKey(Constants.RASA_RUNTIME_OPTIONS_TEXT_EN_KEY).getValue(); 
+	}
+
+
 	/**
 	 * 
 	 */
@@ -199,7 +233,6 @@ public class RasaIntegrationService {
 		logger.debug("Rasa Request param" + jsonParam);
 		try {
 			ResponseEntity<String> response = restTemplate.exchange(new URI(audioApiUrl), HttpMethod.POST, request, String.class);
-			logger.debug("Rasa Response " + response.getBody());
 			jsonResponse = new JSONObject(response.getBody());
 		} catch (RestClientException | URISyntaxException e) {
 			e.printStackTrace();
@@ -228,19 +261,16 @@ public class RasaIntegrationService {
 		RestTemplate restTemplate = new RestTemplate();
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
-		//JSONObject requestBody = new JSONObject();
 		Map<String,String> requestBody = new HashMap<>();
 		requestBody.put(paramKey, payload);
 		HttpEntity<Map<String,String>> request = new HttpEntity<>(requestBody);
-		logger.debug("Rasa Request "+requestBody);
-		
+		logger.debug(Constants.LOGGER_INFO_PREFIX+"Rasa WS request's body is  "+requestBody);
 		ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
-		logger.debug("Rasa Response "+ response.getBody());
+		logger.debug(Constants.LOGGER_INFO_PREFIX+"Rasa WS response is "+ response.getBody());
 		if (response.getStatusCodeValue() != 200) {
 			return new JSONObject();
 		}
 		return new JSONObject(response.getBody());
 	}
-
-
+	
 }

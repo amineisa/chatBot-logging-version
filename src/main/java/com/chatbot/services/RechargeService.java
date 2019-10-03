@@ -20,6 +20,8 @@ import com.chatbot.util.Constants;
  */
 @Service
 public class RechargeService {
+	
+	// For Native recharge update button type to be postback button which its id is 156
 
 	@Autowired
 	private UtilService utilService;

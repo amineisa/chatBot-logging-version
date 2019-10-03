@@ -1,4 +1,4 @@
-package com.chatbot.dao;
+package com.chatbot.repo;
 
 import java.util.List;
 
@@ -18,6 +18,8 @@ public interface BotButtonRepo extends CrudRepository<BotButton, Long> {
 	public BotButton findButtonByButtonType(Long id);
 	
 	public BotButton findButtonByButtonTypeId(Long id); 
+	
+	public BotButton findBotButtonByButtonPayload(String payload); 
 	
 	public List<BotButton> findByBotButtonTemplateMSG(BotButtonTemplateMSG botButtonTemplateMSG);
 	

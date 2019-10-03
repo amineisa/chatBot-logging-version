@@ -2,10 +2,8 @@ package com.chatbot.entity;
 
 import java.io.Serializable;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -50,8 +48,6 @@ public class BotButtonTemplateMSG implements Serializable{
 		this.buttonTempMsgId = buttonTempMsgId;
 	}
 
-
-
 	public Boolean getIsStatic() {
 		return this.isStatic;
 	}
@@ -59,8 +55,6 @@ public class BotButtonTemplateMSG implements Serializable{
 	public void setIsStatic(Boolean isStatic) {
 		this.isStatic = isStatic;
 	}
-
-
 
 	public BotText getBotText() {
 		return this.botText;

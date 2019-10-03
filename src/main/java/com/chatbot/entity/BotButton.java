@@ -10,7 +10,6 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQuery;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
@@ -32,7 +31,7 @@ public class BotButton implements Serializable {
 	@Column(name = "BUTTON_PAYLOAD")
 	private String buttonPayload;
 
-	@OneToOne()
+	@ManyToOne
 	@JoinColumn(name = "BUTTON_TYPE" , referencedColumnName="ID")
 	private ButtonType buttonType;
 
@@ -45,7 +44,7 @@ public class BotButton implements Serializable {
 	private Boolean isStatic;
 
 	// bi-directional many-to-one association to BotText
-	@ManyToOne(fetch=FetchType.LAZY , cascade=CascadeType.MERGE)
+	@ManyToOne()
 	@JoinColumn(name = "TEXT_ID")
 	private BotText botText;
 
@@ -161,6 +160,12 @@ public class BotButton implements Serializable {
 
 	public void setBotWebserviceMessage(BotWebserviceMessage botWebserviceMessage) {
 		this.botWebserviceMessage = botWebserviceMessage;
+	}
+
+	@Override
+	public String toString() {
+		return "BotButton [buttonId=" + buttonId + ", buttonPayload=" + buttonPayload + ", buttonUrl=" + buttonUrl + ", isStatic=" + isStatic + ", botText=" + botText.getEnglishText() 
+				+ ", buttonImageUrl=" + buttonImageUrl + "]";
 	}
 
 	
