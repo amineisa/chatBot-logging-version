@@ -19,7 +19,7 @@ public interface BotButtonRepo extends CrudRepository<BotButton, Long> {
 	
 	public BotButton findButtonByButtonTypeId(Long id); 
 	
-	public BotButton findBotButtonByButtonPayload(String payload); 
+	public List<BotButton> findByButtonPayload(String payload); 
 	
 	public List<BotButton> findByBotButtonTemplateMSG(BotButtonTemplateMSG botButtonTemplateMSG);
 	

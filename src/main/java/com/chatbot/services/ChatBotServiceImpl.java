@@ -253,8 +253,8 @@ public class ChatBotServiceImpl implements ChatBotService {
 	 * @see com.chatbot.services.ChatBotService#findButtonByPayload(java.lang.String)
 	 */
 	@Override
-	public BotButton findButtonByPayload(String payload) {
-		return botButtonRepo.findBotButtonByButtonPayload(payload);
+	public List<BotButton> findAllButtonsByPayload(String payload) {
+		return botButtonRepo.findByButtonPayload(payload);
 	}
 	
 

@@ -156,7 +156,7 @@ public class RasaIntegrationService {
 		List<QuickReply> quickReplies = new ArrayList<>();
 		for(int index = 0;index < payloads.length();index++) {
 			String payload = payloads.getString(index);
-			BotButton button = chatBotService.findButtonByPayload(payload);
+			BotButton button = chatBotService.findAllButtonsByPayload(payload).get(0);
 			if(button != null) {
 			String locale = customerProfile.getLocale();
 			String label = Utils.getTextValueForButtonLabel(locale, button);

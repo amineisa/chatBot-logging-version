@@ -233,6 +233,8 @@ public class Constants {
 	public static final String AUTH_TIME_STAMP_VALUE = "timeStamp";
 	public static final String PAYLOAD_RECHARGE = "native recharge";
 	public static final String PAYLOAD_ALREADY_LOGGED_IN = "already loggedin";
+	public static final String BUNDLE_NAME_KEY = "bundleName";
+	public static final String DETAILS_KEY_SUBTITLE = "details";
 	//Rasa Constants 
 	public static final String RASA_ENABLED_KEY = "RASA_ENABLED_KEY";
 	public static final String RASA_PAYLOAD = "rasa";

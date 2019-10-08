@@ -29,6 +29,7 @@ public class UserSelection implements Serializable{
 	private String akwakartProductName;
 	private int accountDeductionHistory; 
 	private String balanceValue;
+	private String ratePlanNameForEmarledActions;
 	
 	public String getSenderId() {
 		return senderId;
@@ -191,6 +192,14 @@ public class UserSelection implements Serializable{
 
 	public void setBalanceValue(String balanceValue) {
 		this.balanceValue = balanceValue;
+	}
+
+	public String getRatePlanNameForEmarledActions() {
+		return ratePlanNameForEmarledActions;
+	}
+
+	public void setRatePlanNameForEmarledActions(String ratePlanNameForEmarledActions) {
+		this.ratePlanNameForEmarledActions = ratePlanNameForEmarledActions;
 	}
 
 	
