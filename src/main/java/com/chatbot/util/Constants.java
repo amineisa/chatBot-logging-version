@@ -4,7 +4,7 @@ package com.chatbot.util;
  * @author Amin Eisa 
  */
 public class Constants {
-
+	
 	public static final String CHANEL_PARAM = "CHATBOT";
 	public static final String PREFIX_DEDUCTION_DURATION ="DEDUCTION"; 
 	public static final String PREFIX_SALLEFNY_INTERACTION = "SALL_";
@@ -63,8 +63,6 @@ public class Constants {
 	public static final String NOCONSUMPTION_ELEMENT_SUBTITLE_AR = "باقتك ليس عليها اي استهلاك";
 	public static final String NOTELIGIBLE_ELEMENT_SUBTITLE_EN = " Your Dial Not Eligible to any addons ";
 	public static final String NOTELIGIBLE_ELEMENT_SUBTITLE_AR = "عفوا انت ما عندكش باقات اضافية ";
-	public static final String profilePayloads = PAYLOAD_VIEW_CONNECT_DETAILS + Constants.COMMA_CHAR + PAYLOAD_RATEPLAN_AND_CONNECT + "," + PAYLOAD_VIEW_RATEPLAN_DETAILS + "," + PAYLOAD_RATEPLAN_DETAILS
-			+ "," + PAYLOAD_CONSUMPTION;
 	public static final String RESPOSE_MSG_CHANGE_LOCALE_AR = "تم تغير اللغة الي اللغة العربيه ";
 	public static final String RESPOSE_MSG_CHANGE_LOCALE_EN = "Language has been changed to English language";
 	// logger prefixes
@@ -84,6 +82,7 @@ public class Constants {
 	public static final String LOGGER_RATEPLAN_CONSUMPTION = "RatePlan Consumption ";
 	public static final String LOGGER_SERVICE_URL = "Service URL ";
 	public static final String LOGGER_BOT_PREFIX="Bot logging {} message ";
+	public static final String ELEMENT_PHOTO_EXTENSTION = ".png?version=1";
 	// json response keys
 	public static final String IS_ARRAY_KEY_IN_JSON_RESPONSE = "#";
 	public static final String CACHED_MAP_PROFILE_KEY_SUFFIX = "_PROFILE";
@@ -91,6 +90,7 @@ public class Constants {
 	public static final String CACHED_MAP_ELIGIPLE_EXTRA_KEY_SUFFIX = "_EXTRA";
 	public static final String SOCIAL_CONSUMPTION = "socialConsumption";
 	public static final String JSON_KEY_NAME_EN = "englishName";
+	public static final String JSON_KEY_BUNDLE_RESPONSE ="bundleResponses";
 	public static final String JSON_KEY_NAME_AR = "arabicName";
 	public static final String JSON_KEY_FOR_PRODUCT = "products";
 	public static final String JSON_KEY_FOR_RELATED_PRODUCT = "relatedProduct";
@@ -139,8 +139,10 @@ public class Constants {
 	public static final String URL_KEYWORD_BUNDLE = "bundle";
 	public static final String URL_KEYWORD_EXTRA = "extra";
 	public static final String URL_PARAM_CHANNEL_KEY ="paramChannel:";
-	public static final String URL_PARAM_MSISDN_KEY = "msisdn=";
-	public static final String URL_TIME_CHANNEL_KEY = "&time=1525328875649&channel=";
+	public static final String URL_PARAM_MSISDN_KEY = "&user=";
+	public static final String URL_TIME_KEY = "time=";
+	public static final String URL_ETISALAT_VALUE="&URL=etisalat"; 
+	public static final String URL_CHANNEL_KEY = "channel=";
 	public static final String URL_PAY_BILL_AND_RECHARGE_CHANEL = "&URL=facebook";
 	public static final String URL_USER_AND_TIME_KEY = "time=1498033943505&user=";
 	public static final String URL_WARNING_IMAGE = "warning.png?version=1";
@@ -262,7 +264,35 @@ public class Constants {
 	//encryption keys
 	public static final String SECURE_KEY = "SECURE_KEY";
 	public static final String PAYMENT_ENCRYPTION_KEY = "PAYMENT_ENCRYPTION_KEY";
-	public static final String ENCRYPTION_KEY = "ENCRYPTION_KEY";
+	public static final String DPI_ENCRYPTION_KEY = "DPI_ENCRYPTION_KEY";
+	public static final String CHANNEL_ENCRYPTION_KEY = "CHANNEL_ENCRYPTION_KEY";
 	public static final String RAZA_RESPONSE_BUTTON_OPTIONS_KEY = "buttons";
+	//Emerald
+	public static final String EMERALD_PRODUCT_FAMILY_NAME="FAMILY_POSTPAID";
+	public static final String PAYLOAD_EMERALD_ACTIONS = "EMERALD_ACTIONS";
+	public static final String EMERALED_ADD_MEMBER_BUTTON_PAYLOAD = "ADD_CHILD_EMERALD_BUTTON";
+	public static final String EMERALED_REMOVE_MEMBER_BUTTON_PAYLOAD = "REMOVE_CHILD_EMERALD_BUTTON";
+	public static final String EMERALD_NOT_ELIGIBLE_ADD_MEMBER_AR = "EMERALD_NOT_ELIGIBLE_ADD_MEMBER_AR";
+	public static final String EMERALD_NOT_ELIGIBLE_ADD_MEMBER_EN = "EMERALD_NOT_ELIGIBLE_ADD_MEMBER_EN";
+	public static final String EMERALD_ELIGIBLE_ADD_MEMBER_AR = "EMERALD_ELIGIBLE_ADD_MEMBER_AR";
+	public static final String EMERALD_ELIGIBLE_ADD_MEMBER_EN = "EMERALD_ELIGIBLE_ADD_MEMBER_EN";
+	public static final String EMERALD_ADD_CHILD_MEMBER_PAYLOAD = "EMERALD_ADD_CHILD_MEMBER";
+	public static final String EMERALD_PAYLOAD_REMOVE_CHILD_PREFIX="REMOVE_0";
+	public static final String EMERALD_REMOVE_CHILD_MEMBER ="EMERALD_REMOVE_CHILD_MEMBER";
+	public static final String EMERALD_NO_CHILD_FOUND_TO_REMOVE = "EMERALD_NO_CHILD_FOUND_TO_REMOVE";
+	public static final String EMERALD_TRANSFER_AND_DISTRIBUTE_PRODUCTS_PAYLOAD ="EMERALD_TRANSFER_AND_DISTRIBUTE_PRODUCTS";
+	public static final String EMERALD_GET_DIALS_FOR_DISTRIBUTE_PAYLOAD = "DISTRIBUTE_DIAL";
+	public static final String EMERALD_ASK_ABOUT_AMOUT_FOR_DISTRIBUTION = "DISTRIBUTION_AMOUNT,";
+	public static final String EMERALD_DISTRIBUTE_SUBMIT_ORDER_PAYLOAD = "EMERAL_DISTRIBUTE_SUBMIT_ORDER";
+	public static final String EMERALD_CHILD_TRANSFER_FROM_PAYLOAD = "EMERALD_TRANSFER_FROM_CHILD";
+	public static final String EMERALD_CHILD_TRAFICCASES_FOR_TRANSFER_PAYLOAD ="EMERALD_CHILD_TRAFICCASES";
+	public static final String EMERALD_CHILD_TRANSFER_TO_PAYLOAD = "EMERALD_TRANSFER_TO_CHILD";
+	public static final String EMERALD_TRANSFER_SUBMIT_ORDER_PAYLOAD = "EMERAL_TRANSFER_SUBMIT_ORDER";
+	public static final String EMERALD_CHILD_LIST_KEY = "familyDials";
+	public static final String EMERALD_DETAILS_KEY = "details";
+	public static final String DISTRIBUTE_AFTER_TRANSFER = "distbuteAfterTrans";
+	public static final String EMERALD_ASK_ABOUT_AMOUT_FOR_TRANSFER = "TRANSFER_AMOUNT,";
+	
 	
 }
+

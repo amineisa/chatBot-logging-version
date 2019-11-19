@@ -28,6 +28,7 @@ public class JSONUtilsService {
 		ArrayList<String> values = new ArrayList<>();
 		ArrayList<String> textMsgs = new ArrayList<>();
 		values =  getValuesFromJson(jsonObject, keys);
+		logger.debug(Constants.LOGGER_INFO_PREFIX+"In Text message "+values);
 		String finalMsg = replaceValuesByMapping(values, msg, locale);
 		textMsgs.add(finalMsg);
 		titleList.add(values.get(0));

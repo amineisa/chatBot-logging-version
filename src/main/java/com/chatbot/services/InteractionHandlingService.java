@@ -66,17 +66,16 @@ public class InteractionHandlingService {
 	@Autowired
 	private QuickReplyService quickReplyService;
 	@Autowired
-	RasaIntegrationService rasaIntegration;
+	private RasaIntegrationService rasaIntegration;
 	@Autowired
-	SallefnyService sallefnyService;
+	private RechargeService rechargeService;
 	@Autowired
-	AuthService authService;
+	private AkwaKartService akwaKartService;
 	@Autowired
-	RechargeService rechargeService;
+	private BalanceDeductionService balanceDeductionService;
 	@Autowired
-	AkwaKartService akwaKartService;
-	@Autowired
-	BalanceDeductionService balanceDeductionService;
+	private EmeraldService emeraldService;
+
 	private static CacheHelper<String, Object> wsResponseCache = new CacheHelper<>("usersResponses");
 
 	private static final Logger logger = LoggerFactory.getLogger(ChatBotController.class);
@@ -101,6 +100,28 @@ public class InteractionHandlingService {
 			userSelections.setProductIdAndOperationName(payload.substring(4, payload.length()));
 			utilService.updateUserSelectionsInCache(senderId, userSelections);
 			payload = payload.substring(0, 4);
+		} else if (payload.startsWith(Constants.EMERALD_ASK_ABOUT_AMOUT_FOR_DISTRIBUTION)) {
+			// userSelections.setProductIdAndOperationName(payload.split(Constants.COMMA_CHAR)[1]);
+			userSelections.setEmeraldDialForDistribute(payload.split(Constants.COMMA_CHAR)[1]);
+			utilService.updateUserSelectionsInCache(senderId, userSelections);
+			payload = Constants.EMERALD_DISTRIBUTE_SUBMIT_ORDER_PAYLOAD;
+		} else if (payload.startsWith(Constants.EMERALD_ASK_ABOUT_AMOUT_FOR_TRANSFER)) {
+			userSelections.setEmeraldTransferToDial(payload.split(Constants.COMMA_CHAR)[1]);
+			utilService.updateUserSelectionsInCache(senderId, userSelections);
+			payload = Constants.EMERALD_ASK_ABOUT_AMOUT_FOR_TRANSFER;
+		} else if (payload.startsWith(Constants.EMERALD_GET_DIALS_FOR_DISTRIBUTE_PAYLOAD)) {
+			userSelections.setEmeraldTraficCaseID(payload.substring(15, payload.length()));
+			utilService.updateUserSelectionsInCache(senderId, userSelections);
+			payload = Constants.EMERALD_GET_DIALS_FOR_DISTRIBUTE_PAYLOAD;
+		} else if (payload.startsWith(Constants.EMERALD_CHILD_TRAFICCASES_FOR_TRANSFER_PAYLOAD)) {
+			userSelections.setEmeraldTransferFromDial(payload.split(Constants.COMMA_CHAR)[1]);
+			utilService.updateUserSelectionsInCache(senderId, userSelections);
+			payload = Constants.EMERALD_CHILD_TRAFICCASES_FOR_TRANSFER_PAYLOAD;
+		} else if (payload.startsWith(Constants.EMERALD_CHILD_TRANSFER_TO_PAYLOAD)) {
+			String traficCaseId = payload.split(Constants.COMMA_CHAR)[1];
+			userSelections.setEmeraldTraficCaseID(traficCaseId);
+			utilService.updateUserSelectionsInCache(senderId, userSelections);
+			payload = Constants.EMERALD_CHILD_TRANSFER_TO_PAYLOAD;
 		} else if (payload.startsWith(Constants.PREFIX_MOBILEINTERNET_ADDON)) {// addonId for MI
 			userSelections.setAddonId(payload.substring(7, payload.length()));
 			utilService.updateUserSelectionsInCache(senderId, userSelections);
@@ -115,7 +136,7 @@ public class InteractionHandlingService {
 			String stringParametersListForRelatedProducts = userSelections.getParametersListForRelatedProducts();
 			if (stringParametersListForRelatedProducts != null) {
 				String[] parametersListForRelatedProducts = stringParametersListForRelatedProducts.split(",");
-				logger.debug(Constants.LOGGER_INFO_PREFIX+"User Selection" + userSelections.toString());
+				logger.debug(Constants.LOGGER_INFO_PREFIX + "User Selection" + userSelections.toString());
 				if (parametersListForRelatedProducts != null && parametersListForRelatedProducts.length == 3) {
 					payload = Constants.PREFIX_CONFIRM_MOBILEINTERNET_SUBSCRIPTION + "_related_product";
 				} else if (parametersListForRelatedProducts != null && parametersListForRelatedProducts.length == 2) {
@@ -142,6 +163,11 @@ public class InteractionHandlingService {
 				utilService.updateUserSelectionsInCache(senderId, userSelections);
 			}
 			payload = Constants.PAYLOAD_MOBILE_INTERNET_CONFIRMATION_MSG;
+		} else if (payload.contains(Constants.EMERALD_PAYLOAD_REMOVE_CHILD_PREFIX)) {
+			String emeraldChildToRemove = payload.substring(8, payload.length());
+			userSelections.setEmeraldChildDialToRemove(emeraldChildToRemove);
+			utilService.updateUserSelectionsInCache(senderId, userSelections);
+			payload = Constants.EMERALD_REMOVE_CHILD_MEMBER;
 		} else if (payload.equalsIgnoreCase(Constants.PAYLOAD_MOBILE_INTERNET_SUBSCRIPTION_CANCEL)) {
 			payload = Constants.PAYLOAD_CHANGE_BUNDLE;
 		} else if (payload.equalsIgnoreCase(Constants.PAYLOAD_CANCEL_RECHARGING) || payload.equalsIgnoreCase(Constants.PAYLOAD_CANCEL_BILL_PAYMENT)) {
@@ -191,46 +217,38 @@ public class InteractionHandlingService {
 	 * @param senderId
 	 */
 	public void handlePayload(String payload, Messenger messenger, String senderId) {
-		String userFirstName, userLocale, lastName;
-		userFirstName = userLocale = lastName = Constants.EMPTY_STRING;
+		UserProfile userProfile = Utils.getUserProfile(senderId, messenger);
+		String userFirstName = userProfile.firstName() == null ? Constants.EMPTY_STRING : userProfile.firstName();
+		String lastName = /*userProfile.lastName() == null ? Constants.EMPTY_STRING :*/ userProfile.lastName();
+		String userLocale = /*userProfile.locale() == null ? Constants.LOCALE_EN :*/ userProfile.locale();
 		Utils.markAsTypingOn(messenger, senderId);
 		CustomerProfile customerProfile = Utils.saveCustomerInformation(chatBotService, senderId, userLocale, userFirstName, lastName);
-		logger.debug(Constants.LOGGER_INFO_PREFIX+"Payload value is " + payload);
+		logger.debug(Constants.LOGGER_INFO_PREFIX + "Payload value is " + payload);
 		if (payload.equals(Constants.PAYLOAD_TALK_TO_AGENT)) {
-			String phoneNumber = " _ ";
-			if (customerProfile != null) {
-				phoneNumber = customerProfile.getMsisdn();
-			}
-			logger.debug(Constants.LOGGER_INFO_PREFIX+"Send thread control to second app ");
+			BotInteraction interaction = chatBotService.findInteractionByPayload(Constants.PAYLOAD_TALK_TO_AGENT);
+			String phoneNumber = customerProfile != null && customerProfile.getMsisdn() != null ? customerProfile.getMsisdn() : "_";
+			Utils.interactionLogginghandling(customerProfile, interaction, chatBotService);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Send thread control to second app ");
 			callSecondryHandover(senderId, phoneNumber, messenger);
 		} else if (payload != null) {
-			if (payload.equalsIgnoreCase(Constants.PAYLOAD_GET_STARTED)) {
-				UserProfile userProfile = Utils.getUserProfile(senderId, messenger);
-				userFirstName = userProfile.firstName() == null ? Constants.EMPTY_STRING : userProfile.firstName();
-				lastName = userProfile.lastName() == null ? Constants.EMPTY_STRING : userProfile.lastName();
-				userLocale = userProfile.locale() == null ? Constants.LOCALE_EN : userProfile.locale();
-			} else {
-				payload = payloadSetting(payload, senderId);
-			}
-			String phoneNumber = Constants.EMPTY_STRING;
-			userLocale = customerProfile.getLocale() == null ? Constants.LOCALE_EN : customerProfile.getLocale();
-			logger.debug(Constants.LOGGER_INFO_PREFIX+"Handle payload for customer " + customerProfile.toString());
+			payload = payloadSetting(payload, senderId);
+			userLocale = customerProfile.getLocale() == null ? Constants.LOCALE_AR : customerProfile.getLocale();
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Handle payload for customer " + customerProfile.toString());
 			try {
 				ArrayList<MessagePayload> messagePayloadList = new ArrayList<>();
 				if (payload.equalsIgnoreCase("broadcast")) {
-					logger.debug(Constants.LOGGER_INFO_PREFIX+"Sending broadcast message");
+					logger.debug(Constants.LOGGER_INFO_PREFIX + "Sending broadcast message");
 					List<Message> messages = new ArrayList<>();
 					TextMessage textMsg = TextMessage.create("Hi , All Friends ");
 					messages.add(textMsg);
 					BroadCastMessageCreation broadCastMessage = BroadCastMessageCreation.create(messages);
 					try {
-						logger.debug(Constants.LOGGER_INFO_PREFIX+"Send  BroadCast Messanger MSG ");
+						logger.debug(Constants.LOGGER_INFO_PREFIX + "Send  BroadCast Messanger MSG ");
 						messenger.sendBroadCastMessage(broadCastMessage);
 					} catch (MessengerApiException | MessengerIOException e) {
 						e.printStackTrace();
 					}
-				} else if (payload.equalsIgnoreCase(Constants.LOCALE_EN) || payload.equalsIgnoreCase(Constants.LOCALE_AR))// Locale Setting
-				{
+				} else if (payload.equalsIgnoreCase(Constants.LOCALE_EN) || payload.equalsIgnoreCase(Constants.LOCALE_AR)) {// Locale Setting
 					messagePayloadList = utilService.userlocaleSetting(customerProfile, senderId, payload);
 					sendMultipleMessages(messagePayloadList, senderId, messenger, null);
 				} else {
@@ -238,7 +256,7 @@ public class InteractionHandlingService {
 					if (botInteraction == null && !payload.equals(Constants.PAYLOAD_MIGRATE_MORE)) { // Rasa integration in case free text.
 						String rasaEnabled = chatBotService.getBotConfigurationByKey(Constants.RASA_ENABLED_KEY).getValue() == null ? "false"
 								: chatBotService.getBotConfigurationByKey(Constants.RASA_ENABLED_KEY).getValue();
-						logger.debug(Constants.LOGGER_INFO_PREFIX+"Is Rasa Enabled " + rasaEnabled);
+						logger.debug(Constants.LOGGER_INFO_PREFIX + "Is Rasa Enabled " + rasaEnabled);
 						boolean rasa = Boolean.parseBoolean(rasaEnabled);
 						if (rasa) {
 							logger.debug(Constants.LOGGER_INFO_PREFIX + " { rasa is enabled } ");
@@ -249,12 +267,13 @@ public class InteractionHandlingService {
 							handlePayload(Constants.PAYLOAD_UNEXPECTED_PAYLOAD, messenger, senderId);
 						}
 					} else if (payload.equals(Constants.PAYLOAD_MIGRATE_MORE)) {// Rateplan Migration in case retrieved rateplans more than 10
+						BotInteraction interaction = chatBotService.findInteractionByPayload(Constants.PAYLOAD_MIGRATE_MORE);
+						Utils.interactionLogginghandling(customerProfile, interaction, chatBotService);
 						migrationInCaseMorethanTenRateplans(senderId, messenger, customerProfile);
 					} else { // All Other Normal Interactions flow.
 						InteractionLogging interactionLogging = Utils.interactionLogginghandling(customerProfile, botInteraction, chatBotService);
-						phoneNumber = customerProfile.getMsisdn() != null ? customerProfile.getMsisdn() : Constants.EMPTY_STRING;
-						if (botInteraction != null && payload.equalsIgnoreCase(Constants.NEW_PAYLOAD_LOGIN_INTERACTION) || payload.equals(Constants.PAYLOAD_LOGIN_INTERACTION)
-								|| !botInteraction.getIsSecure() || phoneNumber.length() > 0) {
+						String phoneNumber = customerProfile.getMsisdn() != null ? customerProfile.getMsisdn() : Constants.EMPTY_STRING;
+						if (payload.equals(Constants.PAYLOAD_LOGIN_INTERACTION) || phoneNumber.length() > 0) {
 							handleAuthenticatedUser(customerProfile, payload, messenger, messagePayloadList, interactionLogging);
 						} else { // In case Secured Interaction which need authentication before interact with
 							handleUnauthenticatedUser(payload, senderId, messenger);
@@ -291,7 +310,7 @@ public class InteractionHandlingService {
 				messagePayload = responseInCaseStaticScenario(customerProfile, payload, botInteractionMessage);
 				messagePayloadList.add(messagePayload);
 			} else {// Dynamic Scenario
-				logger.debug(Constants.LOGGER_INFO_PREFIX+Constants.LOGGER_DIAL_IS + phoneNumber + Constants.LOGGER_METHOD_NAME + " dynamicScenario and Interaction is " + botInteraction.toString());
+				logger.debug(Constants.LOGGER_INFO_PREFIX + Constants.LOGGER_DIAL_IS + phoneNumber + Constants.LOGGER_METHOD_NAME + " dynamicScenario and Interaction is " + botInteraction.toString());
 				dynamicScenarioController(customerProfile, payload, messenger, messagePayloadList, botInteractionMessage);
 			}
 		}
@@ -320,9 +339,9 @@ public class InteractionHandlingService {
 	private void handleUnauthenticatedUser(String payload, String senderId, Messenger messenger) {
 		UserSelection userSelections = utilService.getUserSelectionsFromCache(senderId);
 		userSelections.setOriginalPayLoad(payload);
-		logger.debug(Constants.LOGGER_INFO_PREFIX + " Orignal payload for unauthenticated user is "+payload);
+		logger.debug(Constants.LOGGER_INFO_PREFIX + " Orignal payload for unauthenticated user is " + payload);
 		utilService.updateUserSelectionsInCache(senderId, userSelections);
-		handlePayload(Constants.LOGGER_INFO_PREFIX+Constants.PAYLOAD_LOGIN_INTERACTION, messenger, senderId);
+		handlePayload(Constants.PAYLOAD_LOGIN_INTERACTION, messenger, senderId);
 	}
 
 	/**
@@ -401,11 +420,12 @@ public class InteractionHandlingService {
 			}
 			if (mapResponse.size() > 0 && mapResponse.get(Constants.RESPONSE_STATUS_KEY).equals("200")) {
 				response = mapResponse.get(Constants.RESPONSE_KEY);
-				logger.debug(Constants.LOGGER_INFO_PREFIX+"WS Response Status is " + mapResponse.get(Constants.RESPONSE_STATUS_KEY));
-				logger.debug(Constants.LOGGER_INFO_PREFIX+"WS Response is " + response);
+				logger.debug(Constants.LOGGER_INFO_PREFIX + "WS Response Status is " + mapResponse.get(Constants.RESPONSE_STATUS_KEY));
+				logger.debug(Constants.LOGGER_INFO_PREFIX + "WS Response is " + response);
 				if (payload.equalsIgnoreCase(Constants.PAYLOAD_VERIFICATION_CODE)) {
 					UserSelection userSelections = utilService.getUserSelectionsFromCache(senderId);
-					utilService.setLinkingInfoForCustomer(senderId, userSelections.getUserDialForAuth());
+					// utilService.setLinkingInfoForCustomer(senderId,
+					// userSelections.getUserDialForAuth());
 					handlePayload(userSelections.getOriginalPayLoad(), messenger, senderId);
 				} else {
 					templatesTypeHandling(customerProfile, payload, messenger, messagePayloadList, senderId, botWebserviceMessage, response);
@@ -488,6 +508,10 @@ public class InteractionHandlingService {
 			} else if (botWebserviceMessage.getOutType().getInOutTypeId() == 3) {// Array
 				buttonTemplateHandling(senderId, userLocale, messagePayloadList, phoneNumber, botWebserviceMessage, response);
 			}
+		} else if (messageTypeId != 0 && messageTypeId == Utils.MessageTypeEnum.QUICKREPLYMESSAGE.getValue()) {
+			String text = userLocale.contains(Constants.LOCALE_AR) ? chatBotService.findQuickReplyMessageByMessageId(messageId).getBotText().getArabicText()
+					: chatBotService.findQuickReplyMessageByMessageId(messageId).getBotText().getEnglishText();
+			quickReplyService.quickReplyDynamicScenario(customerProfile, payload, messagePayloadList, response, text, messenger);
 		} else if (messageTypeId != 0 && messageTypeId == Utils.MessageTypeEnum.GENERICTEMPLATEMESSAGE.getValue()) {// Generic Template
 			if (payload.equals(Constants.PAYLOAD_RATEPLAN_DETAILS)) {
 				JSONObject baseResponse = new JSONObject(response);
@@ -572,7 +596,7 @@ public class InteractionHandlingService {
 			phoneNumber = ".";
 		}
 		MessagePayload messagePayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TextMessage.create(informClientMSGRaw.getValue() + " " + phoneNumber));
-		logger.debug(Constants.LOGGER_INFO_PREFIX+"PASS THREAD CONTROL TO " + appId);
+		logger.debug(Constants.LOGGER_INFO_PREFIX + "PASS THREAD CONTROL TO " + appId);
 		HandoverPayload handoverPayload = HandoverPayload.create(senderId, HandoverAction.pass_thread_control, appId, "information");
 		try {
 			messenger.send(messagePayload);
@@ -620,7 +644,19 @@ public class InteractionHandlingService {
 			logger.debug(Constants.LOGGER_INFO_PREFIX + " Post WS body values {} " + jsonParam);
 		} else if (payload.equals(Constants.PAYLOAD_BALANCE_DEDUCTION)) {
 			jsonParam = balanceDeductionService.setRequestBody();
-			logger.debug(Constants.LOGGER_INFO_PREFIX+"Balance deduction request body " + jsonParam);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Balance deduction request body {} " + jsonParam);
+		} else if (payload.equalsIgnoreCase(Constants.EMERALD_REMOVE_CHILD_MEMBER)) {
+			jsonParam = emeraldService.removeChildRequestBody(userSelections);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Emerald remove child request body {} " + jsonParam);
+		} else if (payload.equalsIgnoreCase(Constants.EMERALD_ADD_CHILD_MEMBER_PAYLOAD)) {
+			jsonParam = emeraldService.addChildRequestBody(paramNames, userSelections);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + " Emerald Add Child Service Body {} " + jsonParam);
+		} else if (payload.equalsIgnoreCase(Constants.EMERALD_DISTRIBUTE_SUBMIT_ORDER_PAYLOAD)) {
+			jsonParam = emeraldService.distributeRequestBody(paramNames, userSelections);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Emerald Distribute Request Body {} " + jsonParam);
+		} else if (payload.equalsIgnoreCase(Constants.EMERALD_TRANSFER_SUBMIT_ORDER_PAYLOAD)) {
+			jsonParam = emeraldService.transferRequestBody(paramNames, userSelections);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Emerald Transfer Request Body {} " + jsonParam);
 		} else if (payload.equalsIgnoreCase(Constants.PAYLOAD_RELATED_PRODUCT_SUBSCRIPTION_CONFIRM)
 				|| payload.equalsIgnoreCase(Constants.PREFIX_CONFIRM_MOBILEINTERNET_SUBSCRIPTION) && userSelections.getProductIdAndOperationName() == null) {
 			handlePayload(Constants.PAYLOAD_CHANGE_BUNDLE, messenger, senderId);
@@ -630,34 +666,36 @@ public class InteractionHandlingService {
 			String operationName = payload.equals(Constants.PAYLOAD_RENEWAL_BUNDLE) ? Constants.RENEW_OPERATION_VALUE : Constants.UNSUBSCRIBE_OPERATION_VALUE;
 			paramValuesList.add(operationName);
 			jsonParam = utilService.setRequestBodyValueForPostCalling(paramValuesList, paramNames);
-			logger.debug(Constants.LOGGER_INFO_PREFIX+"Rateplan unsubscribe service parameters values " + jsonParam);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Rateplan unsubscribe service parameters values " + jsonParam);
 		} else if (userSelections.getAddonId() != null && userSelections.getAddonId().length() > 0 && payload.equals(Constants.PAYLOAD_ADDON_SUBSCRIPTION)) {// Add-on Subscription
-			logger.debug(Constants.LOGGER_INFO_PREFIX+Constants.ADDON_SUBSCRIPTION_ACTION);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + Constants.ADDON_SUBSCRIPTION_ACTION);
 			paramValuesList = new ArrayList<>(Arrays.asList(userSelections.getAddonId().split(Constants.COMMA_CHAR)));
 			jsonParam = utilService.setRequestBodyValueForPostCalling(paramValuesList, paramNames);
-			logger.debug(Constants.LOGGER_INFO_PREFIX+"Add-on subscribe service parameters values " + jsonParam);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Add-on subscribe service parameters values " + jsonParam);
 		} else if (payload.contains(Constants.MIGRATE_BY_PREFIX)) {
 			jsonParam = migrationService.ratePlanMigration(paramNames, payload, userSelections, paramValuesList);
-			logger.debug(Constants.LOGGER_INFO_PREFIX+"Migration Service Parameter values  " + jsonParam.toString());
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Migration Service Parameter values  " + jsonParam.toString());
 		} else if (payload.equalsIgnoreCase(Constants.PAYLOAD_SALLEFNY_CONFIRMATION_YES)) {
 			paramValuesList = new ArrayList<>(Arrays.asList(userSelections.getProductNameForSallefny().split(Constants.COMMA_CHAR)));
 			jsonParam = utilService.setRequestBodyValueForPostCalling(paramValuesList, paramNames);
-			logger.debug(Constants.LOGGER_INFO_PREFIX+"Sallefny Request Body " + jsonParam);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Sallefny Request Body " + jsonParam);
 		} else if (payload.equalsIgnoreCase(Constants.PAYLOAD_DIAL_VALIDITY)) {
-			jsonParam = authService.checkDialValidity(userSelections, customerProfile, paramNames, paramValuesList);
-			logger.debug(Constants.LOGGER_INFO_PREFIX+"Dial Validity Request Body " + jsonParam);
+			// jsonParam = authService.checkDialValidity(userSelections, customerProfile,
+			// paramNames, paramValuesList);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Dial Validity Request Body " + jsonParam);
 		} else if (payload.equalsIgnoreCase(Constants.PAYLOAD_VERIFICATION_CODE)) {
-			jsonParam = authService.checkVerificationCode(userSelections, paramNames, paramValuesList);
-			logger.debug(Constants.LOGGER_INFO_PREFIX+"Verification Code Request Body " + jsonParam);
+			// jsonParam = authService.checkVerificationCode(userSelections, paramNames,
+			// paramValuesList);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Verification Code Request Body " + jsonParam);
 		} else if (payload.equalsIgnoreCase(Constants.PAYLOAD_RECHARGE)) {
 			jsonParam = rechargeService.normalRecharge(userSelections, customerProfile, paramNames, paramValuesList);
-			logger.debug(Constants.LOGGER_INFO_PREFIX+"Recharge Request Body " + jsonParam);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Recharge Request Body " + jsonParam);
 		} else if (payload.startsWith(Constants.PAYLOAD_RREFIX_TESLA)) {
-			logger.debug(Constants.LOGGER_INFO_PREFIX+"Deduct from balance product name " + userSelections.getAkwaKartCategoryName());
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Deduct from balance product name " + userSelections.getAkwaKartCategoryName());
 			paramValuesList.add(userSelections.getAkwakartProductName());
 			paramValuesList.add(Constants.ACTIVATE_OPERATION);
 			jsonParam = akwaKartService.deductFromBalanceRequestBody(paramNames, paramValuesList);
-			logger.debug(Constants.LOGGER_INFO_PREFIX+"Deduct Request body " + jsonParam);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Deduct Request body " + jsonParam);
 		}
 		return utilService.postWSCalling(botWebserviceMessage, jsonParam.toString(), senderId);
 		// }
@@ -685,10 +723,10 @@ public class InteractionHandlingService {
 		if (cachedMap == null || cachedMap.size() == 0) {
 			mapResponse = utilService.getCalling(botWebserviceMessage, senderId, phoneNumber);
 			cacheValue = true;
-			logger.debug(Constants.LOGGER_INFO_PREFIX+Constants.LOGGER_SERVER_RESPONSE);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + Constants.LOGGER_SERVER_RESPONSE);
 		} else {
 			mapResponse = cachedMap;
-			logger.debug(Constants.LOGGER_INFO_PREFIX+Constants.LOGGER_CACHED_RESPONSE);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + Constants.LOGGER_CACHED_RESPONSE);
 		}
 		if (mapResponse.get(Constants.RESPONSE_STATUS_KEY).equals("200")) {
 			wsSuccessStatusHandling(payload, messagePayloadList, messageTypeId, senderId, mapResponse, url, cacheValue);
@@ -724,10 +762,10 @@ public class InteractionHandlingService {
 							: billProfile.getString(Constants.JSON_KEY_BIILAMOUNT);
 				}
 				if (billAmount.equals("")) {// post paid without bill to paid
-					logger.debug(Constants.LOGGER_INFO_PREFIX+" Bill Amount value is "+billAmount);
+					logger.debug(Constants.LOGGER_INFO_PREFIX + " Bill Amount value is " + billAmount);
 					postPaidService.postPaidNoBillToPaid(senderId, userLocale, messagePayloadList, messageTypeId);
 				} else {// post paid with bill to paid
-					logger.debug(Constants.LOGGER_INFO_PREFIX+" Bill Amount value is "+billAmount);
+					logger.debug(Constants.LOGGER_INFO_PREFIX + " Bill Amount value is " + billAmount);
 					postPaidService.postPaidbillingPaymentHandling(senderId, userLocale, messagePayloadList, messageTypeId, phoneNumber, billProfile, billAmount);
 				}
 			}
@@ -765,6 +803,7 @@ public class InteractionHandlingService {
 			} catch (MessengerApiException | MessengerIOException e) {
 				logger.error(Constants.LOGGER_SENDER_ID + senderId + Constants.LOGGER_EXCEPTION_MESSAGE + e);
 				e.printStackTrace();
+				handlePayload(Constants.PAYLOAD_FAULT_MSG, messenger, senderId);
 			}
 			if (interactionLogging != null) {
 				utilService.interactionLoggingUpdateResponseTime(interactionLogging);

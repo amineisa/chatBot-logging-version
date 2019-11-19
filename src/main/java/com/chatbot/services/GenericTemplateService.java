@@ -40,7 +40,7 @@ import com.github.messenger4j.send.message.template.button.PostbackButton;
 import com.github.messenger4j.send.message.template.common.Element;
 
 /**
- * @author Amin Eisa 
+ * @author Amin Eisa
  */
 @Service
 public class GenericTemplateService {
@@ -48,17 +48,19 @@ public class GenericTemplateService {
 	@Autowired
 	private UtilService utilService;
 	@Autowired
-	JSONUtilsService jsonUtilService;
+	private JSONUtilsService jsonUtilService;
 	@Autowired
-	ChatBotService chatBotService;
+	private ChatBotService chatBotService;
 	@Autowired
-	InteractionHandlingService interactionHandlingService;
+	private InteractionHandlingService interactionHandlingService;
 	@Autowired
-	MigrationService migrationService;
+	private MigrationService migrationService;
 	@Autowired
-	SallefnyService sallefnyService;
+	private SallefnyService sallefnyService;
 	@Autowired
-	AkwaKartService akwaKartService;
+	private AkwaKartService akwaKartService;
+	@Autowired
+	private EmeraldService emeraldService;
 
 	private static final Logger logger = LoggerFactory.getLogger(GenericTemplateService.class);
 
@@ -69,77 +71,98 @@ public class GenericTemplateService {
 		BotGTemplateMessage botGTemplateMessage = chatBotService.findGTemplateMessageByMessageId(messageId);
 		List<BotTemplateElement> botTemplateElementList = chatBotService.findTemplateElementsByGTMsgId(botGTemplateMessage.getGTMsgId());
 		List<Element> elements = new ArrayList<>();
-		for (BotTemplateElement botTemplateElement : botTemplateElementList) {
-			List<BotButton> elementButtonList = chatBotService.findButtonsByTemplateElementId(botTemplateElement.getElementId());
-			List<Button> buttonsList = new ArrayList<>();
-			for (BotButton botButton : elementButtonList) {
-				Button button = utilService.createButton(botButton, userlocale, new JSONObject(), dialNumber);
-				buttonsList.add(button);
-			}
-			Element element = null;
-			String elemnetImageUrl = botTemplateElement.getImageUrl();
-			String title = getTitletBotTemplateElement(botTemplateElement, userlocale);
-			String subtitle = getSubTitletBotTemplateElement(botTemplateElement, userlocale);
-			if (payload.equals(Constants.PAYLOAD_RATEPLAN_ACTIONS) || payload.equals(Constants.PAYLOAD_MOBILE_INTERNET_CONTROLLER)) {
-				logger.debug(Constants.LOGGER_INFO_PREFIX + " Normal Rateplan");
-				JSONArray jArray = new JSONArray();
-				if (payload.equals(Constants.PAYLOAD_RATEPLAN_ACTIONS)) {
-					jArray = jsonObject.getJSONArray(Constants.JSON_KEY_RATEPLAN);
-				} else if (payload.equals(Constants.PAYLOAD_MOBILE_INTERNET_CONTROLLER)) {
-					jArray = jsonObject.getJSONArray(Constants.JSON_KEY_MOBILE_INTERNET);
+			for (BotTemplateElement botTemplateElement : botTemplateElementList) {
+				List<BotButton> elementButtonList = chatBotService.findButtonsByTemplateElementId(botTemplateElement.getElementId());
+				List<Button> buttonsList = new ArrayList<>();
+				for (BotButton botButton : elementButtonList) {
+					Button button = utilService.createButton(botButton, userlocale, new JSONObject(), dialNumber);
+					buttonsList.add(button);
 				}
-				Map<String, String> detailsMap = createMainBundleDetails(jArray, userlocale);
-				title = detailsMap.get("bundleName");
-				subtitle = detailsMap.get("details");
-				elemnetImageUrl += title + ".png?version=1";
-			}else if(payload.equalsIgnoreCase(Constants.PAYLOAD_RATEPLAN_WITHOUT_METER)) {
-				logger.debug(Constants.LOGGER_INFO_PREFIX + " Ahlan Rateplan");
-				UserSelection userSelection = utilService.getUserSelectionsFromCache(customerProfile.getSenderID());
-				title += userSelection.getBalanceValue(); 
-				logger.debug(Constants.LOGGER_INFO_PREFIX +" parent payload "+ userSelection.getParentPayLoad());
-				element = Element.create(title, Optional.of(subtitle), Optional.of(Utils.createUrl(botTemplateElement.getImageUrl())), empty(), Optional.of(buttonsList));
-			}
-			if (subtitle != null && subtitle.contains("?") && botWebserviceMessage != null && payload != null && !payload.equals(Constants.PAYLOAD_MOBILE_INTERNET_CONTROLLER)) {
-				if(checkAkwaKart(jsonObject).get("hasAkwaKart") == "true" && payload.equalsIgnoreCase(Constants.PAYLOAD_RATEPLAN_ADDONS_CONSUMPTION)) {
-					element = akwaKartService.getAkwaKartConsumptionValue(new JSONObject(checkAkwaKart(jsonObject).get("consumption")), userlocale);
-					elements.add(element);
-				}else {
-				Long wsId = botWebserviceMessage.getWsMsgId();
-				BotTextResponseMapping botTextResponseMapping = chatBotService.findTextResponseMappingByWsId(wsId).get(0);
-				String[] keys = utilService.getKeysString(botTextResponseMapping, userlocale).split(Constants.COMMA_CHAR);
-				String[] paths = utilService.getPaths(botTextResponseMapping.getCommonPath());
-				Map<String, ArrayList<String>> mapValues = utilService.switchToObjectMode(jsonObject, paths, keys, subtitle, userlocale);
-				ArrayList<String> values = mapValues.get(Constants.RESPONSE_MAP_MESSAGE_KEY);
-				ArrayList<String> titles = mapValues.get(Constants.RESPONSE_MAP_TITLE_KEY);
-				ArrayList<String> percentageList = new ArrayList<>();
-				if(mapValues.containsKey(Constants.RESPONSE_PERCENTAGE_KEY)) {
-				 percentageList = mapValues.get(Constants.RESPONSE_PERCENTAGE_KEY);
-				}
-				if (values == null || values.isEmpty()) {
-					String msg = Utils.informUserThatHeDoesnotSubscribeAtAnyMIBundle(userlocale);
-					createNoConsumptionTemplate(userlocale, elements, botTemplateElement, buttonsList, msg);
-				} else {
-					for (int i = 0; i < values.size(); i++) {
-						title = payload.equalsIgnoreCase(Constants.PAYLOAD_RATEPLAN_ADDONS_CONSUMPTION) ? consumptionNames.get(i) : titles.get(i);
-						if ((title.equalsIgnoreCase(Constants.MOBILE_INTERNET_CONSUMPTION_NAME_EN) || title.equalsIgnoreCase(Constants.MOBILE_INTERNET_CONSUMPTION_NAME_AR))
-								&& !payload.equalsIgnoreCase(Constants.PAYLOAD_RATEPLAN_DETAILS)) {
-							title = consumptionNames.size() > i ? consumptionNames.get(i) : title;
+				Element element = null;
+				String elemnetImageUrl = botTemplateElement.getImageUrl();
+				String title = getTitletBotTemplateElement(botTemplateElement, userlocale);
+				String subtitle = getSubTitletBotTemplateElement(botTemplateElement, userlocale);
+				if (payload.equals(Constants.PAYLOAD_RATEPLAN_ACTIONS) || payload.equals(Constants.PAYLOAD_MOBILE_INTERNET_CONTROLLER)) {
+					logger.debug(Constants.LOGGER_INFO_PREFIX + " Normal Rateplan");
+					JSONArray jArray = new JSONArray();
+					if (payload.equals(Constants.PAYLOAD_RATEPLAN_ACTIONS)) {
+						jArray = jsonObject.getJSONArray(Constants.JSON_KEY_RATEPLAN);
+						Map<String, String> detailsMap = createMainBundleDetails(jArray, userlocale);
+						title = detailsMap.get(Constants.BUNDLE_NAME_KEY);
+						subtitle = detailsMap.get(Constants.DETAILS_KEY_SUBTITLE);
+						elemnetImageUrl += title + Constants.ELEMENT_PHOTO_EXTENSTION;
+						// display Emerald actions at operations template
+						String productName = jArray.getJSONObject(0).getString(Constants.JSON_KEY_PRODUCT_ID);
+						if (productName.contains(Constants.EMERALD_PRODUCT_FAMILY_NAME)) {
+							UserSelection userSelection = utilService.getUserSelectionsFromCache(customerProfile.getMsisdn());
+							userSelection.setEmeraldRateplanProductName(productName);
+							utilService.updateUserSelectionsInCache(customerProfile.getSenderID(), userSelection);
+							List<Button> emeraldActions = new ArrayList<>();
+							emeraldActions.add(buttonsList.get(0));
+							emeraldActions.add(buttonsList.get(1));
+							PostbackButton emeraldActionButton = PostbackButton.create(getEmeraldButtonLabel(userlocale), Constants.PAYLOAD_EMERALD_ACTIONS);
+							emeraldActions.add(emeraldActionButton);
+							buttonsList = new ArrayList<>(emeraldActions);
 						}
-						String perc = String.valueOf(percentageList.get(i));
-						if (perc.contains(Constants.IS_KEY_HAS_DOT)) {
-							perc = perc.substring(0, perc.indexOf('.'));
-						}
-						elemnetImageUrl = botTemplateElement.getImageUrl() + perc + ".png?version=1";
-						element = createElement(buttonsList, elemnetImageUrl, title, values.get(i));
-						elements.add(element);
+					} else if (payload.equals(Constants.PAYLOAD_MOBILE_INTERNET_CONTROLLER)) {
+						jArray = jsonObject.getJSONArray(Constants.JSON_KEY_MOBILE_INTERNET);
+						Map<String, String> detailsMap = createMainBundleDetails(jArray, userlocale);
+						title = detailsMap.get(Constants.BUNDLE_NAME_KEY);
+						subtitle = detailsMap.get(Constants.DETAILS_KEY_SUBTITLE);
+						elemnetImageUrl += title + Constants.ELEMENT_PHOTO_EXTENSTION;
 					}
+
+				} else if (payload.equalsIgnoreCase(Constants.PAYLOAD_RATEPLAN_WITHOUT_METER)) {
+					logger.debug(Constants.LOGGER_INFO_PREFIX + " Ahlan Rateplan");
+					UserSelection userSelection = utilService.getUserSelectionsFromCache(customerProfile.getSenderID());
+					title += userSelection.getBalanceValue();
+					logger.debug(Constants.LOGGER_INFO_PREFIX + " parent payload " + userSelection.getParentPayLoad());
+					element = Element.create(title, Optional.of(subtitle), Optional.of(Utils.createUrl(botTemplateElement.getImageUrl())), empty(), Optional.of(buttonsList));
 				}
-				}} else {
-				element = elemnetImageUrl != null && elemnetImageUrl.length() > 20  ? Element.create(title, Optional.of(subtitle), Optional.of(Utils.createUrl(elemnetImageUrl)), empty(), Optional.of(buttonsList))
-						: Element.create(title, Optional.of(botTemplateElement.getSubTitle().getEnglishText()), empty(), empty(), Optional.of(buttonsList));
-				elements.add(element);
+				if (subtitle != null && subtitle.contains("?") && botWebserviceMessage != null && payload != null && !payload.equals(Constants.PAYLOAD_MOBILE_INTERNET_CONTROLLER)) {
+					if (checkAkwaKart(jsonObject).get("hasAkwaKart") == "true" && payload.equalsIgnoreCase(Constants.PAYLOAD_RATEPLAN_ADDONS_CONSUMPTION)) {
+						element = akwaKartService.getAkwaKartConsumptionValue(new JSONObject(checkAkwaKart(jsonObject).get("consumption")), userlocale);
+						elements.add(element);
+					} else {
+						Long wsId = botWebserviceMessage.getWsMsgId();
+						BotTextResponseMapping botTextResponseMapping = chatBotService.findTextResponseMappingByWsId(wsId).get(0);
+						String[] keys = utilService.getKeysString(botTextResponseMapping, userlocale).split(Constants.COMMA_CHAR);
+						String[] paths = utilService.getPaths(botTextResponseMapping.getCommonPath());
+						Map<String, ArrayList<String>> mapValues = utilService.switchToObjectMode(jsonObject, paths, keys, subtitle, userlocale);
+						ArrayList<String> values = mapValues.get(Constants.RESPONSE_MAP_MESSAGE_KEY);
+						ArrayList<String> titles = mapValues.get(Constants.RESPONSE_MAP_TITLE_KEY);
+						ArrayList<String> percentageList = new ArrayList<>();
+						if (mapValues.containsKey(Constants.RESPONSE_PERCENTAGE_KEY)) {
+							percentageList = mapValues.get(Constants.RESPONSE_PERCENTAGE_KEY);
+						}
+						if (values == null || values.isEmpty()) {
+							String msg = Utils.informUserThatHeDoesnotSubscribeAtAnyMIBundle(userlocale);
+							createNoConsumptionTemplate(userlocale, elements, botTemplateElement, buttonsList, msg);
+						} else {
+							for (int i = 0; i < values.size(); i++) {
+								title = payload.equalsIgnoreCase(Constants.PAYLOAD_RATEPLAN_ADDONS_CONSUMPTION) ? consumptionNames.get(i) : titles.get(i);
+								if ((title.equalsIgnoreCase(Constants.MOBILE_INTERNET_CONSUMPTION_NAME_EN) || title.equalsIgnoreCase(Constants.MOBILE_INTERNET_CONSUMPTION_NAME_AR))
+										&& !payload.equalsIgnoreCase(Constants.PAYLOAD_RATEPLAN_DETAILS)) {
+									title = consumptionNames.size() > i ? consumptionNames.get(i) : title;
+								}
+								String perc = String.valueOf(percentageList.get(i));
+								if (perc.contains(Constants.IS_KEY_HAS_DOT)) {
+									perc = perc.substring(0, perc.indexOf('.'));
+								}
+								elemnetImageUrl = botTemplateElement.getImageUrl() + perc + Constants.ELEMENT_PHOTO_EXTENSTION;
+								element = createElement(buttonsList, elemnetImageUrl, title, values.get(i));
+								elements.add(element);
+							}
+						}
+					}
+				} else {
+					element = elemnetImageUrl != null && elemnetImageUrl.length() > 20
+							? Element.create(title, Optional.of(subtitle), Optional.of(Utils.createUrl(elemnetImageUrl)), empty(), Optional.of(buttonsList))
+							: Element.create(title, Optional.of(botTemplateElement.getSubTitle().getEnglishText()), empty(), empty(), Optional.of(buttonsList));
+					elements.add(element);
+				}
 			}
-		}
+		
 		if (botGTemplateMessage.isListTemplate() != null) {
 			return ListTemplate.create(elements);
 		} else {
@@ -148,27 +171,35 @@ public class GenericTemplateService {
 	}
 
 	/**
+	 * @param userlocale
+	 * @return
+	 */
+	private String getEmeraldButtonLabel(String userlocale) {
+		return userlocale.contains(Constants.LOCALE_AR) ? "خدمات اميرالد" : "Emerald Services";
+	}
+
+	/**
 	 * @param jsonObject
 	 * @return
 	 */
 	private Map<String, String> checkAkwaKart(JSONObject jsonObject) {
-		Map<String,String> values = new HashMap<>();
+		Map<String, String> values = new HashMap<>();
 		boolean hasAkwaKart = false;
 		JSONObject consumption = new JSONObject();
-			JSONArray ratePlanAddons = jsonObject.getJSONArray("ratePlanAddons");
-			for (int i = 0; i < ratePlanAddons.length(); i++) {
-				JSONObject addonConsumption  = ratePlanAddons.optJSONObject(0);
-				JSONArray consumptionDetails = addonConsumption.getJSONArray("consumptionDetailsList");
-				for(int o = 0 ; o<consumptionDetails.length() ; o++) {
-					 consumption = consumptionDetails.getJSONObject(o);
-					if(consumption.get("consumed").equals(null)) {
-						hasAkwaKart = true;
-						values.put("hasAkwaKart", String.valueOf(hasAkwaKart));
-						values.put("consumption", consumption.toString());
-					}
+		JSONArray ratePlanAddons = jsonObject.getJSONArray("ratePlanAddons");
+		for (int i = 0; i < ratePlanAddons.length(); i++) {
+			JSONObject addonConsumption = ratePlanAddons.optJSONObject(0);
+			JSONArray consumptionDetails = addonConsumption.getJSONArray("consumptionDetailsList");
+			for (int o = 0; o < consumptionDetails.length(); o++) {
+				consumption = consumptionDetails.getJSONObject(o);
+				if (consumption.get("consumed") == null) {
+					hasAkwaKart = true;
+					values.put("hasAkwaKart", String.valueOf(hasAkwaKart));
+					values.put("consumption", consumption.toString());
 				}
 			}
-		logger.debug(Constants.LOGGER_INFO_PREFIX+"AkwaKart Consumpton "+hasAkwaKart);
+		}
+		logger.debug(Constants.LOGGER_INFO_PREFIX + "AkwaKart Consumpton " + hasAkwaKart);
 		return values;
 	}
 
@@ -188,7 +219,7 @@ public class GenericTemplateService {
 	 * @param title
 	 * @param msg
 	 * @return
-	 */ 
+	 */
 	public Element createElement(List<Button> buttonsList, String elemnetImageUrl, String title, String msg) {
 		Element element;
 		if (elemnetImageUrl.length() > 1) {
@@ -245,8 +276,8 @@ public class GenericTemplateService {
 		} else {
 			details = finalDetailsWithoutRenewalDate(comercialName, userlocale);
 		}
-		detailsMap.put("bundleName", comercialName);
-		detailsMap.put("details", details);
+		detailsMap.put(Constants.BUNDLE_NAME_KEY, comercialName);
+		detailsMap.put(Constants.DETAILS_KEY_SUBTITLE, details);
 		return detailsMap;
 	}
 
@@ -272,7 +303,7 @@ public class GenericTemplateService {
 		ArrayList<String> categories = new ArrayList<>();
 		String[] categoriesArray = chatBotService.getEnabledCategoryConfigurationDaoById(1l).getEnglishCategories().split(Constants.COMMA_CHAR);
 		categories = new ArrayList<>(Arrays.asList(categoriesArray));
-		for (int i = 0 ; i < arrayResponse.length() ; i++) {
+		for (int i = 0; i < arrayResponse.length(); i++) {
 			try {
 				JSONObject object = arrayResponse.getJSONObject(i);
 				JSONObject categoryObject = object.getJSONObject(Constants.JSON_KEY_CATEGORY_KEY);
@@ -323,71 +354,78 @@ public class GenericTemplateService {
 		}
 
 	}
-	
-	public boolean hasRenewalDate(JSONObject bundleDetails){
+
+	public boolean hasRenewalDate(JSONObject bundleDetails) {
 		return bundleDetails.get(Constants.JSON_KEY_RENEWAL_DATE).equals(null) ? false : true;
 	}
-	
-	
-	
-	public void generictemplateWithJsonObject(String payload , String response , ArrayList<MessagePayload> messagePayloadList, CustomerProfile customerProfile, Messenger messenger,BotWebserviceMessage botWebserviceMessage) {
+
+	public void generictemplateWithJsonObject(String payload, String response, ArrayList<MessagePayload> messagePayloadList, CustomerProfile customerProfile, Messenger messenger,
+			BotWebserviceMessage botWebserviceMessage) {
 		// Object
-					String senderId = customerProfile.getSenderID();
-					String userLocale = customerProfile.getLocale();
-					Long messageId = botWebserviceMessage.getBotInteractionMessage().getMessageId();
-					UserSelection userSelections = utilService.getUserSelectionsFromCache(senderId);
-					JSONObject jsonResponse = new JSONObject(response);
-					if (payload.equalsIgnoreCase(Constants.PAYLOAD_ACCOUNT_DETAILS)) {
-						accountDetailsRouting(messenger, senderId, jsonResponse);
-					} else if(payload.equalsIgnoreCase(Constants.BALANCE_DEDUCTION_AKWAKART)){
-						logger.debug(Constants.LOGGER_INFO_PREFIX+"Balance Deduction get eligible products ");
-						Template gTemplate = akwaKartService.checkEligibilityAndReturnProducts(response,userLocale);
-						MessagePayload gPayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(gTemplate));
-						messagePayloadList.add(gPayload);
-					}else {
-						JSONArray ratePlan = jsonResponse.getJSONArray(Constants.JSON_KEY_RATEPLAN);
-						JSONArray connect = jsonResponse.getJSONArray(Constants.JSON_KEY_MOBILE_INTERNET);
-						JSONArray mobileInternetAddonConsumption = jsonResponse.getJSONArray(Constants.JSON_KEY_MOBILE_INTERNET_ADON);
-						//JSONArray ratePlanAddonConsumption = jsonResponse.getJSONArray(Constants.JSON_KEY_RATEPLAN_ADON);
-						logger.debug(Constants.LOGGER_MOBILE_INTERENET_CONSUMPTION + connect.toString());
-						logger.debug(Constants.LOGGER_RATEPLAN_CONSUMPTION + ratePlan.toString());
-						if (connect.length() > 0) {// productId For Renew
-							userSelections.setProductIdForRenew(connect.getJSONObject(0).getString(Constants.JSON_KEY_PRODUCT_ID));
-							utilService.updateUserSelectionsInCache(senderId, userSelections);
-						}
-						if (payload.equalsIgnoreCase(Constants.PAYLOAD_CONSUMPTION)) {
-							baseConsumptionHandling(messenger, senderId, ratePlan, connect);
-						} else if (payload.equalsIgnoreCase(Constants.PAYLOAD_RATEPLAN_DETAILS)) {
-							rateplanConsumptionDetails(payload, senderId, messagePayloadList, messageId, botWebserviceMessage, jsonResponse, ratePlan);
-						} else if (payload.equalsIgnoreCase(Constants.PAYLOAD_VIEW_CONNECT_DETAILS) && connect.length() == 0) {
-							payload = Constants.EMPTY_STRING;
-							userSelections.setParentPayLoad(Constants.EMPTY_STRING);
-							utilService.updateUserSelectionsInCache(senderId, userSelections);
-							interactionHandlingService.handlePayload(Constants.PAYLOAD_CHANGE_BUNDLE, messenger, senderId);
-						} else if (payload.equalsIgnoreCase(Constants.PAYLOAD_VIEW_CONNECT_DETAILS) || payload.equals(Constants.PAYLOAD_RATEPLAN_ADDONS_CONSUMPTION)
-								|| payload.equals(Constants.PAYLOAD_MOBILEINTERNET_ADDONS_CONSUMPTION)) {
-							userSelections.setSubscribed(true);
-							ArrayList<String> consumptionNames = new ArrayList<>();
-							if (payload.equalsIgnoreCase(Constants.PAYLOAD_RATEPLAN_ADDONS_CONSUMPTION)) {//Check here
-							//	setConsumptionNamesList(userLocale, ratePlanAddonConsumption, consumptionNames);
-							} else if (payload.equals(Constants.PAYLOAD_MOBILEINTERNET_ADDONS_CONSUMPTION)) {
-								setConsumptionNamesList(userLocale, mobileInternetAddonConsumption, consumptionNames);
-							}
-							Template template = createGenericTemplate(messageId, chatBotService, customerProfile, botWebserviceMessage, jsonResponse, consumptionNames, payload);
-							MessagePayload mPayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(template));
-							messagePayloadList.add(mPayload);
-						} else if (payload.equals(Constants.PAYLOAD_RATEPLAN_ACTIONS) || payload.equals(Constants.PAYLOAD_MOBILE_INTERNET_CONTROLLER)) {
-							if (payload.equals(Constants.PAYLOAD_MOBILE_INTERNET_CONTROLLER) && jsonResponse.getJSONArray(Constants.JSON_KEY_MOBILE_INTERNET).length() == 0) {
-								interactionHandlingService.handlePayload(Constants.PAYLOAD_NO_MI_BUNDLE_FOUND, messenger, senderId);
-							}
-							Template template = createGenericTemplate(messageId, chatBotService, customerProfile, botWebserviceMessage, jsonResponse, null, payload);
-							MessagePayload mPayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(template));
-							messagePayloadList.add(mPayload);
-						}
-					}
-				
+		String senderId = customerProfile.getSenderID();
+		String userLocale = customerProfile.getLocale();
+		Long messageId = botWebserviceMessage.getBotInteractionMessage().getMessageId();
+		UserSelection userSelections = utilService.getUserSelectionsFromCache(senderId);
+		JSONObject jsonResponse = new JSONObject(response);
+		if (payload.equalsIgnoreCase(Constants.PAYLOAD_ACCOUNT_DETAILS)) {
+			accountDetailsRouting(messenger, senderId, jsonResponse);
+		} else if (payload.equalsIgnoreCase(Constants.EMERALD_TRANSFER_AND_DISTRIBUTE_PRODUCTS_PAYLOAD)) {
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Emerald Parent Trafic Cases for distribute " + response);
+			Template gTemplate = emeraldService.getAllEmeraldTraficCases(new JSONObject(response), customerProfile.getLocale());
+			MessagePayload  gPayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(gTemplate));
+			messagePayloadList.add(gPayload);
+		}else if(payload.equalsIgnoreCase(Constants.EMERALD_CHILD_TRAFICCASES_FOR_TRANSFER_PAYLOAD)) {
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Emerald child Trafic cases for transfer " + response);
+			Template gTemplate = emeraldService.getAllEmeraldTraficCasesByChildDial(new JSONObject(response), customerProfile,userSelections);
+			MessagePayload  gPayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(gTemplate));
+			messagePayloadList.add(gPayload);
+		} else if (payload.equalsIgnoreCase(Constants.BALANCE_DEDUCTION_AKWAKART)) {
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Balance Deduction get eligible products ");
+			Template gTemplate = akwaKartService.checkEligibilityAndReturnProducts(response, userLocale);
+			MessagePayload gPayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(gTemplate));
+			messagePayloadList.add(gPayload);
+		} else {
+			JSONArray ratePlan = jsonResponse.getJSONArray(Constants.JSON_KEY_RATEPLAN);
+			JSONArray connect = jsonResponse.getJSONArray(Constants.JSON_KEY_MOBILE_INTERNET);
+			JSONArray mobileInternetAddonConsumption = jsonResponse.getJSONArray(Constants.JSON_KEY_MOBILE_INTERNET_ADON);
+			if (connect.length() > 0) {// productId For Renew
+				userSelections.setProductIdForRenew(connect.getJSONObject(0).getString(Constants.JSON_KEY_PRODUCT_ID));
+				utilService.updateUserSelectionsInCache(senderId, userSelections);
+			}
+			if (payload.equalsIgnoreCase(Constants.PAYLOAD_CONSUMPTION)) {
+				baseConsumptionHandling(messenger, senderId, ratePlan, connect);
+			} else if (payload.equalsIgnoreCase(Constants.PAYLOAD_RATEPLAN_DETAILS)) {
+				rateplanConsumptionDetails(payload, senderId, messagePayloadList, messageId, botWebserviceMessage, jsonResponse, ratePlan);
+			} else if (payload.equalsIgnoreCase(Constants.PAYLOAD_VIEW_CONNECT_DETAILS) && connect.length() == 0) {
+				payload = Constants.EMPTY_STRING;
+				userSelections.setParentPayLoad(Constants.EMPTY_STRING);
+				utilService.updateUserSelectionsInCache(senderId, userSelections);
+				interactionHandlingService.handlePayload(Constants.PAYLOAD_CHANGE_BUNDLE, messenger, senderId);
+			} else if (payload.equalsIgnoreCase(Constants.PAYLOAD_VIEW_CONNECT_DETAILS) || payload.equals(Constants.PAYLOAD_RATEPLAN_ADDONS_CONSUMPTION)
+					|| payload.equals(Constants.PAYLOAD_MOBILEINTERNET_ADDONS_CONSUMPTION)) {
+				userSelections.setSubscribed(true);
+				ArrayList<String> consumptionNames = new ArrayList<>();
+				if (payload.equalsIgnoreCase(Constants.PAYLOAD_RATEPLAN_ADDONS_CONSUMPTION)) {// Check here
+					// setConsumptionNamesList(userLocale, ratePlanAddonConsumption,
+					// consumptionNames);
+				} else if (payload.equals(Constants.PAYLOAD_MOBILEINTERNET_ADDONS_CONSUMPTION)) {
+					setConsumptionNamesList(userLocale, mobileInternetAddonConsumption, consumptionNames);
+				}
+				Template template = createGenericTemplate(messageId, chatBotService, customerProfile, botWebserviceMessage, jsonResponse, consumptionNames, payload);
+				MessagePayload mPayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(template));
+				messagePayloadList.add(mPayload);
+			} else if (payload.equals(Constants.PAYLOAD_RATEPLAN_ACTIONS) || payload.equals(Constants.PAYLOAD_MOBILE_INTERNET_CONTROLLER)) {
+				if (payload.equals(Constants.PAYLOAD_MOBILE_INTERNET_CONTROLLER) && jsonResponse.getJSONArray(Constants.JSON_KEY_MOBILE_INTERNET).length() == 0) {
+					interactionHandlingService.handlePayload(Constants.PAYLOAD_NO_MI_BUNDLE_FOUND, messenger, senderId);
+				}
+				Template template = createGenericTemplate(messageId, chatBotService, customerProfile, botWebserviceMessage, jsonResponse, null, payload);
+				MessagePayload mPayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(template));
+				messagePayloadList.add(mPayload);
+			}
+		}
+
 	}
-	
+
 	/**
 	 * @param messenger
 	 * @param senderId
@@ -405,7 +443,7 @@ public class GenericTemplateService {
 			interactionHandlingService.handlePayload(Constants.PAYLOAD_VIEW_MOBILEINTERNET_SUBSCRIPTION, messenger, senderId);
 		}
 	}
-	
+
 	/**
 	 * @param messenger
 	 * @param senderId
@@ -424,7 +462,7 @@ public class GenericTemplateService {
 			interactionHandlingService.handlePayload(Constants.PAYLOAD_POSTPAID_DIAL, messenger, senderId);
 		}
 	}
-	
+
 	/**
 	 * @param payload
 	 * @param senderId
@@ -451,9 +489,6 @@ public class GenericTemplateService {
 					hasNoConsumption = true;
 				}
 			}
-			// messagePayloadList.add(MessagePayload.create(senderId,
-			// MessagingType.RESPONSE, TextMessage.create(createMainBundleDetails(ratePlan,
-			// userLocale))));
 			if (!hasNoConsumption) {
 				ArrayList<String> cNames = new ArrayList<>();
 				JSONArray consumptionDetailsList = ratePlan.getJSONObject(0).getJSONArray(Constants.JSON_KEY_CONSUMPTION_DETAILS_LIST);
@@ -466,7 +501,7 @@ public class GenericTemplateService {
 			}
 		}
 	}
-	
+
 	/**
 	 * @param userLocale
 	 * @param connect
@@ -478,52 +513,47 @@ public class GenericTemplateService {
 			JSONArray consumptionDetailsList = consumption.getJSONObject(i).getJSONArray(Constants.JSON_KEY_CONSUMPTION_DETAILS_LIST); // Amin
 			String baseConsumptionName = getAddonCommercialName(userLocale, consumption, i);
 			for (int c = 0; c < consumptionDetailsList.length(); c++) {
-				if(consumptionDetailsList.getJSONObject(c).get(Constants.JSON_KEY_CONSUMPTION_NAME) != null ) {
-				String consumptionName = jsonUtilService.getConsumptionNameValue(consumptionDetailsList.getJSONObject(c).getJSONObject(Constants.JSON_KEY_CONSUMPTION_NAME), userLocale);
-				consumptionNames.add(baseConsumptionName + consumptionName);
+				if (consumptionDetailsList.getJSONObject(c).get(Constants.JSON_KEY_CONSUMPTION_NAME) != null) {
+					String consumptionName = jsonUtilService.getConsumptionNameValue(consumptionDetailsList.getJSONObject(c).getJSONObject(Constants.JSON_KEY_CONSUMPTION_NAME), userLocale);
+					consumptionNames.add(baseConsumptionName + consumptionName);
 				}
 			}
 		}
 	}
-	
-	
+
 	/**
 	 * @param userLocale
 	 */
 	public String getAddonCommercialName(String userLocale, JSONArray consumption, int i) {
 		return jsonUtilService.getArabicOrEnglishValue(consumption.getJSONObject(i).getJSONObject(Constants.JSON_KEY_COMMERCIAL_NAME), userLocale) + " - ";
 	}
-	
-	
-	
-	public void genericTemplateWithJsonِArray(String payload ,String response , ArrayList<MessagePayload> messagePayloadList , CustomerProfile customerProfile)	{
-	
+
+	public void genericTemplateWithJsonِArray(String payload, String response, ArrayList<MessagePayload> messagePayloadList, CustomerProfile customerProfile) {
+
 		// Array
 		String senderId = customerProfile.getSenderID();
 		String userLocale = customerProfile.getLocale();
 		String phoneNumber = customerProfile.getMsisdn();
-		UserSelection userSelections  = utilService.getUserSelectionsFromCache(senderId);
-					if (payload.equalsIgnoreCase(Constants.PALOAD_SALLEFNY)) {
-						JSONArray products = new JSONArray(response);
-						GenericTemplate gTemplate = sallefnyService.sallefnyHandling(products, userLocale);
-						MessagePayload messagePayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(gTemplate));
-						messagePayloadList.add(messagePayload);
-					} else if (payload.contains(Constants.PAYLOAD_MIGRATE)) {
-						Template gTemplate = migrationService.migrationHandling(payload, phoneNumber, userLocale, new JSONArray(response));
-						MessagePayload gPayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(gTemplate));
-						messagePayloadList.add(gPayload);
-					} else if(payload.equalsIgnoreCase(Constants.BALANCE_DEDUCTION_AKWAKART)){
-						Template gTemplate = akwaKartService.checkEligibilityAndReturnProducts(response,userLocale);
-						MessagePayload gPayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(gTemplate));
-						messagePayloadList.add(gPayload);
-					}else {
-						customerEligibilityHandling(payload, senderId, userLocale, messagePayloadList, phoneNumber, userSelections, response);
-					}
-				
+		UserSelection userSelections = utilService.getUserSelectionsFromCache(senderId);
+		if (payload.equalsIgnoreCase(Constants.PALOAD_SALLEFNY)) {
+			JSONArray products = new JSONArray(response);
+			GenericTemplate gTemplate = sallefnyService.sallefnyHandling(products, userLocale);
+			MessagePayload messagePayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(gTemplate));
+			messagePayloadList.add(messagePayload);
+		} else if (payload.contains(Constants.PAYLOAD_MIGRATE)) {
+			Template gTemplate = migrationService.migrationHandling(payload, phoneNumber, userLocale, new JSONArray(response));
+			MessagePayload gPayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(gTemplate));
+			messagePayloadList.add(gPayload);
+		} else if (payload.equalsIgnoreCase(Constants.BALANCE_DEDUCTION_AKWAKART)) {
+			Template gTemplate = akwaKartService.checkEligibilityAndReturnProducts(response, userLocale);
+			MessagePayload gPayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(gTemplate));
+			messagePayloadList.add(gPayload);
+		} else {
+			customerEligibilityHandling(payload, senderId, userLocale, messagePayloadList, phoneNumber, userSelections, response);
+		}
+
 	}
-	
-	
-	
+
 	/**
 	 * @param payload
 	 * @param senderId
@@ -567,6 +597,5 @@ public class GenericTemplateService {
 			}
 		}
 	}
-
 
 }

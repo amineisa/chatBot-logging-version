@@ -81,7 +81,9 @@ public class PostPaidService {
 		String baseUrl = payBillbaseUrlRaw.getValue();
 		String paramChanel;
 		try {
-			paramChanel = utilService.encryptChannelParam(Constants.URL_PARAM_MSISDN_KEY + phoneNumber + Constants.URL_TIME_CHANNEL_KEY + Constants.CHANEL_PARAM);
+			//long currentTimeInSeconds = System.currentTimeMillis()/1000;
+			paramChanel = utilService.paramAndParamChannelEncryption(phoneNumber);
+			//utilService.encryptDPIParam(Constants.URL_PARAM_MSISDN_KEY + phoneNumber + Constants.URL_TIME_KEY +currentTimeInSeconds+Constants.URL_CHANNEL_KEY+ Constants.CHANEL_PARAM);
 			String webServiceUrl = baseUrl + paramChanel + "&operationParam=" + billingParam + "&lang=" + userLocale;
 			URI uri = new URI(webServiceUrl);
 			Map<String, String> values = utilService.callGetWebServiceByRestTemplate(uri);
@@ -103,6 +105,8 @@ public class PostPaidService {
 			messageTypeId = 0L;
 		} catch (URISyntaxException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException | UnsupportedEncodingException e1) {
 			e1.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 
 	}

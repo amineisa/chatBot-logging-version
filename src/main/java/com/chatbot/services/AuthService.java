@@ -5,32 +5,24 @@
  */
 package com.chatbot.services;
 
-import java.util.ArrayList;
-
-import org.json.JSONObject;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import com.chatbot.entity.CustomerProfile;
-import com.chatbot.entity.UserSelection;
-import com.chatbot.util.Constants;
 
 /**
  * @author A.Eissa 
  */
 @Service
-public class AuthService {
+public class AuthService {/*
 	
 	@Autowired
 	private UtilService utilService;
 
-	/**
+	*//**
 	 * @param userSelections
 	 * @param customerProfile
 	 * @param paramNames
 	 * @param paramValuesList
 	 * @return
-	 */
+	 *//*
 	public JSONObject checkDialValidity(UserSelection userSelections, CustomerProfile customerProfile, ArrayList<String> paramNames, ArrayList<String> paramValuesList) {
 		if(userSelections.getUserDialForAuth() !=null) {
 			String locale = customerProfile.getLocale();
@@ -47,12 +39,12 @@ public class AuthService {
 		
 	}
 
-	/**
+	*//**
 	 * @param userSelections
 	 * @param customerProfile
 	 * @param paramNames
 	 * @param paramValuesList
-	 */
+	 *//*
 	public JSONObject checkVerificationCode(UserSelection userSelections, ArrayList<String> paramNames, ArrayList<String> paramValuesList) {
 		if(userSelections.getActivationCode() != null && userSelections.getUserDialForAuth() !=null ) {
 			String code = userSelections.getActivationCode();
@@ -67,6 +59,6 @@ public class AuthService {
 	}
 	
 
-}
+*/}
 	
 

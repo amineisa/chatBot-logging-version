@@ -9,6 +9,8 @@ import javax.persistence.Id;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 
+import com.chatbot.util.Constants;
+
 @Entity
 @Table(name = "CUSTOMER_PROFILE")
 @NamedQuery(name = "CustomerProfile.findAll", query = "SELECT c FROM CustomerProfile c")
@@ -54,6 +56,9 @@ public class CustomerProfile implements Serializable{
 	}
 
 	public String getLocale() {
+		if(this.locale == null) {
+			locale = Constants.LOCALE_AR;
+		}
 		return locale;
 	}
 

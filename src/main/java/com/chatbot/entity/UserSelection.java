@@ -1,10 +1,8 @@
 package com.chatbot.entity;
 
 import java.io.Serializable;
+import java.time.Instant;
 
-import lombok.ToString;
-
-@ToString
 public class UserSelection implements Serializable{
 
 	private static final long serialVersionUID = 1L;
@@ -20,16 +18,25 @@ public class UserSelection implements Serializable{
 	private String freeText;
 	private String rateplanNameForMigration;
 	private String productNameForSallefny;	
-	private String userDialForAuth;	
+	private String emeraldChildDial;
+	private String emeraldChildDialToRemove;
+	private String emeraldRateplanProductName;
+	private String emeraldDialForDistribute;
+	private String emeraldTraficCaseID;
+	private String emeraldDistributeAmount;
+	private String emeraldTransferFromDial;
+	private String emeraldTransferToDial;
+	private String emeraldDistbuteAfterTrans; 	
 	private String activationCode;	
 	private String scratcheddNumberForRecharge;
 	private String akwaKartCategoryName;
+	private Instant eventRecevingTimeStamp;
 	private int rateplanIdForMigration;
 	private boolean isSubscribed;
 	private String akwakartProductName;
 	private int accountDeductionHistory; 
 	private String balanceValue;
-	private String ratePlanNameForEmarledActions;
+	
 	
 	public String getSenderId() {
 		return senderId;
@@ -138,12 +145,15 @@ public class UserSelection implements Serializable{
 		this.productNameForSallefny = productNameForSallefny;
 	}
 
-	public String getUserDialForAuth() {
-		return userDialForAuth;
+	
+
+
+	public String getEmeraldChildDial() {
+		return emeraldChildDial;
 	}
 
-	public void setUserDialForAuth(String userDialForAuth) {
-		this.userDialForAuth = userDialForAuth;
+	public void setEmeraldChildDial(String emeraldChildDial) {
+		this.emeraldChildDial = emeraldChildDial;
 	}
 
 	public String getActivationCode() {
@@ -194,17 +204,94 @@ public class UserSelection implements Serializable{
 		this.balanceValue = balanceValue;
 	}
 
-	public String getRatePlanNameForEmarledActions() {
-		return ratePlanNameForEmarledActions;
+	public String getEmeraldRateplanProductName() {
+		return emeraldRateplanProductName;
 	}
 
-	public void setRatePlanNameForEmarledActions(String ratePlanNameForEmarledActions) {
-		this.ratePlanNameForEmarledActions = ratePlanNameForEmarledActions;
+	public void setEmeraldRateplanProductName(String emeraldRateplanProductName) {
+		this.emeraldRateplanProductName = emeraldRateplanProductName;
+	}
+
+	public String getEmeraldChildDialToRemove() {
+		return emeraldChildDialToRemove;
+	}
+
+	public void setEmeraldChildDialToRemove(String emeraldChildDialToRemove) {
+		this.emeraldChildDialToRemove = emeraldChildDialToRemove;
+	}
+
+	public String getEmeraldDialForDistribute() {
+		return emeraldDialForDistribute;
+	}
+
+	public void setEmeraldDialForDistribute(String emeraldDialForDistribute) {
+		this.emeraldDialForDistribute = emeraldDialForDistribute;
 	}
 
 	
-	
-	
+
+	public String getEmeraldDistributeAmount() {
+		return emeraldDistributeAmount;
+	}
+
+	public void setEmeraldDistributeAmount(String emeraldDistributeAmount) {
+		this.emeraldDistributeAmount = emeraldDistributeAmount;
+	}
+
+	public String getEmeraldTransferFromDial() {
+		return emeraldTransferFromDial;
+	}
+
+	public void setEmeraldTransferFromDial(String emeraldTransferFromDial) {
+		this.emeraldTransferFromDial = emeraldTransferFromDial;
+	}
+
+	public String getEmeraldTraficCaseID() {
+		return emeraldTraficCaseID;
+	}
+
+	public void setEmeraldTraficCaseID(String emeraldTraficCaseID) {
+		this.emeraldTraficCaseID = emeraldTraficCaseID;
+	}
+
+	public String getEmeraldTransferToDial() {
+		return emeraldTransferToDial;
+	}
+
+	public void setEmeraldTransferToDial(String emeraldTransferToDial) {
+		this.emeraldTransferToDial = emeraldTransferToDial;
+	}
+
+	public String getEmeraldDistbuteAfterTrans() {
+		return emeraldDistbuteAfterTrans;
+	}
+
+	public void setEmeraldDistbuteAfterTrans(String emeraldDistbuteAfterTrans) {
+		this.emeraldDistbuteAfterTrans = emeraldDistbuteAfterTrans;
+	}
 	
 
+	public Instant getEventRecevingTimeStamp() {
+		return eventRecevingTimeStamp;
+	}
+
+	public void setEventRecevingTimeStamp(Instant eventRecevingTimeStamp) {
+		this.eventRecevingTimeStamp = eventRecevingTimeStamp;
+	}
+
+	@Override
+	public String toString() {
+		return "UserSelection [senderId=" + senderId + ", originalPayLoad=" + originalPayLoad + ", phoneNumber=" + phoneNumber + ", productIdAndOperationName=" + productIdAndOperationName
+				+ ", addonId=" + addonId + ", parentPayLoad=" + parentPayLoad + ", productIdForRenew=" + productIdForRenew + ", parametersListForRelatedProducts=" + parametersListForRelatedProducts
+				+ ", freeText=" + freeText + ", rateplanNameForMigration=" + rateplanNameForMigration + ", productNameForSallefny=" + productNameForSallefny + ", emeraldChildDial=" + emeraldChildDial
+				+ ", emeraldChildDialToRemove=" + emeraldChildDialToRemove + ", emeraldRateplanProductName=" + emeraldRateplanProductName + ", emeraldDialForDistribute=" + emeraldDialForDistribute
+				+ ", emeraldTraficCaseID=" + emeraldTraficCaseID + ", emeraldDistributeAmount=" + emeraldDistributeAmount + ", emeraldTransferFromDial=" + emeraldTransferFromDial
+				+ ", emeraldTransferToDial=" + emeraldTransferToDial + ", emeraldDistbuteAfterTrans=" + emeraldDistbuteAfterTrans + ", activationCode=" + activationCode
+				+ ", scratcheddNumberForRecharge=" + scratcheddNumberForRecharge + ", akwaKartCategoryName=" + akwaKartCategoryName + ", rateplanIdForMigration=" + rateplanIdForMigration
+				+ ", isSubscribed=" + isSubscribed + ", akwakartProductName=" + akwakartProductName + ", accountDeductionHistory=" + accountDeductionHistory + ", balanceValue=" + balanceValue + "]";
+	}
+	
+	
+	
+	
 }

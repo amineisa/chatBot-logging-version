@@ -114,14 +114,20 @@ public class RasaIntegrationService {
 				logger.debug(Constants.LOGGER_INFO_PREFIX +"Rasa runtime payloads handling ");
 				handleRunTimeRasaOptions(messenger, senderId, customerProfile, object);
 			} else if(object.keySet().contains(Constants.RASA_RESPONSE_DIAL_KEY)) {
-				if(customerProfile.getMsisdn() == null) {
 				String dial = object.getString(Constants.RASA_RESPONSE_DIAL_KEY);
+				if(dial.matches("[0-9]+") && dial.startsWith("01") && dial.length()==11) {
+					userSelections.setEmeraldChildDial(dial);
+					utilService.updateUserSelectionsInCache(senderId, userSelections);
+					interactionHandlingService.handlePayload(Constants.EMERALD_ADD_CHILD_MEMBER_PAYLOAD, messenger, senderId);
+				}else {
+					interactionHandlingService.handlePayload(Constants.PAYLOAD_ALREADY_LOGGED_IN, messenger, senderId);
+				}/*
 				userSelections.setUserDialForAuth(dial);
 				utilService.updateUserSelectionsInCache(senderId, userSelections);
 				interactionHandlingService.handlePayload(Constants.PAYLOAD_DIAL_VALIDITY, messenger, senderId);
 				}else {	
 				interactionHandlingService.handlePayload(Constants.PAYLOAD_ALREADY_LOGGED_IN, messenger, senderId);
-				}
+				}*/
 			}else if(object.keySet().contains(Constants.RASA_RESPONSE_VERIFICATION_KEY)) {
 				String activationCode = object.getString(Constants.RASA_RESPONSE_VERIFICATION_KEY);
 				logger.debug(Constants.LOGGER_INFO_PREFIX+"Rasa Auth Verification Code "+activationCode);

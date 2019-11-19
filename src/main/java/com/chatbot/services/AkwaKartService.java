@@ -52,7 +52,6 @@ public class AkwaKartService {
 		JSONObject jsonRes = new JSONObject(response);
 		
 		JSONArray products = jsonRes.getJSONArray("akwaKartAllProducts"); 
-				//new JSONArray(response);
 		if(products.length() >0) {
 			List<Element> elements = new ArrayList<>();
 			for (int i = 0; i < products.length(); i++) {
@@ -137,7 +136,7 @@ public class AkwaKartService {
 		JSONObject body = new JSONObject();
 		logger.debug(Constants.LOGGER_INFO_PREFIX+"Deduct from balance request body size "+paramNames.size());
 		for(int i = 0 ; i < paramNames.size() ;i++) {
-			logger.debug(Constants.LOGGER_INFO_PREFIX+Constants.LOGGER_INFO_PREFIX+" Deduct from balance  param key "+paramNames.get(i) +" Deduct from balance param value "+paramValuesList.get(i));
+			logger.debug(Constants.LOGGER_INFO_PREFIX +" Deduct from balance  param key "+paramNames.get(i) +" Deduct from balance param value "+paramValuesList.get(i));
 			body.put(paramNames.get(i), paramValuesList.get(i));
 		}
 		return body;

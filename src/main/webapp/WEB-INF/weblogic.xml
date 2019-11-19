@@ -10,7 +10,6 @@
 			<wls:package-name>org.slf4j</wls:package-name>
 		</wls:prefer-application-packages>
 	</wls:container-descriptor>
-
 	<charset-params>
 		<input-charset>
 			<resource-path>/*</resource-path>
