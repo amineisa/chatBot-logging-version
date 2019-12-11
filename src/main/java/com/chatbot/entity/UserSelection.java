@@ -25,8 +25,8 @@ public class UserSelection implements Serializable{
 	private String emeraldTraficCaseID;
 	private String emeraldDistributeAmount;
 	private String emeraldTransferFromDial;
-	private String emeraldTransferToDial;
-	private String emeraldDistbuteAfterTrans; 	
+	private String emeraldTransferToDial; 
+	private String emeraldDistbuteAfterTrans;
 	private String activationCode;	
 	private String scratcheddNumberForRecharge;
 	private String akwaKartCategoryName;
@@ -36,7 +36,9 @@ public class UserSelection implements Serializable{
 	private String akwakartProductName;
 	private int accountDeductionHistory; 
 	private String balanceValue;
-	
+	private String lastPayload; 
+	private boolean postPaid;
+	private String currentOperation;
 	
 	public String getSenderId() {
 		return senderId;
@@ -277,6 +279,34 @@ public class UserSelection implements Serializable{
 
 	public void setEventRecevingTimeStamp(Instant eventRecevingTimeStamp) {
 		this.eventRecevingTimeStamp = eventRecevingTimeStamp;
+	}
+	
+	
+
+	public String getLastPayload() {
+		return lastPayload;
+	}
+
+	public void setLastPayload(String lastPayload) {
+		this.lastPayload = lastPayload;
+	}
+	
+
+	public boolean isPostPaid() {
+		return postPaid;
+	}
+
+	public void setPostPaid(boolean postPaid) {
+		this.postPaid = postPaid;
+	}
+	
+
+	public String getCurrentOperation() {
+		return currentOperation;
+	}
+
+	public void setCurrentOperation(String currentOperation) {
+		this.currentOperation = currentOperation;
 	}
 
 	@Override

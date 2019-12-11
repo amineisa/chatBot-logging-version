@@ -1,6 +1,7 @@
 package com.chatbot.services;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,7 +30,7 @@ public class JSONUtilsService {
 		ArrayList<String> textMsgs = new ArrayList<>();
 		values =  getValuesFromJson(jsonObject, keys);
 		logger.debug(Constants.LOGGER_INFO_PREFIX+"In Text message "+values);
-		String finalMsg = replaceValuesByMapping(values, msg, locale);
+		String finalMsg = replaceValuesByMapping(values, msg);
 		textMsgs.add(finalMsg);
 		titleList.add(values.get(0));
 		textMsgs.add(finalMsg);
@@ -59,7 +60,7 @@ public class JSONUtilsService {
 				logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
 				e.printStackTrace();
 			}
-			String finalMsg = replaceValuesByMapping(values, msg, locale);
+			String finalMsg = replaceValuesByMapping(values, msg);
 			textMsgs.add(finalMsg);
 			titleList.add(values.get(0));
 		}
@@ -94,7 +95,7 @@ public class JSONUtilsService {
 					e.printStackTrace();
 				}
 				values = getValuesFromJson(firstLevelObject, keys);
-				String finalMsg = replaceValuesByMapping(values, msg, locale);
+				String finalMsg = replaceValuesByMapping(values, msg);
 				titleList.add(values.get(0));
 				textMsgs.add(finalMsg);
 				mapValues.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
@@ -109,7 +110,7 @@ public class JSONUtilsService {
 				e.printStackTrace();
 			}
 			values = getValuesFromJson(firstLevelObject, keys);
-			String finalMsg = replaceValuesByMapping(values, msg, locale);
+			String finalMsg = replaceValuesByMapping(values, msg);
 			titleList.add(values.get(0));
 			textMsgs.add(finalMsg);
 			mapValues.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
@@ -133,7 +134,7 @@ public class JSONUtilsService {
 					for (int j = 0; j < childArray.length(); j++) {
 						JSONObject subChild = childArray.getJSONObject(0);
 						values = getValuesFromJson(subChild, keys);
-						String finalMsg = replaceValuesByMapping(values, msg, locale);
+						String finalMsg = replaceValuesByMapping(values, msg);
 						titleList.add(values.get(0));
 						mapValuse.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
 						textMsgs.add(finalMsg);
@@ -147,7 +148,7 @@ public class JSONUtilsService {
 					JSONObject child = childObject.getJSONObject(paths[0]);
 					values = getValuesFromJson(child, keys);
 					titleList.add(values.get(0));
-					String finalMsg = replaceValuesByMapping(values, msg, locale);
+					String finalMsg = replaceValuesByMapping(values, msg);
 					textMsgs.add(finalMsg);
 					mapValuse.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
 					textMsgs.add(finalMsg);
@@ -214,7 +215,7 @@ public class JSONUtilsService {
 								}
 								logger.debug(Constants.LOGGER_INFO_PREFIX+"Meter Percentage : "+percentage);
 								percentageList.add(String.valueOf(percentage));
-								String finalMsg = replaceValuesByMapping(values, msg, locale);
+								String finalMsg = replaceValuesByMapping(values, msg);
 								textMsgs.add(finalMsg);
 							}catch(Exception e){
 								e.printStackTrace();
@@ -228,7 +229,7 @@ public class JSONUtilsService {
 						values = getValuesFromJson(firstParent, keys);
 						titleList.add(values.get(0));
 						mapValues.put(Constants.RESPONSE_MAP_TITLE_KEY, titleList);
-						String finalMsg = replaceValuesByMapping(values, msg, locale);
+						String finalMsg = replaceValuesByMapping(values, msg);
 						textMsgs.add(finalMsg);
 						mapValues.put(Constants.RESPONSE_MAP_MESSAGE_KEY, values);
 					}
@@ -246,7 +247,7 @@ public class JSONUtilsService {
 						JSONObject tempObject = array.getJSONObject(i);
 						values = getValuesFromJson(tempObject, keys);
 						titleList.add(values.get(0));
-						String finalMsg = replaceValuesByMapping(values, msg, locale);
+						String finalMsg = replaceValuesByMapping(values, msg);
 						textMsgs.add(finalMsg);
 						textMsgs.add(finalMsg);
 						textMsgs.add(finalMsg);
@@ -256,7 +257,7 @@ public class JSONUtilsService {
 				} else if (!paths[1].startsWith(Constants.IS_ARRAY_KEY_IN_JSON_RESPONSE)) {
 					JSONObject lastObject = firstLevelObject.getJSONObject(paths[1]);
 					values = getValuesFromJson(lastObject, keys);
-					String finalMsg = replaceValuesByMapping(values, msg, locale);
+					String finalMsg = replaceValuesByMapping(values, msg);
 					textMsgs.add(finalMsg);
 					titleList.add(values.get(0));
 					textMsgs.add(finalMsg);
@@ -291,13 +292,13 @@ public class JSONUtilsService {
 							for (int k = 0; k < subChildArray.length(); k++) {
 								JSONObject subChildObject = subChildArray.getJSONObject(k);
 								values = getValuesFromJson(subChildObject, keys);
-								String finalMsg = replaceValuesByMapping(values, msg, locale);
+								String finalMsg = replaceValuesByMapping(values, msg);
 								textMsgs.add(finalMsg);
 							}
 						} else if (!paths[1].startsWith(Constants.IS_ARRAY_KEY_IN_JSON_RESPONSE)) {
 							JSONObject childObject = subObject.getJSONObject(paths[1]);
 							values = getValuesFromJson(childObject, keys);
-							String finalMsg = replaceValuesByMapping(values, msg, locale);
+							String finalMsg = replaceValuesByMapping(values, msg);
 							textMsgs.add(finalMsg);
 							titleList.add(values.get(0));
 							textMsgs.add(finalMsg);
@@ -313,7 +314,7 @@ public class JSONUtilsService {
 						for (int j = 0; j < secondLevelArray.length(); j++) {
 							JSONObject subChildObject = secondLevelArray.getJSONObject(j);
 							values = getValuesFromJson(subChildObject, keys);
-							String finalMsg = replaceValuesByMapping(values, msg, locale);
+							String finalMsg = replaceValuesByMapping(values, msg);
 							textMsgs.add(finalMsg);
 							titleList.add(values.get(0));
 							textMsgs.add(finalMsg);
@@ -324,7 +325,7 @@ public class JSONUtilsService {
 					} else if (!paths[1].startsWith(Constants.IS_ARRAY_KEY_IN_JSON_RESPONSE)) {
 						JSONObject secondlevelObject = firstLevelObject.getJSONObject(paths[1]);
 						values = getValuesFromJson(secondlevelObject, keys);
-						String finalMsg = replaceValuesByMapping(values, msg, locale);
+						String finalMsg = replaceValuesByMapping(values, msg);
 						textMsgs.add(finalMsg);
 						titleList.add(values.get(0));
 						textMsgs.add(finalMsg);
@@ -356,9 +357,15 @@ public class JSONUtilsService {
 						JSONObject finalObject = jsonObject.getJSONObject(jsonKey);
 						value = finalObject.getString(valueKey);
 					} else {
-						value = jsonObject.getString(key);
+						if(key.contains("Date") ||key.contains("date") ) {
+							Date d = new Date(jsonObject.getLong(key));
+							value = d.toString();
+						}else {
+							value = jsonObject.getString(key);
+						}
 					} 
 				} catch (JSONException e) {
+					e.printStackTrace();
 					value = Constants.UNDERSCORE;
 				}
 				values.add(value);
@@ -368,7 +375,7 @@ public class JSONUtilsService {
 		
 		
 		// Tested works well replace ? in String by its new values
-		public String replaceValuesByMapping(ArrayList<String> values, String msg, String locale) {
+		public String replaceValuesByMapping(ArrayList<String> values, String msg) {
 			String finalMsg = Constants.EMPTY_STRING;
 			for (int i = 0; i < values.size(); i++) {
 				String flag = i+"?";

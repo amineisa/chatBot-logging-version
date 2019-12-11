@@ -1,10 +1,5 @@
 package com.chatbot.controller;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-
 import javax.servlet.http.HttpServletRequest;
 
 import org.json.JSONObject;
@@ -21,26 +16,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.annotation.SessionScope;
 
-import com.chatbot.entity.BotConfiguration;
 import com.chatbot.entity.BotInteraction;
 import com.chatbot.entity.CustomerProfile;
-import com.chatbot.entity.UserSelection;
 import com.chatbot.services.ChatBotService;
-import com.chatbot.services.InteractionHandlingService;
-import com.chatbot.services.RasaIntegrationService;
-import com.chatbot.services.UtilService;
+import com.chatbot.services.WebHookEventService;
 import com.chatbot.util.Constants;
 import com.chatbot.util.Utils;
-import com.github.messenger4j.Messenger;
 import com.github.messenger4j.exception.MessengerVerificationException;
-import com.github.messenger4j.webhook.event.AccountLinkingEvent;
-import com.github.messenger4j.webhook.event.AttachmentMessageEvent;
-import com.github.messenger4j.webhook.event.PostbackEvent;
-import com.github.messenger4j.webhook.event.QuickReplyMessageEvent;
-import com.github.messenger4j.webhook.event.ReferralEvent;
-import com.github.messenger4j.webhook.event.TextMessageEvent;
-import com.github.messenger4j.webhook.event.attachment.Attachment;
-import com.github.messenger4j.webhook.event.common.Referral;
 
 /**
  * @author Amin Eisa
@@ -52,48 +34,24 @@ public class ChatBotController {
 
 	@Autowired
 	private ChatBotService chatBotService;
-
 	@Autowired
-	private UtilService utilService;
-
-	@Autowired
-	private InteractionHandlingService interactionHandlingService;
-
-	@Autowired
-	private Map<String, Messenger> messengerObjectsMap;
-
-	@Autowired
-	private RasaIntegrationService rasaIntegration;
-
-	private Messenger messenger;
-
+	private WebHookEventService webHookEventService;
 	private static int counter = 0;
+	
 
 	private static final Logger logger = LoggerFactory.getLogger(ChatBotController.class);
 
-	@Autowired
-	public ChatBotController(final Map<String, Messenger> messengersObjectsMap) {
-		this.messengerObjectsMap = messengersObjectsMap;
-	}
 
 	@RequestMapping(method = RequestMethod.GET)
 	public ResponseEntity<String> verifyWebhook(HttpServletRequest req, @RequestParam("hub.mode") final String mode, @RequestParam("hub.verify_token") final String verifyToken,
 			@RequestParam("hub.challenge") final String challenge) {
-		logger.debug(Constants.LOGGER_INFO_PREFIX + "Received Webhook event verification request - mode: {} | verifyToken: {} | challenge: {}", mode, verifyToken, challenge);
-		try {
-			Entry<String, Messenger> entry = this.messengerObjectsMap.entrySet().iterator().next();
-			this.messenger = this.messengerObjectsMap.get(entry.getKey());
-			messenger.verifyWebhook(mode, verifyToken);
-			return ResponseEntity.status(HttpStatus.OK).body(challenge);
-		} catch (MessengerVerificationException e) {
-			logger.warn(Constants.LOGGER_INFO_PREFIX + "Webhook verification failed: {}", e.getMessage());
-			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
-		}
+		return webHookEventService.webHookVerification(mode, verifyToken, challenge);
 	}
+
+	
 
 	@RequestMapping(method = RequestMethod.POST)
 	public ResponseEntity<Void> handleCallback(@RequestBody final String payload, @RequestHeader("X-Hub-Signature") final String signature) {
-
 		logger.debug(Constants.LOGGER_INFO_PREFIX + "Received Messenger Platform callback - payload: {} | signature: {}", payload, signature);
 		if (payload.contains(Constants.FB_JSON_KEY_STANDBY)) {
 			return botStandbyHandling(payload);
@@ -109,115 +67,7 @@ public class ChatBotController {
 	 */
 	public ResponseEntity<Void> webhookEventesHandling(final String payload, final String signature) {
 		try {
-			
-			String pageId = new JSONObject(payload).getJSONArray("entry").getJSONObject(0).getString("id");
-			this.messenger = this.messengerObjectsMap.get(pageId);
-			messenger.onReceiveEvents(payload, Optional.of(signature), event -> {
-				final String senderId = event.senderId();
-				UserSelection userSelections = utilService.getUserSelectionsFromCache(senderId);
-				Utils.markAsSeen(messenger, senderId);
-				//Instant savedTimeStamp = userSelections.getEventRecevingTimeStamp();
-				//Instant timeStamp = event.timestamp();
-				//logger.debug(Constants.LOGGER_INFO_PREFIX + "Event Receving timestamp is " + timeStamp);
-				//logger.debug(Constants.LOGGER_INFO_PREFIX + "Event Saved Receving timestamp is " + savedTimeStamp);
-				//logger.debug(Constants.LOGGER_INFO_PREFIX + "Two TimeStamp are equal ? "+timeStamp.equals(savedTimeStamp));
-				if(event.isMessageDeliveredEvent()) {
-					return;
-				} else if (event.isPostbackEvent()) {
-						// interactionHandlingService.takeThreadControl(senderId, messenger);
-						//userSelections.setEventRecevingTimeStamp(timeStamp);
-						PostbackEvent postbackEvent = event.asPostbackEvent();
-						String pLoad = postbackEvent.payload().get();
-						if (pLoad.equalsIgnoreCase(Constants.PAYLOAD_TALK_TO_AGENT)) {
-							String phoneNumber = " _ ";
-							CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
-							chatBotService.findInteractionByPayload(pLoad);
-							if (customerProfile != null) {
-								phoneNumber = customerProfile.getMsisdn();
-							}
-							logger.debug(Constants.LOGGER_INFO_PREFIX + "Send thread control to second app ");
-							interactionHandlingService.callSecondryHandover(senderId, phoneNumber, messenger);
-						} else {
-							if (pLoad.equalsIgnoreCase(Constants.PAYLOAD_WELCOME_AGAIN)) {
-								logger.debug(Constants.LOGGER_INFO_PREFIX + "Take Thread Control");
-								try {
-									interactionHandlingService.takeThreadControl(senderId, messenger);
-								} catch (Exception e) {
-									e.printStackTrace();
-								}
-							}
-							interactionHandlingService.handlePayload(postbackEvent.payload().get(), messenger, senderId);
-						}
-					} else if (event.isAccountLinkingEvent()) {
-						AccountLinkingEvent accountLinkingEvent = event.asAccountLinkingEvent();
-						logger.debug(Constants.LOGGER_INFO_PREFIX + "ACCOUNT LINKING EVENT");
-						CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
-						if ((accountLinkingEvent.status().equals(AccountLinkingEvent.Status.LINKED))) {
-							String msisdn = accountLinkingEvent.authorizationCode().get();
-							logger.debug(Constants.LOGGER_INFO_PREFIX + "Linked  msisdn " + msisdn);
-							utilService.setLinkingInfoForCustomer(senderId, accountLinkingEvent.authorizationCode().get());
-							// Utils.setLinkedDial(customerProfile , chatBotService);
-							String orginalPayload = userSelections.getOriginalPayLoad() == null ? Constants.PAYLOAD_GET_STARTED : userSelections.getOriginalPayLoad();
-							interactionHandlingService.handlePayload(orginalPayload, messenger, senderId);
-						} else if (accountLinkingEvent.status().equals(AccountLinkingEvent.Status.UNLINKED)) {
-							String msisdn = chatBotService.getCustomerProfileBySenderId(senderId).getMsisdn();
-							logger.debug(Constants.LOGGER_INFO_PREFIX + "UNLINKING MSISDN " + msisdn);
-							customerProfile.setMsisdn("");
-							chatBotService.saveCustomerProfile(customerProfile);
-							interactionHandlingService.handlePayload(Constants.PAYLOAD_LOGIN_INTERACTION, messenger, senderId);
-						}
-					} else if (event.isTextMessageEvent()) {
-						final TextMessageEvent textMessageEvent = event.asTextMessageEvent();
-						String text = textMessageEvent.text();
-						logger.debug(Constants.LOGGER_INFO_PREFIX + "User Selections [] " + userSelections.toString());
-						if (textIsNumberEmeraldDistributeAndTransfer(text) && userSelections.getEmeraldTransferToDial() == null) {
-							userSelections.setEmeraldDistributeAmount(text);
-							utilService.updateUserSelectionsInCache(senderId, userSelections);
-							interactionHandlingService.handlePayload(Constants.EMERALD_DISTRIBUTE_SUBMIT_ORDER_PAYLOAD, messenger, senderId);
-						} else if (textIsNumberEmeraldDistributeAndTransfer(text) && userSelections.getEmeraldTransferToDial() != null) {
-							userSelections.setEmeraldDistributeAmount(text);
-							utilService.updateUserSelectionsInCache(senderId, userSelections);
-							interactionHandlingService.handlePayload(Constants.EMERALD_TRANSFER_SUBMIT_ORDER_PAYLOAD, messenger, senderId);
-						} else {
-							interactionHandlingService.handlePayload(text, messenger, senderId);
-						}
-					} else if (event.isQuickReplyMessageEvent()) {
-						// interactionHandlingService.takeThreadControl(senderId, messenger);
-						//userSelections.setEventRecevingTimeStamp(timeStamp);
-						final QuickReplyMessageEvent quickReplyMessageEvent = event.asQuickReplyMessageEvent();
-						interactionHandlingService.handlePayload(quickReplyMessageEvent.payload(), messenger, senderId);
-					} else if (event.isReferralEvent()) {
-						// interactionHandlingService.takeThreadControl(senderId, messenger);
-						final ReferralEvent referralEvent = event.asReferralEvent();
-						Referral referral = referralEvent.referral();
-						logger.debug(Constants.LOGGER_INFO_PREFIX + "SOURCE IS " + referral.source());
-						logger.debug(Constants.LOGGER_INFO_PREFIX + "REFERRAL PAYLOAD " + referral.refPayload());
-						logger.debug(Constants.LOGGER_INFO_PREFIX + "REFERRAL TYPE " + referral.type());
-					} else if (event.isAttachmentMessageEvent()) {
-						// interactionHandlingService.takeThreadControl(senderId, messenger);
-						AttachmentMessageEvent attachmentEvent = event.asAttachmentMessageEvent();
-						List<Attachment> attachements = attachmentEvent.attachments();
-						for (Attachment attachment : attachements) {
-							if (attachment.isRichMediaAttachment()) {
-								BotConfiguration audioURlRaw = chatBotService.getBotConfigurationByKey(Constants.AUDIO_API_URL);
-								String url = audioURlRaw.getValue();
-								rasaIntegration.richMediaAttachment(attachment, senderId, messenger, url);
-							}
-						}
-						/*
-						 * attachements.forEach(attachement ->{
-						 * 
-						 * if(attachement.isRichMediaAttachment()) {
-						 * attachement.asRichMediaAttachment(); } else
-						 * if(attachement.isLocationAttachment()) { Map<String,Long> location = new
-						 * HashMap<>(); double latitude = attachement.asLocationAttachment().latitude();
-						 * double longitude = attachement.asLocationAttachment().longitude(); //
-						 * location.put("latitude", value); // location.put("longitude", value) } });
-						 */
-					}
-					//utilService.updateUserSelectionsInCache(senderId, userSelections);
-				}
-			);
+			webHookEventService.allWebhookEventsHandling(payload, signature);
 			logger.debug(Constants.LOGGER_INFO_PREFIX + " Processed callback payload successfully");
 			return ResponseEntity.status(HttpStatus.OK).build();
 		} catch (MessengerVerificationException e) {
@@ -226,14 +76,7 @@ public class ChatBotController {
 		}
 	}
 
-	/**
-	 * @param text
-	 * @return
-	 */
-	private boolean textIsNumberEmeraldDistributeAndTransfer(String text) {
-		return text.length() <= 6 && text.matches("[0-9]+");
 
-	}
 
 	/**
 	 * @param payload
@@ -245,16 +88,11 @@ public class ChatBotController {
 			logger.debug(Constants.LOGGER_INFO_PREFIX + "Bot is standby mode thread controlle is with agent ");
 			JSONObject standbyJsonObject = new JSONObject(payload);
 			BotInteraction botInteraction = chatBotService.findInteractionByPayload(Constants.PAYLOAD_FREE_TEXT);
-			// String recivedFreeText =
-			// standbyJsonObject.getJSONArray(Constants.FB_JSON_KEY_ENTRY).getJSONObject(0).getJSONArray(Constants.FB_JSON_KEY_STANDBY).getJSONObject(0)
-			// .getJSONObject(Constants.FB_JSON_KEY_MESSAGE).getString(Constants.FB_JSON_KEY_FREE_TEXT);
 			String senderId = standbyJsonObject.getJSONArray(Constants.FB_JSON_KEY_ENTRY).getJSONObject(0).getJSONArray(Constants.FB_JSON_KEY_STANDBY).getJSONObject(0)
 					.getJSONObject(Constants.FB_JSON_KEY_SENDER).getString(Constants.FB_JSON_KEY_ID);
 			CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 			if (customerProfile != null) {
 				Utils.interactionLogginghandling(customerProfile, botInteraction, chatBotService);
-				// Utils.freeTextinteractionLogginghandling(interactionLogging, recivedFreeText
-				// , chatBotService);
 			}
 		}
 		if (counter > 1) {

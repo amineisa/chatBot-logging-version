@@ -61,6 +61,8 @@ public class GenericTemplateService {
 	private AkwaKartService akwaKartService;
 	@Autowired
 	private EmeraldService emeraldService;
+	@Autowired 
+	private BusinessErrorService businessErrorService;
 
 	private static final Logger logger = LoggerFactory.getLogger(GenericTemplateService.class);
 
@@ -356,7 +358,7 @@ public class GenericTemplateService {
 	}
 
 	public boolean hasRenewalDate(JSONObject bundleDetails) {
-		return bundleDetails.get(Constants.JSON_KEY_RENEWAL_DATE).equals(null) ? false : true;
+		return bundleDetails.get(Constants.JSON_KEY_RENEWAL_DATE) == null;
 	}
 
 	public void generictemplateWithJsonObject(String payload, String response, ArrayList<MessagePayload> messagePayloadList, CustomerProfile customerProfile, Messenger messenger,
@@ -388,6 +390,10 @@ public class GenericTemplateService {
 			JSONArray ratePlan = jsonResponse.getJSONArray(Constants.JSON_KEY_RATEPLAN);
 			JSONArray connect = jsonResponse.getJSONArray(Constants.JSON_KEY_MOBILE_INTERNET);
 			JSONArray mobileInternetAddonConsumption = jsonResponse.getJSONArray(Constants.JSON_KEY_MOBILE_INTERNET_ADON);
+			boolean isPostPaid = jsonResponse.getBoolean("postPaid");
+			userSelections.setPostPaid(isPostPaid);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Profile type postpaid "+isPostPaid);
+			utilService.updateUserSelectionsInCache(senderId, userSelections);
 			if (connect.length() > 0) {// productId For Renew
 				userSelections.setProductIdForRenew(connect.getJSONObject(0).getString(Constants.JSON_KEY_PRODUCT_ID));
 				utilService.updateUserSelectionsInCache(senderId, userSelections);
@@ -416,11 +422,14 @@ public class GenericTemplateService {
 				messagePayloadList.add(mPayload);
 			} else if (payload.equals(Constants.PAYLOAD_RATEPLAN_ACTIONS) || payload.equals(Constants.PAYLOAD_MOBILE_INTERNET_CONTROLLER)) {
 				if (payload.equals(Constants.PAYLOAD_MOBILE_INTERNET_CONTROLLER) && jsonResponse.getJSONArray(Constants.JSON_KEY_MOBILE_INTERNET).length() == 0) {
-					interactionHandlingService.handlePayload(Constants.PAYLOAD_NO_MI_BUNDLE_FOUND, messenger, senderId);
-				}
+					Template template =  businessErrorService.profileWithoutMobileInternetPackage(userLocale);
+					MessagePayload mPayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(template));
+					messagePayloadList.add(mPayload);
+				}else{
 				Template template = createGenericTemplate(messageId, chatBotService, customerProfile, botWebserviceMessage, jsonResponse, null, payload);
 				MessagePayload mPayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(template));
 				messagePayloadList.add(mPayload);
+				}
 			}
 		}
 

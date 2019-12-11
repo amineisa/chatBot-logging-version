@@ -60,11 +60,11 @@ public class MigrationService {
 		String list = (String) responseMap.get(Constants.MIGRATION_RATEPLANS_KEY);
 		Boolean displayMoreBtn = (Boolean) responseMap.get(Constants.MIGRATION_DISPLAY_MOREBUTTON);
 		JSONArray ratePlansToDisplay = new JSONArray(list);
-		if (displayMoreBtn) {
+		//if (displayMoreBtn) {
 			return createRateplansTemplates(ratePlansToDisplay, locale, displayMoreBtn);
-		} else {
+		/*} else {
 			return createRateplansTemplates(ratePlansToDisplay, locale, displayMoreBtn);
-		}
+		}*/
 
 		
 	}

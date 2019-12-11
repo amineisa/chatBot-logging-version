@@ -14,6 +14,8 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.chatbot.controller.ChatBotController;
@@ -75,6 +77,8 @@ public class InteractionHandlingService {
 	private BalanceDeductionService balanceDeductionService;
 	@Autowired
 	private EmeraldService emeraldService;
+	@Autowired
+	private BusinessErrorService businessErrorService;
 
 	private static CacheHelper<String, Object> wsResponseCache = new CacheHelper<>("usersResponses");
 
@@ -96,7 +100,13 @@ public class InteractionHandlingService {
 			payload = Constants.PAYLOAD_ADDON_SUBSCRIPTION;
 			utilService.updateUserSelectionsInCache(senderId, userSelections);
 		}
-		if (payload.startsWith(Constants.PREFIX_RATEPLAN_SUBSCRIPTION)) {// productIdAndOperationName
+		else if(payload.equalsIgnoreCase(Constants.EMERALD_TRANSFER_AND_DISTRIBUTE_PRODUCTS_PAYLOAD)) {
+			userSelections.setCurrentOperation(Constants.DISTRIBUTE_OPERATION);
+			utilService.updateUserSelectionsInCache(senderId, userSelections);
+		}else if(payload.equalsIgnoreCase(Constants.EMERALD_CHILD_TRANSFER_FROM_PAYLOAD)) {
+			userSelections.setCurrentOperation(Constants.TRANSFER_OPERATION);
+			utilService.updateUserSelectionsInCache(senderId, userSelections);
+		}else if (payload.startsWith(Constants.PREFIX_RATEPLAN_SUBSCRIPTION)) {// productIdAndOperationName
 			userSelections.setProductIdAndOperationName(payload.substring(4, payload.length()));
 			utilService.updateUserSelectionsInCache(senderId, userSelections);
 			payload = payload.substring(0, 4);
@@ -104,7 +114,7 @@ public class InteractionHandlingService {
 			// userSelections.setProductIdAndOperationName(payload.split(Constants.COMMA_CHAR)[1]);
 			userSelections.setEmeraldDialForDistribute(payload.split(Constants.COMMA_CHAR)[1]);
 			utilService.updateUserSelectionsInCache(senderId, userSelections);
-			payload = Constants.EMERALD_DISTRIBUTE_SUBMIT_ORDER_PAYLOAD;
+			payload = Constants.EMERALD_ASK_ABOUT_AMOUT_FOR_DISTRIBUTION;
 		} else if (payload.startsWith(Constants.EMERALD_ASK_ABOUT_AMOUT_FOR_TRANSFER)) {
 			userSelections.setEmeraldTransferToDial(payload.split(Constants.COMMA_CHAR)[1]);
 			utilService.updateUserSelectionsInCache(senderId, userSelections);
@@ -119,7 +129,9 @@ public class InteractionHandlingService {
 			payload = Constants.EMERALD_CHILD_TRAFICCASES_FOR_TRANSFER_PAYLOAD;
 		} else if (payload.startsWith(Constants.EMERALD_CHILD_TRANSFER_TO_PAYLOAD)) {
 			String traficCaseId = payload.split(Constants.COMMA_CHAR)[1];
+			String distributeAfterTransfer = payload.split(Constants.COMMA_CHAR)[2];
 			userSelections.setEmeraldTraficCaseID(traficCaseId);
+			userSelections.setEmeraldDistbuteAfterTrans(distributeAfterTransfer);
 			utilService.updateUserSelectionsInCache(senderId, userSelections);
 			payload = Constants.EMERALD_CHILD_TRANSFER_TO_PAYLOAD;
 		} else if (payload.startsWith(Constants.PREFIX_MOBILEINTERNET_ADDON)) {// addonId for MI
@@ -219,10 +231,11 @@ public class InteractionHandlingService {
 	public void handlePayload(String payload, Messenger messenger, String senderId) {
 		UserProfile userProfile = Utils.getUserProfile(senderId, messenger);
 		String userFirstName = userProfile.firstName() == null ? Constants.EMPTY_STRING : userProfile.firstName();
-		String lastName = /*userProfile.lastName() == null ? Constants.EMPTY_STRING :*/ userProfile.lastName();
-		String userLocale = /*userProfile.locale() == null ? Constants.LOCALE_EN :*/ userProfile.locale();
-		Utils.markAsTypingOn(messenger, senderId);
+		String lastName = /* userProfile.lastName() == null ? Constants.EMPTY_STRING : */ userProfile.lastName();
+		String userLocale = /* userProfile.locale() == null ? Constants.LOCALE_EN : */ userProfile.locale();
 		CustomerProfile customerProfile = Utils.saveCustomerInformation(chatBotService, senderId, userLocale, userFirstName, lastName);
+		Utils.markAsSeen(messenger, senderId);
+		Utils.markAsTypingOn(messenger, senderId);
 		logger.debug(Constants.LOGGER_INFO_PREFIX + "Payload value is " + payload);
 		if (payload.equals(Constants.PAYLOAD_TALK_TO_AGENT)) {
 			BotInteraction interaction = chatBotService.findInteractionByPayload(Constants.PAYLOAD_TALK_TO_AGENT);
@@ -230,9 +243,9 @@ public class InteractionHandlingService {
 			Utils.interactionLogginghandling(customerProfile, interaction, chatBotService);
 			logger.debug(Constants.LOGGER_INFO_PREFIX + "Send thread control to second app ");
 			callSecondryHandover(senderId, phoneNumber, messenger);
-		} else if (payload != null) {
+		} else {
 			payload = payloadSetting(payload, senderId);
-			userLocale = customerProfile.getLocale() == null ? Constants.LOCALE_AR : customerProfile.getLocale();
+			//userLocale = customerProfile.getLocale() == null ? Constants.LOCALE_AR : customerProfile.getLocale();
 			logger.debug(Constants.LOGGER_INFO_PREFIX + "Handle payload for customer " + customerProfile.toString());
 			try {
 				ArrayList<MessagePayload> messagePayloadList = new ArrayList<>();
@@ -242,12 +255,8 @@ public class InteractionHandlingService {
 					TextMessage textMsg = TextMessage.create("Hi , All Friends ");
 					messages.add(textMsg);
 					BroadCastMessageCreation broadCastMessage = BroadCastMessageCreation.create(messages);
-					try {
-						logger.debug(Constants.LOGGER_INFO_PREFIX + "Send  BroadCast Messanger MSG ");
-						messenger.sendBroadCastMessage(broadCastMessage);
-					} catch (MessengerApiException | MessengerIOException e) {
-						e.printStackTrace();
-					}
+					logger.debug(Constants.LOGGER_INFO_PREFIX + "Send  BroadCast Messanger MSG ");
+					messenger.sendBroadCastMessage(broadCastMessage);
 				} else if (payload.equalsIgnoreCase(Constants.LOCALE_EN) || payload.equalsIgnoreCase(Constants.LOCALE_AR)) {// Locale Setting
 					messagePayloadList = utilService.userlocaleSetting(customerProfile, senderId, payload);
 					sendMultipleMessages(messagePayloadList, senderId, messenger, null);
@@ -316,6 +325,9 @@ public class InteractionHandlingService {
 		}
 		if (!messagePayloadList.isEmpty()) {
 			sendMultipleMessages(messagePayloadList, senderId, messenger, interactionLogging);
+		} else {
+			businessErrorService.handleFaultMessage(customerProfile.getLocale(), senderId, messagePayloadList);
+			// handlePayload(Constants.PAYLOAD_FAULT_MSG, messenger, senderId);
 		}
 		String parentPayLoad = getParentPayloadValueFromCache(senderId, payload);
 		if (parentPayLoad.length() > 0) {
@@ -410,30 +422,48 @@ public class InteractionHandlingService {
 		BotWebserviceMessage botWebserviceMessage = chatBotService.findWebserviceMessageByMessageId(messageId);
 		String response = Constants.EMPTY_STRING;
 		Map<String, String> mapResponse = new HashMap<>();
+		boolean isGetCall = false;
+		ResponseEntity<String> mResponseEntity = new ResponseEntity<>(HttpStatus.NO_CONTENT);
 		if (payload.equals(Constants.RASA_PAYLOAD)) {
 			rasaIntegration.rasaCallingForFreeTextHandling(messenger, senderId, botWebserviceMessage);
 		} else {
 			if (botWebserviceMessage.getBotMethodType().getMethodTypeId() == 1) {// GET
-				mapResponse = getWebServiceHandling(messagePayloadList, payload, botInteractionMessage, customerProfile);
+				isGetCall = true;
+				mResponseEntity = getWebServiceHandling(payload, botInteractionMessage, customerProfile);
+				logger.debug(Constants.LOGGER_INFO_PREFIX + "Get WS Call Response Status " + mResponseEntity.getStatusCodeValue());
 			} else if (botWebserviceMessage.getBotMethodType().getMethodTypeId() == 2) {// POST
 				mapResponse = postWebServiceRequestBodyCreationAndCalling(payload, messenger, senderId, botWebserviceMessage);
+				logger.debug(Constants.LOGGER_INFO_PREFIX + "Post WS Call Status " + mResponseEntity.getStatusCodeValue());
 			}
-			if (mapResponse.size() > 0 && mapResponse.get(Constants.RESPONSE_STATUS_KEY).equals("200")) {
-				response = mapResponse.get(Constants.RESPONSE_KEY);
-				logger.debug(Constants.LOGGER_INFO_PREFIX + "WS Response Status is " + mapResponse.get(Constants.RESPONSE_STATUS_KEY));
+
+			if ((isGetCall && mResponseEntity.getStatusCode().equals(HttpStatus.OK)) || (!isGetCall && mapResponse.get(Constants.RESPONSE_STATUS_KEY).equals("200"))) {
+				response = isGetCall ? mResponseEntity.getBody() : mapResponse.get(Constants.RESPONSE_KEY);
 				logger.debug(Constants.LOGGER_INFO_PREFIX + "WS Response is " + response);
-				if (payload.equalsIgnoreCase(Constants.PAYLOAD_VERIFICATION_CODE)) {
-					UserSelection userSelections = utilService.getUserSelectionsFromCache(senderId);
-					// utilService.setLinkingInfoForCustomer(senderId,
-					// userSelections.getUserDialForAuth());
-					handlePayload(userSelections.getOriginalPayLoad(), messenger, senderId);
+				if (payload.equalsIgnoreCase(Constants.PAYLOAD_POSTPAID_DIAL)) {
+					wsSuccessStatusHandling(payload, messagePayloadList, senderId, response);
 				} else {
 					templatesTypeHandling(customerProfile, payload, messenger, messagePayloadList, senderId, botWebserviceMessage, response);
 				}
 			} else {
-				handlePayload(Constants.PAYLOAD_FAULT_MSG, messenger, senderId);
+				businessErrorService.handleFaultMessage(customerProfile.getLocale(), senderId, messagePayloadList);
 			}
-		}
+		}		
+		/*
+		 * if (mResponseEntity.getStatusCode().equals(HttpStatus.OK) ||
+		 * (mapResponse.keySet() != null &&
+		 * mapResponse.get(Constants.RESPONSE_STATUS_KEY).equals("200"))) { response =
+		 * botWebserviceMessage.getBotMethodType().getMethodTypeId() == 1 ?
+		 * mResponseEntity.getBody() : mapResponse.get(Constants.RESPONSE_KEY);
+		 * logger.debug(Constants.LOGGER_INFO_PREFIX + "WS Response is " + response); if
+		 * (payload.equalsIgnoreCase(Constants.PAYLOAD_POSTPAID_DIAL)) {
+		 * wsSuccessStatusHandling(payload, messagePayloadList, senderId,
+		 * mResponseEntity); } else { templatesTypeHandling(customerProfile, payload,
+		 * messenger, messagePayloadList, senderId, botWebserviceMessage, response); } }
+		 * else { businessErrorService.handleFaultMessage(customerProfile.getLocale(),
+		 * senderId, messagePayloadList); }
+		 */
+	
+
 	}
 
 	/**
@@ -698,6 +728,8 @@ public class InteractionHandlingService {
 			logger.debug(Constants.LOGGER_INFO_PREFIX + "Deduct Request body " + jsonParam);
 		}
 		return utilService.postWSCalling(botWebserviceMessage, jsonParam.toString(), senderId);
+		// return utilService.postWSCallingRT(botWebserviceMessage, jsonParam,
+		// senderId);
 		// }
 
 	}
@@ -708,30 +740,61 @@ public class InteractionHandlingService {
 	 * @param botInteractionMessage
 	 * @param customerProfile
 	 * @param messenger
+	 * @return original
+	 * 
+	 * 
+	 *         public Map<String, String>
+	 *         getWebServiceHandling(ArrayList<MessagePayload> messagePayloadList,
+	 *         String payload, BotInteractionMessage botInteractionMessage,
+	 *         CustomerProfile customerProfile) { Map<String, String> mapResponse =
+	 *         new HashMap<>(); String senderId = customerProfile.getSenderID();
+	 *         String phoneNumber = customerProfile.getMsisdn(); Long messageId =
+	 *         botInteractionMessage.getMessageId(); Long messageTypeId =
+	 *         botInteractionMessage.getBotMessageType().getMessageTypeId();
+	 *         BotWebserviceMessage botWebserviceMessage =
+	 *         chatBotService.findWebserviceMessageByMessageId(messageId); String
+	 *         url = botWebserviceMessage.getWsUrl(); boolean cacheValue = false;
+	 *         Map<String, String> cachedMap = getFromCachDependOnWebService(url,
+	 *         phoneNumber); if (cachedMap == null || cachedMap.size() == 0) {
+	 *         mapResponse = utilService.getCalling(botWebserviceMessage, senderId,
+	 *         phoneNumber); cacheValue = true;
+	 *         logger.debug(Constants.LOGGER_INFO_PREFIX +
+	 *         Constants.LOGGER_SERVER_RESPONSE); } else { mapResponse = cachedMap;
+	 *         logger.debug(Constants.LOGGER_INFO_PREFIX +
+	 *         Constants.LOGGER_CACHED_RESPONSE); } if
+	 *         (mapResponse.get(Constants.RESPONSE_STATUS_KEY).equals("200")) { //
+	 *         wsSuccessStatusHandling(payload, messagePayloadList, messageTypeId,
+	 *         senderId, mapResponse, url, cacheValue); } else { if
+	 *         (!messagePayloadList.isEmpty()) { messagePayloadList.remove(0); }
+	 *         return new HashMap<>(); } return mapResponse;
+	 * 
+	 *         }
+	 */
+
+	/**
+	 * @param messagePayloadList
+	 * @param payload
+	 * @param botInteractionMessage
+	 * @param customerProfile
+	 * @param messenger
 	 * @return
 	 */
-	public Map<String, String> getWebServiceHandling(ArrayList<MessagePayload> messagePayloadList, String payload, BotInteractionMessage botInteractionMessage, CustomerProfile customerProfile) {
-		Map<String, String> mapResponse = new HashMap<>();
+	public ResponseEntity<String> getWebServiceHandling(String payload, BotInteractionMessage botInteractionMessage, CustomerProfile customerProfile) {
 		String senderId = customerProfile.getSenderID();
 		String phoneNumber = customerProfile.getMsisdn();
 		Long messageId = botInteractionMessage.getMessageId();
-		Long messageTypeId = botInteractionMessage.getBotMessageType().getMessageTypeId();
 		BotWebserviceMessage botWebserviceMessage = chatBotService.findWebserviceMessageByMessageId(messageId);
 		String url = botWebserviceMessage.getWsUrl();
-		boolean cacheValue = false;
-		Map<String, String> cachedMap = getFromCachDependOnWebService(url, phoneNumber);
-		if (cachedMap == null || cachedMap.size() == 0) {
-			mapResponse = utilService.getCalling(botWebserviceMessage, senderId, phoneNumber);
-			cacheValue = true;
-			logger.debug(Constants.LOGGER_INFO_PREFIX + Constants.LOGGER_SERVER_RESPONSE);
-		} else {
-			mapResponse = cachedMap;
-			logger.debug(Constants.LOGGER_INFO_PREFIX + Constants.LOGGER_CACHED_RESPONSE);
+		ResponseEntity<String> cachedResponse = getFromCachDependOnWebService(url, phoneNumber);
+		logger.debug(Constants.LOGGER_INFO_PREFIX + " Cached value is Response " + cachedResponse);
+		if (cachedResponse == null) {
+			cachedResponse = utilService.getCalling(botWebserviceMessage, senderId, phoneNumber);
+			if (cachedResponse.getStatusCode().equals(HttpStatus.OK)) {
+				logger.debug(Constants.LOGGER_BOT_PREFIX + "Put response in cache ");
+				putInCachDependOnWebService(url, cachedResponse, phoneNumber);
+			}
 		}
-		if (mapResponse.get(Constants.RESPONSE_STATUS_KEY).equals("200")) {
-			wsSuccessStatusHandling(payload, messagePayloadList, messageTypeId, senderId, mapResponse, url, cacheValue);
-		}
-		return mapResponse;
+		return cachedResponse;
 
 	}
 
@@ -747,30 +810,26 @@ public class InteractionHandlingService {
 	 * @param cacheValue
 	 * @return WebService response as String value
 	 */
-	public void wsSuccessStatusHandling(String payload, ArrayList<MessagePayload> messagePayloadList, Long messageTypeId, String senderId, Map<String, String> mapResponse, String url,
-			boolean cacheValue) {
+	public void wsSuccessStatusHandling(String payload, ArrayList<MessagePayload> messagePayloadList, String senderId, String response) {
 		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
-		String phoneNumber = customerProfile.getMsisdn();
-		String userLocale = customerProfile.getLocale();
-		if (cacheValue) {
-			if (payload.equalsIgnoreCase(Constants.PAYLOAD_POSTPAID_DIAL)) {
-				// lastBill
-				JSONObject billProfile = new JSONObject(mapResponse.get(Constants.RESPONSE_KEY));
-				String billAmount = "";
-				if (!billProfile.get(Constants.JSON_KEY_BIILAMOUNT).equals(null)) {
-					billAmount = billProfile.getString(Constants.JSON_KEY_BIILAMOUNT) == null || billProfile.getString(Constants.JSON_KEY_BIILAMOUNT) == "" ? ""
-							: billProfile.getString(Constants.JSON_KEY_BIILAMOUNT);
-				}
-				if (billAmount.equals("")) {// post paid without bill to paid
-					logger.debug(Constants.LOGGER_INFO_PREFIX + " Bill Amount value is " + billAmount);
-					postPaidService.postPaidNoBillToPaid(senderId, userLocale, messagePayloadList, messageTypeId);
-				} else {// post paid with bill to paid
-					logger.debug(Constants.LOGGER_INFO_PREFIX + " Bill Amount value is " + billAmount);
-					postPaidService.postPaidbillingPaymentHandling(senderId, userLocale, messagePayloadList, messageTypeId, phoneNumber, billProfile, billAmount);
-				}
+		if (payload.equalsIgnoreCase(Constants.PAYLOAD_POSTPAID_DIAL)) {// lastBill
+			JSONObject billProfile = new JSONObject(response);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Billing profile response " + billProfile);
+			String billAmount = "";
+			if (billProfile.get(Constants.JSON_KEY_BIILAMOUNT) != null) {
+				billAmount = billProfile.getString(Constants.JSON_KEY_BIILAMOUNT) == null || billProfile.getString(Constants.JSON_KEY_BIILAMOUNT) == "" ? ""
+						: billProfile.getString(Constants.JSON_KEY_BIILAMOUNT);
 			}
-			putInCachDependOnWebService(url, mapResponse, phoneNumber);
+			if (billAmount.equals("0")) {// post paid without bill to paid
+				logger.debug(Constants.LOGGER_INFO_PREFIX + " Bill Amount value is " + billAmount);
+				postPaidService.postPaidNoBillToPaid(senderId, customerProfile.getLocale(), messagePayloadList/* , messageTypeId */);
+			} else {// post paid with bill to paid
+				logger.debug(Constants.LOGGER_INFO_PREFIX + " Bill Amount value is " + billAmount);
+				postPaidService.postPaidbillingPaymentHandling(messagePayloadList, billProfile, billAmount, customerProfile);
+			}
 		}
+		// putInCachDependOnWebService(url, mapResponse, customerProfile.getMsisdn());
+		// }
 
 	}
 
@@ -787,7 +846,7 @@ public class InteractionHandlingService {
 			BotWebserviceMessage getProfileWS = new BotWebserviceMessage();
 			String subscriperProfileUrl = chatBotService.getBotConfigurationByKey(Constants.GET_SUBSCRIPER_PROFILE_URL_KEY).getValue();
 			getProfileWS.setWsUrl(subscriperProfileUrl);
-			String resp = utilService.getCalling(getProfileWS, senderId, customerProfile.getMsisdn()).get(Constants.RESPONSE_KEY);
+			String resp = utilService.getCalling(getProfileWS, senderId, customerProfile.getMsisdn()).getBody();
 			JSONObject jsonResp = new JSONObject(resp);
 			return jsonResp.getJSONArray(Constants.JSON_KEY_MOBILE_INTERNET).getJSONObject(0).getString(Constants.JSON_KEY_PRODUCT_ID);
 
@@ -799,11 +858,11 @@ public class InteractionHandlingService {
 			try {
 				Utils.markAsTypingOn(messenger, senderId);
 				Utils.markAsTypingOff(messenger, senderId);
+				logger.debug(Constants.LOGGER_INFO_PREFIX + Constants.LOGGER_SENDER_ID + senderId + " Message {} " + response.toString());
 				messenger.send(response);
 			} catch (MessengerApiException | MessengerIOException e) {
-				logger.error(Constants.LOGGER_SENDER_ID + senderId + Constants.LOGGER_EXCEPTION_MESSAGE + e);
+				logger.debug(Constants.LOGGER_INFO_PREFIX + Constants.LOGGER_SENDER_ID + senderId + Constants.LOGGER_EXCEPTION_MESSAGE + e);
 				e.printStackTrace();
-				handlePayload(Constants.PAYLOAD_FAULT_MSG, messenger, senderId);
 			}
 			if (interactionLogging != null) {
 				utilService.interactionLoggingUpdateResponseTime(interactionLogging);
@@ -812,26 +871,58 @@ public class InteractionHandlingService {
 
 	}
 
-	private void putInCachDependOnWebService(String url, Map<String, String> response, String dial) {
+	/*
+	 * private void putInCachDependOnWebService(String url, Map<String, String>
+	 * response, String dial) { if (url.contains(Constants.URL_KEYWORD_PROFILE)) {
+	 * wsResponseCache.addToCentralCache(dial +
+	 * Constants.CACHED_MAP_PROFILE_KEY_SUFFIX, response); } else if
+	 * (url.contains(Constants.URL_KEYWORD_BUNDLE)) {
+	 * wsResponseCache.addToCentralCache(dial +
+	 * Constants.CACHED_MAP_ELIGIPLE_PRODUCT_KEY_SUFFIX, response); } else if
+	 * (url.contains(Constants.URL_KEYWORD_EXTRA)) {
+	 * wsResponseCache.addToCentralCache(dial +
+	 * Constants.CACHED_MAP_ELIGIPLE_EXTRA_KEY_SUFFIX, response); } }
+	 * 
+	 * @SuppressWarnings("unchecked") private Map<String, String>
+	 * getFromCachDependOnWebService(String url, String dial) { Map<String, String>
+	 * mapResponse = new HashMap<>(); if
+	 * (url.contains(Constants.URL_KEYWORD_PROFILE)) { mapResponse = (Map<String,
+	 * String>) wsResponseCache.getCachedValue(dial +
+	 * Constants.CACHED_MAP_PROFILE_KEY_SUFFIX); } else if
+	 * (url.contains(Constants.URL_KEYWORD_BUNDLE)) { mapResponse = (Map<String,
+	 * String>) wsResponseCache.getCachedValue(dial +
+	 * Constants.CACHED_MAP_ELIGIPLE_PRODUCT_KEY_SUFFIX); } else if
+	 * (url.contains(Constants.URL_KEYWORD_EXTRA)) { mapResponse = (Map<String,
+	 * String>) wsResponseCache.getCachedValue(dial +
+	 * Constants.CACHED_MAP_ELIGIPLE_EXTRA_KEY_SUFFIX); } return mapResponse; }
+	 */
+
+	private void putInCachDependOnWebService(String url, ResponseEntity<String> response, String dial) {
 		if (url.contains(Constants.URL_KEYWORD_PROFILE)) {
+			logger.debug(Constants.LOGGER_INFO_PREFIX + " Put profile response in cache ");
 			wsResponseCache.addToCentralCache(dial + Constants.CACHED_MAP_PROFILE_KEY_SUFFIX, response);
 		} else if (url.contains(Constants.URL_KEYWORD_BUNDLE)) {
+			logger.debug(Constants.LOGGER_INFO_PREFIX + " Put bundle response in cache ");
 			wsResponseCache.addToCentralCache(dial + Constants.CACHED_MAP_ELIGIPLE_PRODUCT_KEY_SUFFIX, response);
 		} else if (url.contains(Constants.URL_KEYWORD_EXTRA)) {
+			logger.debug(Constants.LOGGER_INFO_PREFIX + " Put extra response in cache ");
 			wsResponseCache.addToCentralCache(dial + Constants.CACHED_MAP_ELIGIPLE_EXTRA_KEY_SUFFIX, response);
 		}
 	}
 
 	@SuppressWarnings("unchecked")
-	private Map<String, String> getFromCachDependOnWebService(String url, String dial) {
-		Map<String, String> mapResponse = new HashMap<>();
+	private ResponseEntity<String> getFromCachDependOnWebService(String url, String dial) {
+		ResponseEntity<String> cachedResponse = null;
 		if (url.contains(Constants.URL_KEYWORD_PROFILE)) {
-			mapResponse = (Map<String, String>) wsResponseCache.getCachedValue(dial + Constants.CACHED_MAP_PROFILE_KEY_SUFFIX);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Get profile response from cache");
+			cachedResponse = (ResponseEntity<String>) wsResponseCache.getCachedValue(dial + Constants.CACHED_MAP_PROFILE_KEY_SUFFIX);
 		} else if (url.contains(Constants.URL_KEYWORD_BUNDLE)) {
-			mapResponse = (Map<String, String>) wsResponseCache.getCachedValue(dial + Constants.CACHED_MAP_ELIGIPLE_PRODUCT_KEY_SUFFIX);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Get bundle response from cache");
+			cachedResponse = (ResponseEntity<String>) wsResponseCache.getCachedValue(dial + Constants.CACHED_MAP_ELIGIPLE_PRODUCT_KEY_SUFFIX);
 		} else if (url.contains(Constants.URL_KEYWORD_EXTRA)) {
-			mapResponse = (Map<String, String>) wsResponseCache.getCachedValue(dial + Constants.CACHED_MAP_ELIGIPLE_EXTRA_KEY_SUFFIX);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Get extra response from cache");
+			cachedResponse = (ResponseEntity<String>) wsResponseCache.getCachedValue(dial + Constants.CACHED_MAP_ELIGIPLE_EXTRA_KEY_SUFFIX);
 		}
-		return mapResponse;
+		return cachedResponse;
 	}
 }

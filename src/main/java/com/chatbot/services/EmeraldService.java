@@ -112,11 +112,11 @@ public class EmeraldService {
 			List<Button> buttons = new ArrayList<>();
 			JSONObject object = bundleResponses.getJSONObject(i);
 			String payload = object.getString(Constants.FB_JSON_KEY_ID);
-			Button button = PostbackButton.create(getButtonLabel(userlocale), Constants.EMERALD_GET_DIALS_FOR_DISTRIBUTE_PAYLOAD+payload);
-			String title = userlocale.contains(Constants.LOCALE_AR) ? object.getString(Constants.JSON_KEY_NAME_AR):object.getString(Constants.JSON_KEY_NAME_EN);
-			String subtitle = userlocale.contains(Constants.LOCALE_AR) ? object.getString(Constants.JSON_KEY_ARABIC_DESCRIPTION_KEY): object.getString(Constants.JSON_KEY_FOR_ENGLISH_DESCRIPTION);
+			String label = userlocale.contains(Constants.LOCALE_AR) ? object.getString(Constants.JSON_KEY_NAME_AR):object.getString(Constants.JSON_KEY_NAME_EN);
+			Button button = PostbackButton.create(label, Constants.EMERALD_GET_DIALS_FOR_DISTRIBUTE_PAYLOAD+payload);
+			String title = userlocale.contains(Constants.LOCALE_AR) ? object.getString(Constants.JSON_KEY_ARABIC_DESCRIPTION_KEY): object.getString(Constants.JSON_KEY_FOR_ENGLISH_DESCRIPTION);
 			buttons.add(button);
-			Element element = Element.create(title, Optional.of(subtitle), Optional.empty(),Optional.empty(), Optional.of(buttons) );
+			Element element = Element.create(title, Optional.of("---"), Optional.empty(),Optional.empty(), Optional.of(buttons) );
 			elements.add(element);
 		}
 		return GenericTemplate.create(elements);
@@ -135,14 +135,12 @@ public class EmeraldService {
 			JSONObject object = traficCase.getJSONObject(i);
 			if(object.get(Constants.FB_JSON_KEY_ID) != null) {
 		    boolean distbuteAfterTrans = object.getBoolean(Constants.DISTRIBUTE_AFTER_TRANSFER);
-		    userSelection.setEmeraldDistbuteAfterTrans(Boolean.toString(distbuteAfterTrans));
-		    utilService.updateUserSelectionsInCache(customerProfile.getSenderID(), userSelection);
 			String payload = object.getString(Constants.FB_JSON_KEY_ID);
-			Button button = PostbackButton.create(getButtonLabel(userLocale), Constants.EMERALD_CHILD_TRANSFER_TO_PAYLOAD +Constants.COMMA_CHAR+payload);
-			String title = userLocale.contains(Constants.LOCALE_AR) ? object.getString(Constants.JSON_KEY_NAME_AR):object.getString(Constants.JSON_KEY_NAME_EN);
-			String subtitle = userLocale.contains(Constants.LOCALE_AR) ? object.getString(Constants.JSON_KEY_ARABIC_DESCRIPTION_KEY): object.getString(Constants.JSON_KEY_FOR_ENGLISH_DESCRIPTION);
+			String label = userLocale.contains(Constants.LOCALE_AR) ? object.getString(Constants.JSON_KEY_NAME_AR):object.getString(Constants.JSON_KEY_NAME_EN);
+			Button button = PostbackButton.create(label, Constants.EMERALD_CHILD_TRANSFER_TO_PAYLOAD +Constants.COMMA_CHAR+payload+Constants.COMMA_CHAR+distbuteAfterTrans);
+			String title = userLocale.contains(Constants.LOCALE_AR) ? object.getString(Constants.JSON_KEY_ARABIC_DESCRIPTION_KEY): object.getString(Constants.JSON_KEY_FOR_ENGLISH_DESCRIPTION);
 			buttons.add(button);
-			Element element = Element.create(title, Optional.of(subtitle), Optional.empty(),Optional.empty(), Optional.of(buttons) );
+			Element element = Element.create(title, Optional.of("---"), Optional.empty(),Optional.empty(), Optional.of(buttons) );
 			elements.add(element);
 			}
 		}
@@ -150,14 +148,7 @@ public class EmeraldService {
 		
 	}
 
-	/**
-	 * @param userlocale
-	 * @return
-	 */
-	private String getButtonLabel(String userlocale) {
-		return userlocale.contains(Constants.LOCALE_AR)? "اختار":"Choose";
-	}
-
+	
 	/**
 	 * @param paramNames 
 	 * @param userSelections
@@ -188,7 +179,7 @@ public class EmeraldService {
 		String source = encryptDPIParam(userSelection.getEmeraldTransferFromDial());
 		String target = encryptDPIParam(userSelection.getEmeraldTransferToDial());
 		String quota = userSelection.getEmeraldDistributeAmount();
-		String distrbuteAfterTransfare = userSelection.getEmeraldDistbuteAfterTrans();
+		String distrbuteAfterTransfare = userSelection.getEmeraldDistbuteAfterTrans().equals("true")?"Y":"N";
 		values.add(productName);
 		values.add(trafficCase);
 		values.add(source);
@@ -198,7 +189,6 @@ public class EmeraldService {
 		for (int i = 0; i < paramNames.size(); i++) {
 			body.put(paramNames.get(i), values.get(i));
 		}
-		
 		return body ;
 	}
 	
