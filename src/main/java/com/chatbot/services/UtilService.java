@@ -2,7 +2,6 @@ package com.chatbot.services;
 
 import static java.util.Optional.empty;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -42,6 +41,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
@@ -61,6 +61,7 @@ import com.chatbot.entity.InteractionLogging;
 import com.chatbot.entity.UserSelection;
 import com.chatbot.util.Constants;
 import com.chatbot.util.Utils;
+import com.github.messenger4j.common.WebviewHeightRatio;
 import com.github.messenger4j.send.MessagePayload;
 import com.github.messenger4j.send.MessagingType;
 import com.github.messenger4j.send.message.TemplateMessage;
@@ -159,9 +160,8 @@ public class UtilService {
 	}
 
 	// Create Button
-	public Button createButton(BotButton botButton, String locale, JSONObject jsonObject, String dialNumber){
-		// PostBack
-		if (botButton.getButtonType().getId() == Utils.ButtonTypeEnum.POSTBACK.getValue()) {
+	public Button createButton(BotButton botButton, String locale, JSONObject jsonObject, String dialNumber) {
+		if (botButton.getButtonType().getId() == Utils.ButtonTypeEnum.POSTBACK.getValue()) {// PostBack
 			String payload = botButton.getButtonPayload();
 			String lable = Utils.getTextValueForButtonLabel(locale, botButton);
 			if (payload.contains(Constants.IS_KEY_HAS_DOT) && lable.contains(Constants.IS_KEY_HAS_DOT)) {
@@ -173,32 +173,25 @@ public class UtilService {
 				return PostbackButton.create(finalText, finalPayLoad);
 			}
 			return PostbackButton.create(Utils.getTextValueForButtonLabel(locale, botButton), botButton.getButtonPayload());
-			// URl
-		} else if (botButton.getButtonType().getId() == Utils.ButtonTypeEnum.URL.getValue()) {
+		} else if (botButton.getButtonType().getId() == Utils.ButtonTypeEnum.URL.getValue()) {// URl
 			URL url = Utils.createUrl(botButton.getButtonUrl());
 			String localeParamValue = locale.contains(Constants.LOCALE_AR) ? Constants.URL_LOCALE_AR : Constants.URL_LOCALE_EN;
-			if (botButton.getButtonUrl().contains("recharge") || botButton.getButtonUrl().contains("balanceDeduction") || botButton.getButtonUrl().contains("payment")) {
+			if (botButton.getButtonUrl().contains("recharge") || botButton.getButtonUrl().contains("balanceDeduction") || botButton.getButtonUrl().contains("payment") || botButton.getButtonUrl().contains("distribute")) {
 				URL realURL = null;
 				try {
-					//long currentInSeconds = System.currentTimeMillis()/1000;
-					//String par = encryptDPIParam(Constants.URL_USER_AND_TIME_KEY + dialNumber + Constants.URL_PAY_BILL_AND_RECHARGE_CHANEL);
-					/*String param = encryptDPIParam(Constants.URL_TIME_KEY+"="+currentInSeconds+Constants.URL_PARAM_MSISDN_KEY+dialNumber);
-					String paramChannel = encryptChannelParam(Constants.URL_CHANNEL_KEY+Constants.CHANEL_PARAM);*/
-					String stringUrl = url + localeParamValue + paramAndParamChannelEncryption(dialNumber);
-					 realURL = Utils.createUrl(stringUrl);
-					 logger.debug(Constants.LOGGER_INFO_PREFIX+"Button template button url "+realURL.toString());
+					String stringUrl = url + localeParamValue + paramAndParamChannelEncryptionForWebView(dialNumber);
+					realURL = Utils.createUrl(stringUrl);
+					logger.debug(Constants.LOGGER_INFO_PREFIX + "Button template button url " + realURL.toString());
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-				return UrlButton.create(Utils.getTextValueForButtonLabel(locale, botButton), realURL);
-			} 
-			return UrlButton.create(Utils.getTextValueForButtonLabel(locale, botButton), url);
-			// Login
-		} else if (botButton.getButtonType().getId() == Utils.ButtonTypeEnum.LOGIN.getValue()) {
+				return UrlButton.create(Utils.getTextValueForButtonLabel(locale, botButton), realURL,Optional.of(WebviewHeightRatio.TALL));
+			}
+				return UrlButton.create(Utils.getTextValueForButtonLabel(locale, botButton), url);
+		} else if (botButton.getButtonType().getId() == Utils.ButtonTypeEnum.LOGIN.getValue()) {// Login
 			URL url = Utils.createUrl(botButton.getButtonUrl());
 			return LogInButton.create(url);
-			// Logout
-		} else if (botButton.getButtonType().getId() == Utils.ButtonTypeEnum.LOGOUT.getValue()) {
+		} else if (botButton.getButtonType().getId() == Utils.ButtonTypeEnum.LOGOUT.getValue()) {// Logout
 			return LogOutButton.create();
 		}
 		return null;
@@ -229,8 +222,8 @@ public class UtilService {
 	public String getTextForButtonTemplate(String locale, BotButtonTemplateMSG botButtonTemplateMSG) {
 		if (locale == null) {
 			locale = Constants.LOCALE_EN;
-		}	
-		return locale.contains(Constants.LOCALE_AR) ? botButtonTemplateMSG.getBotText().getArabicText() :botButtonTemplateMSG.getBotText().getEnglishText();
+		}
+		return locale.contains(Constants.LOCALE_AR) ? botButtonTemplateMSG.getBotText().getArabicText() : botButtonTemplateMSG.getBotText().getEnglishText();
 	}
 
 	/**
@@ -245,8 +238,6 @@ public class UtilService {
 		MessagePayload messagePayload;
 		List<BotTextResponseMapping> botTextResponseMappings = chatBotService.findTextResponseMappingByWsId(botWebserviceMessage.getWsMsgId());
 		BotTextResponseMapping text = botTextResponseMappings.get(0);
-		// for (BotTextResponseMapping botTextResponseMapping : botTextResponseMappings)
-		// {
 		String msg = getTextForBotTextResponseMapping(locale, text);
 		String path = text.getCommonPath();
 		String[] paths = getPaths(path);
@@ -254,12 +245,10 @@ public class UtilService {
 		String[] keysArray = getKeys(keys);
 		ArrayList<String> values = switchToArrayMode(rootArray, paths, keysArray, msg, locale).get(Constants.RESPONSE_MAP_MESSAGE_KEY);
 		for (String val : values) {
-			logger.debug(Constants.LOGGER_INFO_PREFIX+"Total number of final Text Messages "+values.size() );
 			messagePayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TextMessage.create(val));
 			messagePayloadList.add(messagePayload);
 		}
-		logger.debug(Constants.LOGGER_INFO_PREFIX+"Messages list Size : "+messagePayloadList.size());
-		// }
+		logger.debug(Constants.LOGGER_INFO_PREFIX + "Messages list Size : " + messagePayloadList.size());
 	}
 
 	public String getTextForBotTextResponseMapping(String local, BotTextResponseMapping botTextResponseMapping) {
@@ -295,21 +284,21 @@ public class UtilService {
 				keys = botTextResponseMapping.getEnParams();
 			}
 			String[] keysArray = getKeys(keys);
-			if(botWebserviceMessage.getWsUrl().contains("family/childSetting") && emeraldService.checkAddChildEligibility(rootObject, keysArray)) {
-				logger.debug(Constants.LOGGER_INFO_PREFIX +" Emerald Eligible TO Add Child ");
-				msg = emeraldService.sendNotEligibleTOAddChildMsg(locale);
-				messagePayloadList.add(MessagePayload.create(senderId, MessagingType.RESPONSE, TextMessage.create(msg)));
-			}else if(botWebserviceMessage.getWsUrl().contains("family/childSetting") && !emeraldService.checkAddChildEligibility(rootObject, keysArray)){
-				logger.debug(Constants.LOGGER_INFO_PREFIX +" Emerald Not Eligible TO Add Child");
+			if (botWebserviceMessage.getWsUrl().contains("family/childSetting") && emeraldService.checkAddChildEligibility(rootObject, keysArray)) {
+				logger.debug(Constants.LOGGER_INFO_PREFIX + " Emerald Eligible TO Add Child ");
 				msg = emeraldService.sendEligibleTOAddChildMsg(locale);
 				messagePayloadList.add(MessagePayload.create(senderId, MessagingType.RESPONSE, TextMessage.create(msg)));
-			}else {
-				logger.debug(Constants.LOGGER_INFO_PREFIX +" Text Message Creation");
-			ArrayList<String> values = switchToObjectMode(rootObject, paths, keysArray, msg, locale).get(Constants.RESPONSE_MAP_MESSAGE_KEY);
-			for (String val : values) {
-				messagePayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TextMessage.create(val));
-				messagePayloadList.add(messagePayload);
-			}
+			} else if (botWebserviceMessage.getWsUrl().contains("family/childSetting") && !emeraldService.checkAddChildEligibility(rootObject, keysArray)) {
+				logger.debug(Constants.LOGGER_INFO_PREFIX + " Emerald Not Eligible TO Add Child");
+				msg = emeraldService.sendNotEligibleTOAddChildMsg(locale);
+				messagePayloadList.add(MessagePayload.create(senderId, MessagingType.RESPONSE, TextMessage.create(msg)));	
+			} else {
+				logger.debug(Constants.LOGGER_INFO_PREFIX + " Text Message Creation");
+				ArrayList<String> values = switchToObjectMode(rootObject, paths, keysArray, msg, locale).get(Constants.RESPONSE_MAP_MESSAGE_KEY);
+				for (String val : values) {
+					messagePayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TextMessage.create(val));
+					messagePayloadList.add(messagePayload);
+				}
 			}
 		}
 	}
@@ -339,7 +328,7 @@ public class UtilService {
 	}
 
 	// get text for BotTextMessage according to local
-	public String getTextValueForBotTextMessage(BotTextMessage botTextMessage, String locale, String userFirstName, String phoneNumber) { 
+	public String getTextValueForBotTextMessage(BotTextMessage botTextMessage, String locale, String userFirstName, String phoneNumber) {
 		String text = locale.equalsIgnoreCase(Constants.LOCALE_AR) ? botTextMessage.getBotText().getArabicText() : botTextMessage.getBotText().getEnglishText();
 		return Utils.replacePlaceholderByNameValue(text, userFirstName, phoneNumber);
 
@@ -356,35 +345,16 @@ public class UtilService {
 		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 		String dialNumber = customerProfile.getMsisdn();
 		Map<String, String> mapResponse = new HashMap<>();
-		//String paramChannel = Constants.EMPTY_STRING;
 		int responseStatusId = 0;
 		String stringResponse = Constants.EMPTY_STRING;
 		try {
-			//long currentTimeInSecond = System.currentTimeMillis()/1000;
-			String paramChannel =paramAndParamChannelEncryption(dialNumber);
-			//encryptDPIParam(Constants.URL_PARAM_MSISDN_KEY + dialNumber + Constants.URL_TIME_KEY +currentTimeInSecond+Constants.URL_CHANNEL_KEY+Constants.CHANEL_PARAM);
+			String paramChannel = paramAndParamChannelEncryption(dialNumber);
 			CloseableHttpClient client = createClient();
 			HttpPost httpPost = new HttpPost(botWebserviceMessage.getWsUrl());
-			/*if (botWebserviceMessage.getWsUrl().contains(Constants.SEND_VERFICATION_CODE_SERVICE)) {
-				List<NameValuePair> nvps = new ArrayList<>();
-				String dialParamKey = botWebserviceMessage.getListParamName().split(",")[0];
-				String langParamKey = botWebserviceMessage.getListParamName().split(",")[1];
-				JSONObject params = new JSONObject(jsonParam);
-				NameValuePair dialParam = new BasicNameValuePair(botWebserviceMessage.getListParamName().split(",")[0], params.getString(dialParamKey));
-				NameValuePair langParam = new BasicNameValuePair(botWebserviceMessage.getListParamName().split(",")[1], params.getString(langParamKey));
-				nvps.add(dialParam);
-				nvps.add(langParam);
-				uri = new URIBuilder(httpPost.getURI()).addParameters(nvps).build();
-			} else if (botWebserviceMessage.getWsUrl().contains(Constants.VERFICATION_CODE_VALIDITY_SERVICE)) {
-				uri = new URIBuilder(httpPost.getURI()).build();
-			} else {*/
-			//	String realParameter = Constants.URL_PARAM_CHANNEL_KEY + paramChannel;
-			//URI uri = new URIBuilder(httpPost.getURI()).addParameter("dial", paramChannel).build();
-			 String wsUrl= botWebserviceMessage.getWsUrl()+"?dial="+paramChannel;
-				URI uri = new URI(wsUrl);
-			//}
+			String wsUrl = botWebserviceMessage.getWsUrl() +Constants.URL_DIAL_PARAM_KEY + paramChannel;
+			URI uri = new URI(wsUrl);
 			httpPost.setURI(uri);
-			logger.debug(Constants.LOGGER_INFO_PREFIX+"Post Service URL IS " + uri);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Post Service URL IS " + uri);
 			logger.debug(Constants.LOGGER_BUNDLE_SUPSCRIPTION + jsonParam);
 			StringEntity entity = new StringEntity(jsonParam);
 			httpPost.setEntity(entity);
@@ -395,10 +365,8 @@ public class UtilService {
 			org.apache.http.HttpEntity responseEntity = response.getEntity();
 			stringResponse = EntityUtils.toString(responseEntity, "UTF-8");
 			client.close();
-		} catch (IOException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException | URISyntaxException e) {
-			logger.error(Constants.LOGGER_SENDER_ID + senderId + Constants.LOGGER_EXCEPTION_MESSAGE + e);
-			e.printStackTrace();
 		} catch (Exception e) {
+			logger.error(Constants.LOGGER_SENDER_ID + senderId + Constants.LOGGER_EXCEPTION_MESSAGE + e);
 			e.printStackTrace();
 		} finally {
 			mapResponse.put(Constants.RESPONSE_STATUS_KEY, String.valueOf(responseStatusId));
@@ -407,6 +375,37 @@ public class UtilService {
 		return mapResponse;
 	}
 
+	
+	public ResponseEntity<String> postWSCallingRT(BotWebserviceMessage botWebserviceMessage, JSONObject jsonParam, String senderId){
+		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
+		String dialNumber = customerProfile.getMsisdn();
+		URI uri = null;
+		HttpEntity requestEntity = null;
+		RestTemplate postRestTemplate = new RestTemplate();
+			try {
+				String paramChannel = paramAndParamChannelEncryption(dialNumber);
+				String wsUrl = botWebserviceMessage.getWsUrl() +Constants.URL_DIAL_PARAM_KEY + paramChannel;
+				uri = new URI(wsUrl);
+				HttpHeaders headers = new HttpHeaders();
+				headers.set("Content-type","application/json");
+				requestEntity = new HttpEntity<>(new JSONObject(jsonParam),headers);			
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return postRestTemplate.exchange(uri, HttpMethod.POST, requestEntity, String.class);
+			
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	private CloseableHttpClient createClient() {
 		RequestConfig requestConfig = RequestConfig.custom().setConnectionRequestTimeout(100000).setConnectTimeout(5 * 1000).setConnectionRequestTimeout(5 * 1000).setSocketTimeout(5 * 1000).build();
 		return HttpClientBuilder.create().setDefaultRequestConfig(requestConfig).build();
@@ -434,16 +433,16 @@ public class UtilService {
 			int maxSize = userSelections.getAccountDeductionHistory();
 			JSONArray jsonArray = new JSONArray(jsonBodyString);
 			if (payload.equalsIgnoreCase(Constants.PAYLOAD_BALANCE_DEDUCTION) && jsonArray.length() > 0) {
-				logger.debug(Constants.LOGGER_INFO_PREFIX+"Balance deduction transactions number "+maxSize);
+				logger.debug(Constants.LOGGER_INFO_PREFIX + "Balance deduction transactions number " + maxSize);
 				userSelections.setParentPayLoad("FOUND_ANSWER");
 				updateUserSelectionsInCache(senderId, userSelections);
 				List<JSONObject> lastTransactions = new ArrayList<>();
 				for (int i = 0; i < maxSize; i++) {
 					lastTransactions.add(jsonArray.getJSONObject(i));
 				}
-				jsonArray = new JSONArray(lastTransactions);	
+				jsonArray = new JSONArray(lastTransactions);
 			}
-			logger.debug(Constants.LOGGER_INFO_PREFIX+"Values list size " + jsonArray.length());
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Values list size " + jsonArray.length());
 			getTextMessageIfResponseIsArray(senderId, messagePayloadList, botWebserviceMessage, jsonArray, locale);
 		}
 	}
@@ -456,7 +455,7 @@ public class UtilService {
 		newCustomerProfile.setCustomerLastSeen(timestamp);
 		newCustomerProfile.setFirstInsertion(customerProfile.getFirstInsertion());
 		newCustomerProfile.setLinkingDate(timestamp);
-		newCustomerProfile.setLocale(customerProfile.getLocale());
+		newCustomerProfile.setLocale(customerProfile.getLocale().substring(0,2));
 		newCustomerProfile.setFirstName(customerProfile.getFirstName());
 		newCustomerProfile.setLastName(customerProfile.getLastName());
 		if (customerDial.startsWith("0") && customerDial.length() > 10) {
@@ -467,7 +466,7 @@ public class UtilService {
 		newCustomerProfile.setSenderID(senderId);
 		return chatBotService.saveCustomerProfile(newCustomerProfile);
 	}
-
+	
 	public void setCustomerProfileLocal(CustomerProfile customerProfile, String locale) {
 		CustomerProfile customerProfileForLocal = new CustomerProfile();
 		Date date = new Date();
@@ -667,7 +666,7 @@ public class UtilService {
 	}
 
 	public MessagePayload getCategoryForMobileInternetAddons(JSONArray arrayResponse, String senderId, String locale) {
-		logger.debug(Constants.LOGGER_INFO_PREFIX+Constants.LOGGER_SENDER_ID + senderId + Constants.LOGGER_ELIGIBLE_PRODUCT + arrayResponse.toString());
+		logger.debug(Constants.LOGGER_INFO_PREFIX + Constants.LOGGER_SENDER_ID + senderId + Constants.LOGGER_ELIGIBLE_PRODUCT + arrayResponse.toString());
 		// Map<String, String> categoriesMap = new HashMap<>();
 		Map<String, AddonCategory> categoriesMap = new HashMap<>();
 		ArrayList<Element> elements = new ArrayList<>();
@@ -728,19 +727,24 @@ public class UtilService {
 
 	}
 
-	public Map<String, String> getCalling(BotWebserviceMessage botWebserviceMessage, String senderId, String phoneNumber) {
+/*	public Map<String, String> getCalling(BotWebserviceMessage botWebserviceMessage, String senderId, String phoneNumber) {
+		URI uri = createURI(botWebserviceMessage, senderId, chatBotService, phoneNumber);
+		logger.debug(Constants.LOGGER_SENDER_ID + senderId + Constants.LOGGER_DIAL_IS + phoneNumber + Constants.LOGGER_SERVICE_URL + uri);
+		return callGetWebServiceByRestTemplate(uri);
+	}*/
+	
+	public ResponseEntity<String> getCalling(BotWebserviceMessage botWebserviceMessage, String senderId, String phoneNumber){
 		URI uri = createURI(botWebserviceMessage, senderId, chatBotService, phoneNumber);
 		logger.debug(Constants.LOGGER_SENDER_ID + senderId + Constants.LOGGER_DIAL_IS + phoneNumber + Constants.LOGGER_SERVICE_URL + uri);
 		return callGetWebServiceByRestTemplate(uri);
 	}
 
-	
 	/**
 	 * Get WebService Calling
 	 * 
 	 * @param uri
 	 */
-	public Map<String, String> callGetWebServiceByRestTemplate(URI uri) {
+/*	public Map<String, String> callGetWebServiceByRestTemplate(URI uri) {
 		Map<String, String> responseMap = new HashMap<>();
 		HttpHeaders headers = new HttpHeaders();
 		headers.set("Accept", MediaType.APPLICATION_JSON_UTF8_VALUE);
@@ -752,28 +756,41 @@ public class UtilService {
 			statusId = response.getStatusCodeValue();
 			responseMap.put(Constants.RESPONSE_STATUS_KEY, String.valueOf(statusId));
 			responseMap.put(Constants.RESPONSE_KEY, response.getBody());
-			responseMap.put(Constants.RESPONSE_STATUS_KEY, String.valueOf(statusId));
 		} catch (Exception e) {
 			responseMap.put(Constants.RESPONSE_STATUS_KEY, String.valueOf(statusId));
 			logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
 			e.printStackTrace();
 		}
 		return responseMap;
+	}*/
+	
+	
+	public ResponseEntity<String> callGetWebServiceByRestTemplate(URI uri) {
+		ResponseEntity<String> response = new ResponseEntity<>(HttpStatus.NO_CONTENT);
+		HttpHeaders headers = new HttpHeaders();
+		headers.set("Accept", MediaType.APPLICATION_JSON_UTF8_VALUE);
+		try {
+			HttpEntity entity = new HttpEntity<>(headers);
+			RestTemplate restTemplate = customRestTemplate();
+			response = restTemplate.exchange(uri, HttpMethod.GET, entity, String.class);
+		} catch (Exception e) {
+			logger.error(Constants.LOGGER_EXCEPTION_MESSAGE + e);
+			e.printStackTrace();
+		}
+		return response;
 	}
-	
-	 private RestTemplate customRestTemplate(){
-	        HttpComponentsClientHttpRequestFactory httpRequestFactory = new HttpComponentsClientHttpRequestFactory();
-			String timeOutValue = chatBotService.getBotConfigurationByKey(Constants.REQUEST_TIME_OUT_VALUE) == null ? "10000" : chatBotService.getBotConfigurationByKey(Constants.REQUEST_TIME_OUT_VALUE).getValue();
-			int  inttimeOut = Integer.parseInt(timeOutValue);
-	        httpRequestFactory.setConnectionRequestTimeout(inttimeOut);
-	        httpRequestFactory.setConnectTimeout(inttimeOut);
-	        httpRequestFactory.setReadTimeout(inttimeOut);
-	        return new RestTemplate(httpRequestFactory);
-	    }
-	 
-	
-	
-	
+
+	private RestTemplate customRestTemplate() {
+		HttpComponentsClientHttpRequestFactory httpRequestFactory = new HttpComponentsClientHttpRequestFactory();
+		String timeOutValue = chatBotService.getBotConfigurationByKey(Constants.REQUEST_TIME_OUT_VALUE) == null ? "10000"
+				: chatBotService.getBotConfigurationByKey(Constants.REQUEST_TIME_OUT_VALUE).getValue();
+		int inttimeOut = Integer.parseInt(timeOutValue);
+		httpRequestFactory.setConnectionRequestTimeout(inttimeOut);
+		httpRequestFactory.setConnectTimeout(inttimeOut);
+		httpRequestFactory.setReadTimeout(inttimeOut);
+		return new RestTemplate(httpRequestFactory);
+	}
+
 	public MessagePayload changeLanguageResponse(String locale, String senderId) {
 		String text = Constants.EMPTY_STRING;
 		if (locale.contains(Constants.LOCALE_AR)) {
@@ -888,12 +905,12 @@ public class UtilService {
 		}
 		return messagePayloadList;
 	}
-	
+
 	/**
 	 * DashBoard encryption for channel param
 	 * 
 	 */
-	public  String encryptChannelParam(String url)
+	public String encryptChannelParam(String url)
 			throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, UnsupportedEncodingException {
 		BotConfiguration encryptionRaw = chatBotService.getBotConfigurationByKey(Constants.CHANNEL_ENCRYPTION_KEY);
 		String key = encryptionRaw.getValue();
@@ -915,80 +932,87 @@ public class UtilService {
 		String toBeSentParams = strbuf.toString();
 		return toBeSentParams;
 	}
-	
+
 	// DashBoard encryption Utils
-	public  String encryptDPIParam(String url) throws Exception {
+	public String encryptDPIParam(String url) throws Exception {
 		BotConfiguration encryptionRaw = chatBotService.getBotConfigurationByKey(Constants.DPI_ENCRYPTION_KEY);
 		String encryptionKey = encryptionRaw.getValue();
-		logger.debug(Constants.LOGGER_INFO_PREFIX+"Encryption Key "+encryptionKey);
-	           byte[] decryptionKey = new byte[encryptionKey.length()];
-	           for (int i = 0; i < encryptionKey.length(); i++) {
-	                decryptionKey[i] = (byte) encryptionKey.charAt(i);
-	           }
-	        Cipher c = Cipher.getInstance("AES");
-	        SecretKeySpec k = new SecretKeySpec(decryptionKey, "AES");
-	        c.init(Cipher.ENCRYPT_MODE, k);
-	        byte[] utf8 = url.getBytes("UTF8");
-	        byte[] enc = c.doFinal(utf8);
-	        return URLEncoder.encode(DatatypeConverter.printBase64Binary(enc), "UTF-8");
-	    }
-	
-		/*public static String encryptDPIParam(String encryptedString) throws Exception {
-			byte[] decryptionKey = new byte[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
-			Cipher c = Cipher.getInstance("AES");
-			SecretKeySpec k = new SecretKeySpec(decryptionKey, "AES");
-			c.init(Cipher.ENCRYPT_MODE, k);
-			byte[] utf8 = encryptedString.getBytes("UTF8");
-			byte[] enc = c.doFinal(utf8);
-			return URLEncoder.encode(DatatypeConverter.printBase64Binary(enc),"UTF-8");
+		logger.debug(Constants.LOGGER_INFO_PREFIX + "Encryption Key " + encryptionKey);
+		byte[] decryptionKey = new byte[encryptionKey.length()];
+		for (int i = 0; i < encryptionKey.length(); i++) {
+			decryptionKey[i] = (byte) encryptionKey.charAt(i);
 		}
-		*/
-		/**
-		 * URI creation for Get Webservice Calling
-		 * 
-		 */
-		public  URI createURI(BotWebserviceMessage botWebserviceMessage, String senderId, ChatBotService chatBotService, String phoneNumber) {
-			URI uri = null;
-			try {
-				CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
-				String dialNumber = customerProfile.getMsisdn();
-				String realParameter = paramAndParamChannelEncryption(dialNumber);
-				if(botWebserviceMessage.getWsUrl().contains("allowedMoves")) {
-					String [] params=botWebserviceMessage.getListParamName().split(Constants.COMMA_CHAR);
-					String requiredParam ="&"+params[0]+"=&"+params[1]+"=";
-					uri = new URI(botWebserviceMessage.getWsUrl() + "?dial=" + realParameter+requiredParam);
-				}else {
-				uri = new URI(botWebserviceMessage.getWsUrl() + "?dial=" + realParameter);
-				}
-				
-			} catch (URISyntaxException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException | UnsupportedEncodingException e1) {
-				logger.error(Constants.LOGGER_DIAL_IS + phoneNumber + Constants.LOGGER_SENDER_ID + senderId + Constants.LOGGER_EXCEPTION_MESSAGE + e1);
-				e1.printStackTrace();
-			} catch (Exception e) {
-				logger.error(Constants.LOGGER_DIAL_IS + phoneNumber + Constants.LOGGER_SENDER_ID + senderId + Constants.LOGGER_EXCEPTION_MESSAGE + e);
-				e.printStackTrace();
-			}
-			return uri;
-		}
+		Cipher c = Cipher.getInstance("AES");
+		SecretKeySpec k = new SecretKeySpec(decryptionKey, "AES");
+		c.init(Cipher.ENCRYPT_MODE, k);
+		byte[] utf8 = url.getBytes("UTF8");
+		byte[] enc = c.doFinal(utf8);
+		return URLEncoder.encode(DatatypeConverter.printBase64Binary(enc), "UTF-8");
+	}
 
-		/**
-		 * @param senderId
-		 * @param chatBotService
-		 * @return
-		 * @throws Exception
-		 * @throws NoSuchAlgorithmException
-		 * @throws NoSuchPaddingException
-		 * @throws InvalidKeyException
-		 * @throws IllegalBlockSizeException
-		 * @throws BadPaddingException
-		 * @throws UnsupportedEncodingException
-		 */
-		public String paramAndParamChannelEncryption(String dialNumber) throws Exception{
-			long currentTimeInSecond = System.currentTimeMillis()/1000;
-			String param = encryptDPIParam(Constants.URL_TIME_KEY +currentTimeInSecond+Constants.URL_PARAM_MSISDN_KEY + dialNumber+Constants.URL_ETISALAT_VALUE);
-			String paramChannel = encryptChannelParam(Constants.URL_CHANNEL_KEY+Constants.CHANEL_PARAM);
-			return "param:"+param+"&paramChannel:"+paramChannel;
-			
+	/*
+	 * public static String encryptDPIParam(String encryptedString) throws Exception
+	 * { byte[] decryptionKey = new byte[] { '0', '1', '2', '3', '4', '5', '6', '7',
+	 * '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' }; Cipher c =
+	 * Cipher.getInstance("AES"); SecretKeySpec k = new SecretKeySpec(decryptionKey,
+	 * "AES"); c.init(Cipher.ENCRYPT_MODE, k); byte[] utf8 =
+	 * encryptedString.getBytes("UTF8"); byte[] enc = c.doFinal(utf8); return
+	 * URLEncoder.encode(DatatypeConverter.printBase64Binary(enc),"UTF-8"); }
+	 */
+	/**
+	 * URI creation for Get Webservice Calling
+	 * 
+	 */
+	public URI createURI(BotWebserviceMessage botWebserviceMessage, String senderId, ChatBotService chatBotService, String phoneNumber) {
+		URI uri = null;
+		try {
+			CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
+			String dialNumber = customerProfile.getMsisdn();
+			String realParameter = paramAndParamChannelEncryption(dialNumber);
+			if (botWebserviceMessage.getWsUrl().contains("allowedMoves")) {
+				String[] params = botWebserviceMessage.getListParamName().split(Constants.COMMA_CHAR);
+				String requiredParam = "&" + params[0] + "=&" + params[1] + "=";
+				uri = new URI(botWebserviceMessage.getWsUrl() + Constants.URL_DIAL_PARAM_KEY + realParameter + requiredParam);
+			} else {
+				uri = new URI(botWebserviceMessage.getWsUrl() + Constants.URL_DIAL_PARAM_KEY + realParameter);
+			}
+
+		} catch (URISyntaxException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException | UnsupportedEncodingException e1) {
+			logger.error(Constants.LOGGER_DIAL_IS + phoneNumber + Constants.LOGGER_SENDER_ID + senderId + Constants.LOGGER_EXCEPTION_MESSAGE + e1);
+			e1.printStackTrace();
+		} catch (Exception e) {
+			logger.error(Constants.LOGGER_DIAL_IS + phoneNumber + Constants.LOGGER_SENDER_ID + senderId + Constants.LOGGER_EXCEPTION_MESSAGE + e);
+			e.printStackTrace();
 		}
+		return uri;
+	}
+
+	/**
+	 * @param senderId
+	 * @param chatBotService
+	 * @return
+	 * @throws Exception
+	 * @throws NoSuchAlgorithmException
+	 * @throws NoSuchPaddingException
+	 * @throws InvalidKeyException
+	 * @throws IllegalBlockSizeException
+	 * @throws BadPaddingException
+	 * @throws UnsupportedEncodingException
+	 */
+	public String paramAndParamChannelEncryption(String dialNumber) throws Exception {
+		long currentTimeInSecond = System.currentTimeMillis() / 1000;
+		String param = encryptDPIParam(Constants.URL_TIME_KEY + currentTimeInSecond + Constants.URL_PARAM_MSISDN_KEY + dialNumber + Constants.URL_ETISALAT_VALUE);
+		String paramChannel = encryptChannelParam(Constants.URL_CHANNEL_KEY + Constants.CHANEL_PARAM);
+		return "param:" + param + "&paramChannel:" + paramChannel;
+
+	}
+	
+	
+	public String paramAndParamChannelEncryptionForWebView(String dialNumber) throws Exception {
+		long currentTimeInSecond = System.currentTimeMillis() / 1000;
+		String param = encryptDPIParam(Constants.URL_TIME_KEY + currentTimeInSecond + Constants.URL_PARAM_MSISDN_KEY + dialNumber + Constants.URL_ETISALAT_VALUE);
+		String paramChannel = encryptChannelParam(Constants.URL_CHANNEL_KEY + Constants.CHANEL_PARAM);
+		return "param=" + param + "&paramChannel:" + paramChannel;
+	}
 
 }

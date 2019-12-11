@@ -52,11 +52,11 @@ public class PersistentMenuService {
 		List<CallToAction> callToActions = getMasterButtons();
 		logger.debug(Constants.LOGGER_INFO_PREFIX+"Parents buttons list size "+callToActions.size());
 		// supported Local as English Language
-		SupportedLocale enlocal = SupportedLocale.en_US;
+		SupportedLocale arlocal = SupportedLocale.ar_AR;
 		// Optional of call To Action list
 		Optional<List<CallToAction>> otipnalPerBtns = Optional.of(callToActions);
 		// LocalizedPersistentMenu
-		LocalizedPersistentMenu localizedPersistentMenu = LocalizedPersistentMenu.create(enlocal, false, otipnalPerBtns);
+		LocalizedPersistentMenu localizedPersistentMenu = LocalizedPersistentMenu.create(arlocal, false, otipnalPerBtns);
 		logger.debug(Constants.LOGGER_INFO_PREFIX+"Localization creation ");
 		final PersistentMenu persistentMenu = PersistentMenu.create(false, otipnalPerBtns, localizedPersistentMenu);
 		Optional<PersistentMenu> persistentMenus = Optional.of(persistentMenu);
@@ -66,8 +66,8 @@ public class PersistentMenuService {
 		StartButton startButton = StartButton.create(startBtn.getButtonPayload());
 		Optional<StartButton> opStartButton = Optional.of(startButton);
 		// Greeting Section
-		String greetingMessage = startBtn.getBotText().getEnglishText();
-		LocalizedGreeting localizedGreeting = LocalizedGreeting.create(enlocal, greetingMessage);
+		String greetingMessage = startBtn.getBotText().getArabicText();
+		LocalizedGreeting localizedGreeting = LocalizedGreeting.create(arlocal, greetingMessage);
 		Greeting greeting = Greeting.create(Constants.EMPTY_STRING,  localizedGreeting );
 		Optional<Greeting> optionalGreeting = Optional.of(greeting);
 		logger.debug(Constants.LOGGER_INFO_PREFIX+"Create Messenger Setting ");
@@ -90,12 +90,12 @@ public class PersistentMenuService {
 				} catch (MalformedURLException e) {
 					logger.error(e.getMessage());
 				}
-				UrlCallToAction urlCallToAction = UrlCallToAction.create(realButton.getBotText().getEnglishText(), url, Optional.of(WebviewHeightRatio.FULL), empty(), empty(),
+				UrlCallToAction urlCallToAction = UrlCallToAction.create(realButton.getBotText().getArabicText(), url, Optional.of(WebviewHeightRatio.FULL), empty(), empty(),
 						Optional.of(WebviewShareButtonState.HIDE));
 				callToActions.add(urlCallToAction);
 				// PostBack
 			} else if (realButton.getButtonType().getId() == Utils.ButtonTypeEnum.POSTBACK.getValue()) {
-				String title = realButton.getBotText().getEnglishText();
+				String title = realButton.getBotText().getArabicText();
 				String payLoad = realButton.getButtonPayload();
 				PostbackCallToAction postbackCallToAction = PostbackCallToAction.create(title, payLoad);
 				callToActions.add(postbackCallToAction);
@@ -118,12 +118,12 @@ public class PersistentMenuService {
 			}
 			BotButton button = subButton.getButton();
 			if (subButton.getButton().getButtonType().getId() == Utils.ButtonTypeEnum.POSTBACK.getValue()) {
-				String title = button.getBotText().getEnglishText();
+				String title = button.getBotText().getArabicText();
 				String payload = button.getButtonPayload();
 				PostbackCallToAction postBackButton = PostbackCallToAction.create(title, payload);
 				subNestedButton.add(postBackButton);
 			} else if (subButton.getButton().getButtonType().getId() == Utils.ButtonTypeEnum.URL.getValue()) {
-				String title = button.getBotText().getEnglishText();
+				String title = button.getBotText().getArabicText();
 				String url = button.getButtonUrl();
 				try {
 					UrlCallToAction urlCallToAction = UrlCallToAction.create(title, new URL(url));
@@ -133,7 +133,7 @@ public class PersistentMenuService {
 				}
 			}
 		}
-		String title = perButton.getButton().getBotText().getEnglishText();
+		String title = perButton.getButton().getBotText().getArabicText();
 		return NestedCallToAction.create(title, subNestedButton);
 	}
 

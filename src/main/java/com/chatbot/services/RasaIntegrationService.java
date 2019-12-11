@@ -70,7 +70,8 @@ public class RasaIntegrationService {
 	private ChatBotService chatBotService;
 	@Autowired
 	private InteractionLoggingRepo interactionLoggingRepo;
-
+	
+	
 
 	private static final Logger logger = LoggerFactory.getLogger(RasaIntegrationService.class);
 
@@ -91,10 +92,10 @@ public class RasaIntegrationService {
 	
 	// Rasa response handling
 	private void rasaResponseHandling(JSONObject jsonResponse , Messenger messenger ,String senderId) {
+		if(jsonResponse.has(Constants.RASA_RESPONSE_ARRAY_KEY) && jsonResponse.getJSONArray(Constants.RASA_RESPONSE_ARRAY_KEY).length() > 0) {
 		JSONArray botResponses = jsonResponse.getJSONArray(Constants.RASA_RESPONSE_ARRAY_KEY);
 		CustomerProfile customerProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 		UserSelection userSelections = utilService.getUserSelectionsFromCache(senderId);
-		if(botResponses.length() > 0) { 
 		for (int i = 0; i < botResponses.length(); i++) {
 			JSONObject object = botResponses.getJSONObject(i);
 			if (object.keySet().contains(Constants.RASA_RESPONSE_TEXT_KEY)) {
@@ -200,8 +201,8 @@ public class RasaIntegrationService {
 		MessagePayload payload = MessagePayload.create(senderId, MessagingType.RESPONSE, textMessage);
 		try {
 			Utils.markAsTypingOn(messenger, senderId);
-			messenger.send(payload);
 			Utils.markAsTypingOff(messenger, senderId);
+			messenger.send(payload);
 		} catch (MessengerApiException | MessengerIOException e) {
 			e.printStackTrace();
 		}
@@ -266,17 +267,21 @@ public class RasaIntegrationService {
 	public JSONObject rasaIntegration(String url, String payload, String paramKey) {
 		RestTemplate restTemplate = new RestTemplate();
 		HttpHeaders headers = new HttpHeaders();
+		JSONObject jResonse = new JSONObject();
 		headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
 		Map<String,String> requestBody = new HashMap<>();
 		requestBody.put(paramKey, payload);
+		try {
 		HttpEntity<Map<String,String>> request = new HttpEntity<>(requestBody);
 		logger.debug(Constants.LOGGER_INFO_PREFIX+"Rasa WS request's body is  "+requestBody);
 		ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, request, String.class);
 		logger.debug(Constants.LOGGER_INFO_PREFIX+"Rasa WS response is "+ response.getBody());
-		if (response.getStatusCodeValue() != 200) {
-			return new JSONObject();
+		jResonse = new JSONObject(response.getBody());
+		return jResonse;
+		}catch (Exception e) {
+			e.printStackTrace();
 		}
-		return new JSONObject(response.getBody());
+		return jResonse;
 	}
 	
 }

@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 
 import com.chatbot.entity.BotButton;
 import com.chatbot.entity.BotInteraction;
@@ -119,6 +120,7 @@ public class Utils {
 	 * @param botInteraction
 	 * @param chatBotService
 	 */
+	//@Async
 	public static InteractionLogging interactionLogginghandling(CustomerProfile customerProfile, BotInteraction botInteraction, ChatBotService chatBotService) {
 		Date date = new Date();
 		Timestamp timeStamp = new Timestamp(date.getTime());
@@ -177,6 +179,7 @@ public class Utils {
 	 * @param firstName
 	 * @param lastName
 	 */
+	//@Async
 	public static CustomerProfile saveCustomerInformation(ChatBotService chatBotService, String senderId, String userLocale, String firstName, String lastName) {
 		CustomerProfile cProfile = chatBotService.getCustomerProfileBySenderId(senderId);
 		if (cProfile == null) {
@@ -271,11 +274,10 @@ public class Utils {
 	 * @param chatBotService
 	 */
 	public static CustomerLinkingDial setLinkedDial(CustomerProfile customerProfile, ChatBotService chatBotService) {
-
 		CustomerLinkingDial customerLinkingDial = new CustomerLinkingDial();
 		Date linkingDate = new Date();
 		Timestamp timestamp = new Timestamp(linkingDate.getTime());
-		customerLinkingDial.setUnlinkingDate(timestamp);
+		customerLinkingDial.setUnlinkingDate(null);
 		customerLinkingDial.setLinkingDate(timestamp);
 		customerLinkingDial.setDial(customerProfile.getMsisdn());
 		customerLinkingDial.setCustomerProfile(customerProfile);
@@ -298,6 +300,7 @@ public class Utils {
 		newCustomerLinkingDial.setDial(storedObject.getDial());
 		newCustomerLinkingDial.setLinkingDate(storedObject.getLinkingDate());
 		newCustomerLinkingDial.setUnlinkingDate(unLinkingTime);
+		chatBotService.saveCustomerLinkingDial(newCustomerLinkingDial);
 		}
 		
 	}
@@ -364,9 +367,9 @@ public class Utils {
 
 	public static String informUserThatHeDoesnotSubscribeAtAnyMIBundle(String locale) {
 		if (locale.contains(Constants.LOCALE_AR)) {
-			return "نأسف أنت غير مشترك بأي من باقات الأنترنت .سوف نتأكد من الباقات المتاحة لرقمك";
+			return "نأسف أنت غير مشترك بأي من  اي باقات اضافية";
 		}
-		return "Sorry ,You are not subscribe to any MI Bundle. We will check available MI bundles for your number";
+		return "Sorry ,You are not subscribe to any Addons.";
 	}
 
 	public static UserProfile getUserProfile(String senderId, Messenger messenger) {

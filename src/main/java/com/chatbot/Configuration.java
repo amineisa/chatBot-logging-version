@@ -39,12 +39,6 @@ public class Configuration {
 	private ChatBotService chatBotService;
 	@Autowired
 	private PersistentMenuService persistentMenuService;
-	/*@Autowired
-	private CacheHelper<Object, Object> configurationCache;*/
-	
-	
-	/*@Autowired
-	private BotConfigurationRepo botConfigurationRepo;*/
 	
 	private static final Logger logger = LoggerFactory.getLogger(Configuration.class);
 	
@@ -53,7 +47,6 @@ public class Configuration {
 	Map<String, Messenger> messengersObjectsMap() {
 		Map<String, Messenger> messengersObjectsMap = new HashMap<>();
 		Map<String, String> configCacheObject = cofigurationMap();
-				//(Map<String, String>) configurationCache.getCachedValue(Constants.CONFIGURATION_CACHE_KEY);
 		List<String> pagesIds = Arrays.asList(configCacheObject.get("PAGES_IDS").split(","));
 		for (String pageId : pagesIds) {
 			String appSecret = configCacheObject.get(pageId + "_" + Constants.CONFIGURATION_TABLE_APP_SECRET);
@@ -102,23 +95,12 @@ public class Configuration {
 		cfg.getNetworkConfig().getJoin().getTcpIpConfig().addMember(secondServerIp).setEnabled(true);
 		cfg.setInstanceName(Constants.HAZEL_OBJECT_NAME);
 		logger.info("Hazelcast Shiro session persistence initialized.");
-		//return Hazelcast.getOrCreateHazelcastInstance(cfg).getMap(Constants.USER_SELECTION_MAP_KEY);
+		//	return Hazelcast.getOrCreateHazelcastInstance(cfg).getMap(Constants.USER_SELECTION_MAP_KEY);
 		return Hazelcast.newHazelcastInstance(cfg).getMap(Constants.USER_SELECTION_MAP_KEY);
 
 	}
 
-	/*@Bean
-	public CacheHelper<Object, Object> configurationCache() {
-		Map<String, String> configurationsMap = new HashMap<>();
-		CacheHelper<Object, Object> configurationCache = new CacheHelper<>("configuration");
-		List<BotConfiguration> botConfigurations = chatBotService.getBotAllConfiguration();
-		for (BotConfiguration botConfiguration : botConfigurations) {
-			configurationsMap.put(botConfiguration.getKey(), botConfiguration.getValue());
-		}
-		configurationCache.addToCentralCache(Constants.CONFIGURATION_CACHE_KEY, configurationsMap);
-		return configurationCache;
-	}
-*/
+
     @Bean
     public Map<String , String> cofigurationMap(){
     	List<BotConfiguration> botConfigurations = chatBotService.getBotAllConfiguration();

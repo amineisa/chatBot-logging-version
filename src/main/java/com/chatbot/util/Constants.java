@@ -39,6 +39,7 @@ public class Constants {
 	public static final String PAYLOAD_RATEPLAN_AND_CONNECT = "view rateplan and connect details";
 	public static final String PAYLOAD_VIEW_ROOT_CONNECT_DETAILS = "view root connect details";
 	public static final String PAYLOAD_RATEPLAN_DETAILS = "rateplan details";
+	public static final String PAYLOAD_FULL_INTERNET = "Full Internet actions";
 	public static final String PAYLOAD_CONSUMPTION = "consumption";
 	public static final String PAYLOAD_RELATED_PRODUCT_SUBSCRIPTION_CONFIRM = "mi_yes_subscripe_related_product";
 	public static final String PAYLOAD_VIEW_MOBILEINTERNET_SUBSCRIPTION = "view mobile internet subscribe";
@@ -80,7 +81,7 @@ public class Constants {
 	public static final String LOGGER_SERVER_RESPONSE = " Response retrieved from server";
 	public static final String LOGGER_MOBILE_INTERENET_CONSUMPTION = "Mobile Internet Consumption ";
 	public static final String LOGGER_RATEPLAN_CONSUMPTION = "RatePlan Consumption ";
-	public static final String LOGGER_SERVICE_URL = "Service URL ";
+	public static final String LOGGER_SERVICE_URL = " Service URL ";
 	public static final String LOGGER_BOT_PREFIX="Bot logging {} message ";
 	public static final String ELEMENT_PHOTO_EXTENSTION = ".png?version=1";
 	// json response keys
@@ -146,8 +147,8 @@ public class Constants {
 	public static final String URL_PAY_BILL_AND_RECHARGE_CHANEL = "&URL=facebook";
 	public static final String URL_USER_AND_TIME_KEY = "time=1498033943505&user=";
 	public static final String URL_WARNING_IMAGE = "warning.png?version=1";
-	public static final String URL_LOCALE_AR = "ar&param=";
-	public static final String URL_LOCALE_EN = "en&param=";
+	public static final String URL_LOCALE_AR = "ar&";
+	public static final String URL_LOCALE_EN = "en&";
 	public static final String MOBILE_INTERNET_CONSUMPTION_NAME_EN = "Mobile Internet";
 	public static final String MOBILE_INTERNET_CONSUMPTION_NAME_AR = "موبايل انترنت";
 	public static final String OPERATION_NAME_RENEW = ",RENEW";
@@ -224,6 +225,7 @@ public class Constants {
 	public static final String NOT_ELIGIBLE_RATEPLAN_SUBTITLE_AR ="NOT_ELIGIBLE_RP_AR";
 	public static final String UPDATE_PERSISTENCE_MENU_KEY = "UPDATE_PERSISTENCE_MENU";
 	public static final String AUDIO_API_URL = "AUDIO_API_URL";
+	public static final String URL_DIAL_PARAM_KEY="?dial=";
 	public static final String PALOAD_SALLEFNY = "Salefny";
 	public static final String SALLEFNY_BUTTON_LABEL_AR = "سلفني";
 	public static final String SALLEFNY_BUTTON_LABEL_EN = "Sallefny";
@@ -292,6 +294,11 @@ public class Constants {
 	public static final String EMERALD_DETAILS_KEY = "details";
 	public static final String DISTRIBUTE_AFTER_TRANSFER = "distbuteAfterTrans";
 	public static final String EMERALD_ASK_ABOUT_AMOUT_FOR_TRANSFER = "TRANSFER_AMOUNT,";
+	public static final String AR_FAULT_MSG = "هذة الخدمة غير متاحة الان  😔";
+	public static final String EN_FAULT_MSG = "Sorry, This service is not available now 😔";
+	public static final String DISTRIBUTE_OPERATION = "DISTRIBUTE_OPERATION";
+	public static final String TRANSFER_OPERATION = "TRANSFER_OPERATION";
+	
 	
 	
 }
