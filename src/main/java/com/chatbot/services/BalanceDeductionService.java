@@ -25,9 +25,6 @@ import com.chatbot.util.Constants;
 @Service
 public class BalanceDeductionService {
 	
-	
-
-	
 	private static final Logger logger = LoggerFactory.getLogger(BalanceDeductionService.class);
 	
 	

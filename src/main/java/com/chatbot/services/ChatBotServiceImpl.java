@@ -256,6 +256,10 @@ public class ChatBotServiceImpl implements ChatBotService {
 	public List<BotButton> findAllButtonsByPayload(String payload) {
 		return botButtonRepo.findByButtonPayload(payload);
 	}
+
+	
+	
+	
 	
 
 }

@@ -114,13 +114,13 @@ public class AkwaKartService {
 		Map<String,String> values = new HashMap<>();
 		if(userLocale.contains(Constants.LOCALE_AR)) {
 		values.put(Constants.RESPONSE_MAP_TITLE_KEY, product.getString(Constants.AKWAKART_PRODUCT_AR_NAME));
-		values.put(Constants.RESPONSE_MAP_SUBTITLE_KEY ,product.getString(Constants.AKWAKART_PRODUCT_AR_DESCRITION));
+		values.put(Constants.RESPONSE_MAP_SUBTITLE_KEY ,product.getString(Constants.JSON_PRODUCT_AR_NAME));
 		values.put(Constants.RESPONSE_MAP_LABEL_KEY, Constants.BUTTON_LABEL_SUBSCRIBE_AR);
 		return values;
 	}else {
-		values.put(Constants.RESPONSE_MAP_TITLE_KEY, product.getString(Constants.AKWAKART_PRODUCT_EN_NAME));
+		values.put(Constants.RESPONSE_MAP_TITLE_KEY, product.getString(Constants.JSON_PRODUCT_EN_NAME));
 		values.put(Constants.RESPONSE_MAP_SUBTITLE_KEY ,product.getString(Constants.AKWAKART_PRODUCT_EN_DESCRITION));
-		values.put(Constants.RESPONSE_MAP_LABEL_KEY, Constants.BUTTON_LABEL_BACK_SUBSCRIBE_EN);
+		values.put(Constants.RESPONSE_MAP_LABEL_KEY, Constants.BUTTON_LABEL_SUBSCRIBE_EN);
 		return values;
 	}
 	}

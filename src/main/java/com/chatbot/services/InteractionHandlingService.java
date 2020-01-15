@@ -79,6 +79,8 @@ public class InteractionHandlingService {
 	private EmeraldService emeraldService;
 	@Autowired
 	private BusinessErrorService businessErrorService;
+	@Autowired
+	private HarleyService harelyService;
 
 	private static CacheHelper<String, Object> wsResponseCache = new CacheHelper<>("usersResponses");
 
@@ -96,22 +98,44 @@ public class InteractionHandlingService {
 	private String payloadSetting(String payload, String senderId) {
 		UserSelection userSelections = utilService.getUserSelectionsFromCache(senderId);
 		if (payload.startsWith(Constants.PREFIX_ADDONSUBSCRIPE)) {// addonId
-			userSelections.setAddonId(payload.substring(9, payload.length()) + Constants.COMMA_CHAR + "ACTIVATE");
+			userSelections.setAddonId(payload.substring(9, payload.length()) + Constants.COMMA_CHAR + Constants.ACTIVATE_OPERATION);
 			payload = Constants.PAYLOAD_ADDON_SUBSCRIPTION;
 			utilService.updateUserSelectionsInCache(senderId, userSelections);
-		}
-		else if(payload.equalsIgnoreCase(Constants.EMERALD_TRANSFER_AND_DISTRIBUTE_PRODUCTS_PAYLOAD)) {
+		} else if(payload.startsWith(Constants.EMERALD_ADDON_SUBMIT_ORDER)){
+			userSelections.setEmearldAddonId(payload.split(Constants.COMMA_CHAR)[1]);
+			utilService.updateUserSelectionsInCache(senderId, userSelections);
+			payload = Constants.EMERALD_ADDON_SUBMIT_ORDER;
+		}else if (payload.contains(Constants.EMERALD_ADDON_CATEGORY_PREFEX)) {
+			userSelections.setEmearldAddonCategoryId(payload.split(Constants.COMMA_CHAR)[1]);
+			utilService.updateUserSelectionsInCache(senderId, userSelections);
+			payload = Constants.EMERALD_ADDON_CATEGORY_PREFEX;
+		} else if (payload.contains(Constants.FREE_ETISALAT_SERVICES)) {// Free Service
+			userSelections.setFreeServiceName(payload.split(Constants.COMMA_CHAR)[1]);
+			utilService.updateUserSelectionsInCache(senderId, userSelections);
+			payload = payload.split(Constants.COMMA_CHAR)[0];
+		} else if (payload.equalsIgnoreCase(Constants.PAYLOAD_HARLEY_ADD_FAF_RENEWAL_MODE_ON_DEMAND) || payload.equalsIgnoreCase(Constants.PAYLOAD_HARLEY_ADD_FAF_RENEWAL_MODE_MONTHLY)) {// Harley Add																																										// Mode
+			userSelections.setHarleyFafNumbRenewelMode(payload);
+			utilService.updateUserSelectionsInCache(senderId, userSelections);
+			payload = Constants.PAYLOAD_HARLEY_ADD_FAF_NUMBER_INSERT_DIAL;
+		} else if (payload.startsWith(Constants.HARLEY_ADDON_PRODUCT_PREFEX)) {// Harley Addon ID
+			userSelections.setHarleyProductName(payload.split(Constants.COMMA_CHAR)[1]);
+			utilService.updateUserSelectionsInCache(senderId, userSelections);
+			payload = Constants.HARLEY_ADDON_PRODUCT_PREFEX;
+		} else if (payload.contains(Constants.HARLEY_ADDON_CATEGORY_PREFEX)) {// Harley Addon Category
+			userSelections.setHarleyAddonCategory(payload.split(Constants.COMMA_CHAR)[1]);
+			utilService.updateUserSelectionsInCache(senderId, userSelections);
+			payload = Constants.HARLEY_ADDON_CATEGORY_PREFEX;
+		} else if (payload.equalsIgnoreCase(Constants.EMERALD_TRANSFER_AND_DISTRIBUTE_PRODUCTS_PAYLOAD)) { // Emerald Transfer Products
 			userSelections.setCurrentOperation(Constants.DISTRIBUTE_OPERATION);
 			utilService.updateUserSelectionsInCache(senderId, userSelections);
-		}else if(payload.equalsIgnoreCase(Constants.EMERALD_CHILD_TRANSFER_FROM_PAYLOAD)) {
+		} else if (payload.equalsIgnoreCase(Constants.EMERALD_CHILD_TRANSFER_FROM_PAYLOAD)) {
 			userSelections.setCurrentOperation(Constants.TRANSFER_OPERATION);
 			utilService.updateUserSelectionsInCache(senderId, userSelections);
-		}else if (payload.startsWith(Constants.PREFIX_RATEPLAN_SUBSCRIPTION)) {// productIdAndOperationName
+		} else if (payload.startsWith(Constants.PREFIX_RATEPLAN_SUBSCRIPTION)) {// productIdAndOperationName
 			userSelections.setProductIdAndOperationName(payload.substring(4, payload.length()));
 			utilService.updateUserSelectionsInCache(senderId, userSelections);
 			payload = payload.substring(0, 4);
 		} else if (payload.startsWith(Constants.EMERALD_ASK_ABOUT_AMOUT_FOR_DISTRIBUTION)) {
-			// userSelections.setProductIdAndOperationName(payload.split(Constants.COMMA_CHAR)[1]);
 			userSelections.setEmeraldDialForDistribute(payload.split(Constants.COMMA_CHAR)[1]);
 			utilService.updateUserSelectionsInCache(senderId, userSelections);
 			payload = Constants.EMERALD_ASK_ABOUT_AMOUT_FOR_DISTRIBUTION;
@@ -207,7 +231,6 @@ public class InteractionHandlingService {
 			userSelections.setAkwaKartCategoryName(payload);
 			utilService.updateUserSelectionsInCache(senderId, userSelections);
 			payload = "recharge now";
-			// Constants.PAYLOAD_RECHARGE;
 		} else if (payload.startsWith(Constants.PAYLOAD_RREFIX_TESLA)) {
 			userSelections.setAkwakartProductName(payload);
 			utilService.updateUserSelectionsInCache(senderId, userSelections);
@@ -231,8 +254,8 @@ public class InteractionHandlingService {
 	public void handlePayload(String payload, Messenger messenger, String senderId) {
 		UserProfile userProfile = Utils.getUserProfile(senderId, messenger);
 		String userFirstName = userProfile.firstName() == null ? Constants.EMPTY_STRING : userProfile.firstName();
-		String lastName = /* userProfile.lastName() == null ? Constants.EMPTY_STRING : */ userProfile.lastName();
-		String userLocale = /* userProfile.locale() == null ? Constants.LOCALE_EN : */ userProfile.locale();
+		String lastName = userProfile.lastName() == null ? Constants.EMPTY_STRING : userProfile.lastName();
+		String userLocale = userProfile.locale() == null ? Constants.LOCALE_EN : userProfile.locale();
 		CustomerProfile customerProfile = Utils.saveCustomerInformation(chatBotService, senderId, userLocale, userFirstName, lastName);
 		Utils.markAsSeen(messenger, senderId);
 		Utils.markAsTypingOn(messenger, senderId);
@@ -245,7 +268,6 @@ public class InteractionHandlingService {
 			callSecondryHandover(senderId, phoneNumber, messenger);
 		} else {
 			payload = payloadSetting(payload, senderId);
-			//userLocale = customerProfile.getLocale() == null ? Constants.LOCALE_AR : customerProfile.getLocale();
 			logger.debug(Constants.LOGGER_INFO_PREFIX + "Handle payload for customer " + customerProfile.toString());
 			try {
 				ArrayList<MessagePayload> messagePayloadList = new ArrayList<>();
@@ -277,8 +299,8 @@ public class InteractionHandlingService {
 						}
 					} else if (payload.equals(Constants.PAYLOAD_MIGRATE_MORE)) {// Rateplan Migration in case retrieved rateplans more than 10
 						BotInteraction interaction = chatBotService.findInteractionByPayload(Constants.PAYLOAD_MIGRATE_MORE);
-						Utils.interactionLogginghandling(customerProfile, interaction, chatBotService);
-						migrationInCaseMorethanTenRateplans(senderId, messenger, customerProfile);
+						InteractionLogging interactionLogging = Utils.interactionLogginghandling(customerProfile, interaction, chatBotService);
+						migrationInCaseMorethanTenRateplans(senderId, messenger, customerProfile, interactionLogging);
 					} else { // All Other Normal Interactions flow.
 						InteractionLogging interactionLogging = Utils.interactionLogginghandling(customerProfile, botInteraction, chatBotService);
 						String phoneNumber = customerProfile.getMsisdn() != null ? customerProfile.getMsisdn() : Constants.EMPTY_STRING;
@@ -327,7 +349,6 @@ public class InteractionHandlingService {
 			sendMultipleMessages(messagePayloadList, senderId, messenger, interactionLogging);
 		} else {
 			businessErrorService.handleFaultMessage(customerProfile.getLocale(), senderId, messagePayloadList);
-			// handlePayload(Constants.PAYLOAD_FAULT_MSG, messenger, senderId);
 		}
 		String parentPayLoad = getParentPayloadValueFromCache(senderId, payload);
 		if (parentPayLoad.length() > 0) {
@@ -396,12 +417,12 @@ public class InteractionHandlingService {
 	 * @param messenger
 	 * @param customerProfile
 	 */
-	private void migrationInCaseMorethanTenRateplans(String senderId, Messenger messenger, CustomerProfile customerProfile) {
+	private void migrationInCaseMorethanTenRateplans(String senderId, Messenger messenger, CustomerProfile customerProfile, InteractionLogging interactionLogging) {
 		ArrayList<MessagePayload> messagePayloadList = new ArrayList<>();
 		Template template = migrationService.displayMigrationRatePlans(customerProfile.getMsisdn(), customerProfile.getLocale(), new JSONArray());
 		MessagePayload messagePayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(template));
 		messagePayloadList.add(messagePayload);
-		sendMultipleMessages(messagePayloadList, senderId, messenger, null);
+		sendMultipleMessages(messagePayloadList, senderId, messenger, interactionLogging);
 	}
 
 	/**
@@ -429,7 +450,7 @@ public class InteractionHandlingService {
 		} else {
 			if (botWebserviceMessage.getBotMethodType().getMethodTypeId() == 1) {// GET
 				isGetCall = true;
-				mResponseEntity = getWebServiceHandling(payload, botInteractionMessage, customerProfile);
+				mResponseEntity = getWebServiceHandling(botInteractionMessage, customerProfile);
 				logger.debug(Constants.LOGGER_INFO_PREFIX + "Get WS Call Response Status " + mResponseEntity.getStatusCodeValue());
 			} else if (botWebserviceMessage.getBotMethodType().getMethodTypeId() == 2) {// POST
 				mapResponse = postWebServiceRequestBodyCreationAndCalling(payload, messenger, senderId, botWebserviceMessage);
@@ -447,22 +468,7 @@ public class InteractionHandlingService {
 			} else {
 				businessErrorService.handleFaultMessage(customerProfile.getLocale(), senderId, messagePayloadList);
 			}
-		}		
-		/*
-		 * if (mResponseEntity.getStatusCode().equals(HttpStatus.OK) ||
-		 * (mapResponse.keySet() != null &&
-		 * mapResponse.get(Constants.RESPONSE_STATUS_KEY).equals("200"))) { response =
-		 * botWebserviceMessage.getBotMethodType().getMethodTypeId() == 1 ?
-		 * mResponseEntity.getBody() : mapResponse.get(Constants.RESPONSE_KEY);
-		 * logger.debug(Constants.LOGGER_INFO_PREFIX + "WS Response is " + response); if
-		 * (payload.equalsIgnoreCase(Constants.PAYLOAD_POSTPAID_DIAL)) {
-		 * wsSuccessStatusHandling(payload, messagePayloadList, senderId,
-		 * mResponseEntity); } else { templatesTypeHandling(customerProfile, payload,
-		 * messenger, messagePayloadList, senderId, botWebserviceMessage, response); } }
-		 * else { businessErrorService.handleFaultMessage(customerProfile.getLocale(),
-		 * senderId, messagePayloadList); }
-		 */
-	
+		}
 
 	}
 
@@ -485,28 +491,21 @@ public class InteractionHandlingService {
 		String text = Constants.EMPTY_STRING;
 		MessagePayload messagePayload = null;
 		logger.debug(Constants.LOGGER_DIAL_IS + userDial + " Method Name is Static Scenario Message is " + botInteractionMessage.toString());
-		// text message
-		if (messageTypeId == Utils.MessageTypeEnum.TEXTMESSAGE.getValue()) {
+		if (messageTypeId == Utils.MessageTypeEnum.TEXTMESSAGE.getValue()) {// text message
 			BotTextMessage botTextMessage = chatBotService.findTextMessageByMessageId(messageId);
 			text = utilService.getTextValueForBotTextMessage(botTextMessage, locale, userFirstName, userDial);
 			messagePayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TextMessage.create(text));
-
-		}
-		// quick reply
-		else if (messageTypeId == Utils.MessageTypeEnum.QUICKREPLYMESSAGE.getValue()) {
+		}else if (messageTypeId == Utils.MessageTypeEnum.QUICKREPLYMESSAGE.getValue()) {// quick reply
 			BotQuickReplyMessage botQuickReplyMessage = chatBotService.findQuickReplyMessageByMessageId(messageId);
 			text = quickReplyService.getTextForQuickReply(locale, botQuickReplyMessage, userFirstName, userDial);
 			List<QuickReply> quickReplies = quickReplyService.createQuickReply(messageId, locale, chatBotService);
 			Optional<List<QuickReply>> quickRepliesOp = Optional.of(quickReplies);
 			messagePayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TextMessage.create(text, quickRepliesOp, empty()));
-		}
-		// generic template
-		else if (messageTypeId == Utils.MessageTypeEnum.GENERICTEMPLATEMESSAGE.getValue()) {
+		}else if (messageTypeId == Utils.MessageTypeEnum.GENERICTEMPLATEMESSAGE.getValue()) {// generic template
 			Template template = genericTemplateService.createGenericTemplate(messageId, chatBotService, customerProfile, new BotWebserviceMessage(), new JSONObject(), new ArrayList<String>(),
 					payload);
 			messagePayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(template));
-			// ButtonTemplate
-		} else if (messageTypeId == Utils.MessageTypeEnum.ButtonTemplate.getValue()) {
+		} else if (messageTypeId == Utils.MessageTypeEnum.ButtonTemplate.getValue()) {// ButtonTemplate
 			ButtonTemplate buttonTemplate = utilService.createButtonTemplateInScenario(botInteractionMessage, locale, userDial);
 			messagePayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(buttonTemplate));
 		}
@@ -556,10 +555,10 @@ public class InteractionHandlingService {
 					utilService.updateUserSelectionsInCache(senderId, userSelections);
 					handlePayload(Constants.PAYLOAD_RATEPLAN_WITHOUT_METER, messenger, senderId);
 				} else {
-					genericTemplateHandling(customerProfile, payload, messenger, messagePayloadList, messageId, botWebserviceMessage, response);
+					genericTemplateHandling(customerProfile, payload, messenger, messagePayloadList, botWebserviceMessage, response);
 				}
 			} else {
-				genericTemplateHandling(customerProfile, payload, messenger, messagePayloadList, messageId, botWebserviceMessage, response);
+				genericTemplateHandling(customerProfile, payload, messenger, messagePayloadList, botWebserviceMessage, response);
 
 			}
 		}
@@ -578,8 +577,8 @@ public class InteractionHandlingService {
 	 * @param response
 	 */
 
-	public void genericTemplateHandling(CustomerProfile customerProfile, String payload, Messenger messenger, ArrayList<MessagePayload> messagePayloadList, Long messageId,
-			BotWebserviceMessage botWebserviceMessage, String response) {
+	public void genericTemplateHandling(CustomerProfile customerProfile, String payload, Messenger messenger, ArrayList<MessagePayload> messagePayloadList, BotWebserviceMessage botWebserviceMessage,
+			String response) {
 		if (botWebserviceMessage.getOutType().getInOutTypeId() == 1) {// string
 		} else if (botWebserviceMessage.getOutType().getInOutTypeId() == 2 && response.startsWith("{")) { // Object
 			genericTemplateService.generictemplateWithJsonObject(payload, response, messagePayloadList, customerProfile, messenger, botWebserviceMessage);
@@ -637,17 +636,6 @@ public class InteractionHandlingService {
 		}
 	}
 
-	public void takeThreadControl(final String senderId, Messenger messenger) {
-		logger.debug(Constants.LOGGER_INFO_PREFIX + " Take thread control from page inbox");
-		HandoverPayload handoverPayload = HandoverPayload.create(senderId, HandoverAction.take_thread_control, "", "information");
-		try {
-			messenger.handover(handoverPayload);
-		} catch (MessengerApiException | MessengerIOException io) {
-			logger.error(Constants.LOGGER_DIAL_IS + "callSecondryHandover" + Constants.LOGGER_SENDER_ID + senderId + Constants.LOGGER_EXCEPTION_MESSAGE + io);
-			io.printStackTrace();
-		}
-	}
-
 	/**
 	 * @param payload
 	 * @param messenger
@@ -672,12 +660,27 @@ public class InteractionHandlingService {
 			}
 			jsonParam = utilService.setRequestBodyValueForPostCalling(paramValuesList, paramNames);
 			logger.debug(Constants.LOGGER_INFO_PREFIX + " Post WS body values {} " + jsonParam);
+		} else if (payload.equalsIgnoreCase(Constants.PAYLOAD_HARLEY_ADD_FAF_NUM_SUBMIT_ORDER)) {
+			jsonParam = harelyService.setAddFafNumRequestBodyValue(paramNames, userSelections, senderId);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + " Harley Add FAF Number WS body values {} " + jsonParam);
+		} else if(payload.equalsIgnoreCase(Constants.EMERALD_ADDON_SUBMIT_ORDER)){
+			jsonParam = emeraldService.setBuyAddonRequestBodyValue(paramNames, userSelections);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + " Emerald Buy Addon WS Body {} "+jsonParam);
+		}else if (payload.equalsIgnoreCase(Constants.FREE_ETISALAT_SERVICES)) {
+			jsonParam = harelyService.setSubscribeFreeServicesRequestBody(userSelections);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Harley Free Service Submit Order WS Body {} " + jsonParam);
+		} else if (payload.equalsIgnoreCase(Constants.PAYLOAD_HARLEY_BUNDLE_RENEW)) {
+			jsonParam = harelyService.setRenewBundleRequestBodyValue(paramNames);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + " Harley Renew Bundle  Submit Order Request body {} " + jsonParam);
+		} else if (payload.equalsIgnoreCase(Constants.HARLEY_ADDON_PRODUCT_PREFEX)) {
+			jsonParam = harelyService.setBuyAddonRequestBodyValue(paramNames, userSelections);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + " Harley Buy Addon Submit Order Request body {} " + jsonParam);
 		} else if (payload.equals(Constants.PAYLOAD_BALANCE_DEDUCTION)) {
 			jsonParam = balanceDeductionService.setRequestBody();
-			logger.debug(Constants.LOGGER_INFO_PREFIX + "Balance deduction request body {} " + jsonParam);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Balance Deduction Request body {} " + jsonParam);
 		} else if (payload.equalsIgnoreCase(Constants.EMERALD_REMOVE_CHILD_MEMBER)) {
 			jsonParam = emeraldService.removeChildRequestBody(userSelections);
-			logger.debug(Constants.LOGGER_INFO_PREFIX + "Emerald remove child request body {} " + jsonParam);
+			logger.debug(Constants.LOGGER_INFO_PREFIX + "Emerald Remove Child Request body {} " + jsonParam);
 		} else if (payload.equalsIgnoreCase(Constants.EMERALD_ADD_CHILD_MEMBER_PAYLOAD)) {
 			jsonParam = emeraldService.addChildRequestBody(paramNames, userSelections);
 			logger.debug(Constants.LOGGER_INFO_PREFIX + " Emerald Add Child Service Body {} " + jsonParam);
@@ -728,48 +731,7 @@ public class InteractionHandlingService {
 			logger.debug(Constants.LOGGER_INFO_PREFIX + "Deduct Request body " + jsonParam);
 		}
 		return utilService.postWSCalling(botWebserviceMessage, jsonParam.toString(), senderId);
-		// return utilService.postWSCallingRT(botWebserviceMessage, jsonParam,
-		// senderId);
-		// }
-
 	}
-
-	/**
-	 * @param messagePayloadList
-	 * @param payload
-	 * @param botInteractionMessage
-	 * @param customerProfile
-	 * @param messenger
-	 * @return original
-	 * 
-	 * 
-	 *         public Map<String, String>
-	 *         getWebServiceHandling(ArrayList<MessagePayload> messagePayloadList,
-	 *         String payload, BotInteractionMessage botInteractionMessage,
-	 *         CustomerProfile customerProfile) { Map<String, String> mapResponse =
-	 *         new HashMap<>(); String senderId = customerProfile.getSenderID();
-	 *         String phoneNumber = customerProfile.getMsisdn(); Long messageId =
-	 *         botInteractionMessage.getMessageId(); Long messageTypeId =
-	 *         botInteractionMessage.getBotMessageType().getMessageTypeId();
-	 *         BotWebserviceMessage botWebserviceMessage =
-	 *         chatBotService.findWebserviceMessageByMessageId(messageId); String
-	 *         url = botWebserviceMessage.getWsUrl(); boolean cacheValue = false;
-	 *         Map<String, String> cachedMap = getFromCachDependOnWebService(url,
-	 *         phoneNumber); if (cachedMap == null || cachedMap.size() == 0) {
-	 *         mapResponse = utilService.getCalling(botWebserviceMessage, senderId,
-	 *         phoneNumber); cacheValue = true;
-	 *         logger.debug(Constants.LOGGER_INFO_PREFIX +
-	 *         Constants.LOGGER_SERVER_RESPONSE); } else { mapResponse = cachedMap;
-	 *         logger.debug(Constants.LOGGER_INFO_PREFIX +
-	 *         Constants.LOGGER_CACHED_RESPONSE); } if
-	 *         (mapResponse.get(Constants.RESPONSE_STATUS_KEY).equals("200")) { //
-	 *         wsSuccessStatusHandling(payload, messagePayloadList, messageTypeId,
-	 *         senderId, mapResponse, url, cacheValue); } else { if
-	 *         (!messagePayloadList.isEmpty()) { messagePayloadList.remove(0); }
-	 *         return new HashMap<>(); } return mapResponse;
-	 * 
-	 *         }
-	 */
 
 	/**
 	 * @param messagePayloadList
@@ -779,7 +741,7 @@ public class InteractionHandlingService {
 	 * @param messenger
 	 * @return
 	 */
-	public ResponseEntity<String> getWebServiceHandling(String payload, BotInteractionMessage botInteractionMessage, CustomerProfile customerProfile) {
+	public ResponseEntity<String> getWebServiceHandling(BotInteractionMessage botInteractionMessage, CustomerProfile customerProfile) {
 		String senderId = customerProfile.getSenderID();
 		String phoneNumber = customerProfile.getMsisdn();
 		Long messageId = botInteractionMessage.getMessageId();
@@ -870,32 +832,6 @@ public class InteractionHandlingService {
 		}
 
 	}
-
-	/*
-	 * private void putInCachDependOnWebService(String url, Map<String, String>
-	 * response, String dial) { if (url.contains(Constants.URL_KEYWORD_PROFILE)) {
-	 * wsResponseCache.addToCentralCache(dial +
-	 * Constants.CACHED_MAP_PROFILE_KEY_SUFFIX, response); } else if
-	 * (url.contains(Constants.URL_KEYWORD_BUNDLE)) {
-	 * wsResponseCache.addToCentralCache(dial +
-	 * Constants.CACHED_MAP_ELIGIPLE_PRODUCT_KEY_SUFFIX, response); } else if
-	 * (url.contains(Constants.URL_KEYWORD_EXTRA)) {
-	 * wsResponseCache.addToCentralCache(dial +
-	 * Constants.CACHED_MAP_ELIGIPLE_EXTRA_KEY_SUFFIX, response); } }
-	 * 
-	 * @SuppressWarnings("unchecked") private Map<String, String>
-	 * getFromCachDependOnWebService(String url, String dial) { Map<String, String>
-	 * mapResponse = new HashMap<>(); if
-	 * (url.contains(Constants.URL_KEYWORD_PROFILE)) { mapResponse = (Map<String,
-	 * String>) wsResponseCache.getCachedValue(dial +
-	 * Constants.CACHED_MAP_PROFILE_KEY_SUFFIX); } else if
-	 * (url.contains(Constants.URL_KEYWORD_BUNDLE)) { mapResponse = (Map<String,
-	 * String>) wsResponseCache.getCachedValue(dial +
-	 * Constants.CACHED_MAP_ELIGIPLE_PRODUCT_KEY_SUFFIX); } else if
-	 * (url.contains(Constants.URL_KEYWORD_EXTRA)) { mapResponse = (Map<String,
-	 * String>) wsResponseCache.getCachedValue(dial +
-	 * Constants.CACHED_MAP_ELIGIPLE_EXTRA_KEY_SUFFIX); } return mapResponse; }
-	 */
 
 	private void putInCachDependOnWebService(String url, ResponseEntity<String> response, String dial) {
 		if (url.contains(Constants.URL_KEYWORD_PROFILE)) {

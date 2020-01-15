@@ -39,6 +39,13 @@ public class UserSelection implements Serializable{
 	private String lastPayload; 
 	private boolean postPaid;
 	private String currentOperation;
+	private String harleyAddonCategory;
+	private String harleyProductName; 
+	private String harleyFafNumbRenewelMode;
+	private String harleyFafNumberValue;
+	private String freeServiceName;
+	private String emearldAddonCategoryId;
+	private String emearldAddonId;
 	
 	public String getSenderId() {
 		return senderId;
@@ -309,6 +316,72 @@ public class UserSelection implements Serializable{
 		this.currentOperation = currentOperation;
 	}
 
+		
+	public String getHarleyAddonCategory() {
+		return harleyAddonCategory;
+	}
+
+	public void setHarleyAddonCategory(String harleyAddonCategory) {
+		this.harleyAddonCategory = harleyAddonCategory;
+	}
+	
+	
+
+	public String getHarleyProductName() {
+		return harleyProductName;
+	}
+
+	public void setHarleyProductName(String harleyProductName) {
+		this.harleyProductName = harleyProductName;
+	}
+	
+
+	public String getHarleyFafNumbRenewelMode() {
+		return harleyFafNumbRenewelMode;
+	}
+
+	public void setHarleyFafNumbRenewelMode(String harleyFafNumbRenewelMode) {
+		this.harleyFafNumbRenewelMode = harleyFafNumbRenewelMode;
+	}
+	
+
+	public String getHarleyFafNumberValue() {
+		return harleyFafNumberValue;
+	}
+
+	public void setHarleyFafNumberValue(String harleyFafNumberValue) {
+		this.harleyFafNumberValue = harleyFafNumberValue;
+	}
+
+	
+	public String getFreeServiceName() {
+		return freeServiceName;
+	}
+
+	public void setFreeServiceName(String freeServiceName) {
+		this.freeServiceName = freeServiceName;
+	}
+
+	
+	
+	public String getEmearldAddonCategoryId() {
+		return emearldAddonCategoryId;
+	}
+
+	public void setEmearldAddonCategoryId(String emearldAddonCategoryId) {
+		this.emearldAddonCategoryId = emearldAddonCategoryId;
+	}
+
+	
+	
+	public String getEmearldAddonId() {
+		return emearldAddonId;
+	}
+
+	public void setEmearldAddonId(String emearldAddonId) {
+		this.emearldAddonId = emearldAddonId;
+	}
+
 	@Override
 	public String toString() {
 		return "UserSelection [senderId=" + senderId + ", originalPayLoad=" + originalPayLoad + ", phoneNumber=" + phoneNumber + ", productIdAndOperationName=" + productIdAndOperationName
@@ -317,9 +390,14 @@ public class UserSelection implements Serializable{
 				+ ", emeraldChildDialToRemove=" + emeraldChildDialToRemove + ", emeraldRateplanProductName=" + emeraldRateplanProductName + ", emeraldDialForDistribute=" + emeraldDialForDistribute
 				+ ", emeraldTraficCaseID=" + emeraldTraficCaseID + ", emeraldDistributeAmount=" + emeraldDistributeAmount + ", emeraldTransferFromDial=" + emeraldTransferFromDial
 				+ ", emeraldTransferToDial=" + emeraldTransferToDial + ", emeraldDistbuteAfterTrans=" + emeraldDistbuteAfterTrans + ", activationCode=" + activationCode
-				+ ", scratcheddNumberForRecharge=" + scratcheddNumberForRecharge + ", akwaKartCategoryName=" + akwaKartCategoryName + ", rateplanIdForMigration=" + rateplanIdForMigration
-				+ ", isSubscribed=" + isSubscribed + ", akwakartProductName=" + akwakartProductName + ", accountDeductionHistory=" + accountDeductionHistory + ", balanceValue=" + balanceValue + "]";
+				+ ", scratcheddNumberForRecharge=" + scratcheddNumberForRecharge + ", akwaKartCategoryName=" + akwaKartCategoryName + ", eventRecevingTimeStamp=" + eventRecevingTimeStamp
+				+ ", rateplanIdForMigration=" + rateplanIdForMigration + ", isSubscribed=" + isSubscribed + ", akwakartProductName=" + akwakartProductName + ", accountDeductionHistory="
+				+ accountDeductionHistory + ", balanceValue=" + balanceValue + ", lastPayload=" + lastPayload + ", postPaid=" + postPaid + ", currentOperation=" + currentOperation
+				+ ", harleyAddonCategory=" + harleyAddonCategory + ", harleyProductName=" + harleyProductName + ", harleyFafNumbRenewelMode=" + harleyFafNumbRenewelMode + ", harleyFafNumberValue="
+				+ harleyFafNumberValue + "]";
 	}
+
+	
 	
 	
 	

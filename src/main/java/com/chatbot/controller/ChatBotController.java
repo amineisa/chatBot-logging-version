@@ -36,7 +36,7 @@ public class ChatBotController {
 	private ChatBotService chatBotService;
 	@Autowired
 	private WebHookEventService webHookEventService;
-	private static int counter = 0;
+	private  int counter = 0;
 	
 
 	private static final Logger logger = LoggerFactory.getLogger(ChatBotController.class);
@@ -55,7 +55,7 @@ public class ChatBotController {
 		logger.debug(Constants.LOGGER_INFO_PREFIX + "Received Messenger Platform callback - payload: {} | signature: {}", payload, signature);
 		if (payload.contains(Constants.FB_JSON_KEY_STANDBY)) {
 			return botStandbyHandling(payload);
-		} else {
+		}else{
 			return webhookEventesHandling(payload, signature);
 		}
 	}

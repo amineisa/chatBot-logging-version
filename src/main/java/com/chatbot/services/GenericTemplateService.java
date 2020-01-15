@@ -63,6 +63,8 @@ public class GenericTemplateService {
 	private EmeraldService emeraldService;
 	@Autowired 
 	private BusinessErrorService businessErrorService;
+	@Autowired
+	private HarleyService harleyService;
 
 	private static final Logger logger = LoggerFactory.getLogger(GenericTemplateService.class);
 
@@ -73,6 +75,11 @@ public class GenericTemplateService {
 		BotGTemplateMessage botGTemplateMessage = chatBotService.findGTemplateMessageByMessageId(messageId);
 		List<BotTemplateElement> botTemplateElementList = chatBotService.findTemplateElementsByGTMsgId(botGTemplateMessage.getGTMsgId());
 		List<Element> elements = new ArrayList<>();
+		if(payload.equalsIgnoreCase(Constants.EXTRA_HARLEY_RATEPLAN_CATEGORIES)) {
+			elements = harleyService.getHarleyAddonBundlePlansCategories(userlocale,chatBotService);
+		}else if(payload.equalsIgnoreCase(Constants.EXTRA_EMERALD_RATEPLAN_CATEGORIES)){
+			elements = emeraldService.getEmeraldAddonBundlePlansCategories(userlocale, chatBotService);
+		}else{
 			for (BotTemplateElement botTemplateElement : botTemplateElementList) {
 				List<BotButton> elementButtonList = chatBotService.findButtonsByTemplateElementId(botTemplateElement.getElementId());
 				List<Button> buttonsList = new ArrayList<>();
@@ -93,18 +100,9 @@ public class GenericTemplateService {
 						title = detailsMap.get(Constants.BUNDLE_NAME_KEY);
 						subtitle = detailsMap.get(Constants.DETAILS_KEY_SUBTITLE);
 						elemnetImageUrl += title + Constants.ELEMENT_PHOTO_EXTENSTION;
-						// display Emerald actions at operations template
 						String productName = jArray.getJSONObject(0).getString(Constants.JSON_KEY_PRODUCT_ID);
-						if (productName.contains(Constants.EMERALD_PRODUCT_FAMILY_NAME)) {
-							UserSelection userSelection = utilService.getUserSelectionsFromCache(customerProfile.getMsisdn());
-							userSelection.setEmeraldRateplanProductName(productName);
-							utilService.updateUserSelectionsInCache(customerProfile.getSenderID(), userSelection);
-							List<Button> emeraldActions = new ArrayList<>();
-							emeraldActions.add(buttonsList.get(0));
-							emeraldActions.add(buttonsList.get(1));
-							PostbackButton emeraldActionButton = PostbackButton.create(getEmeraldButtonLabel(userlocale), Constants.PAYLOAD_EMERALD_ACTIONS);
-							emeraldActions.add(emeraldActionButton);
-							buttonsList = new ArrayList<>(emeraldActions);
+						if (productName.contains(Constants.EMERALD_PRODUCT_FAMILY_NAME) ||productName.contains(Constants.HARLEY_PRODUCT_NAME))  {// Emerald actions 
+							buttonsList = controlElementPerRateplan(customerProfile, userlocale, buttonsList, productName);
 						}
 					} else if (payload.equals(Constants.PAYLOAD_MOBILE_INTERNET_CONTROLLER)) {
 						jArray = jsonObject.getJSONArray(Constants.JSON_KEY_MOBILE_INTERNET);
@@ -130,7 +128,7 @@ public class GenericTemplateService {
 						BotTextResponseMapping botTextResponseMapping = chatBotService.findTextResponseMappingByWsId(wsId).get(0);
 						String[] keys = utilService.getKeysString(botTextResponseMapping, userlocale).split(Constants.COMMA_CHAR);
 						String[] paths = utilService.getPaths(botTextResponseMapping.getCommonPath());
-						Map<String, ArrayList<String>> mapValues = utilService.switchToObjectMode(jsonObject, paths, keys, subtitle, userlocale);
+						Map<String, ArrayList<String>> mapValues = utilService.switchToObjectMode(jsonObject, paths, keys, subtitle);
 						ArrayList<String> values = mapValues.get(Constants.RESPONSE_MAP_MESSAGE_KEY);
 						ArrayList<String> titles = mapValues.get(Constants.RESPONSE_MAP_TITLE_KEY);
 						ArrayList<String> percentageList = new ArrayList<>();
@@ -142,15 +140,17 @@ public class GenericTemplateService {
 							createNoConsumptionTemplate(userlocale, elements, botTemplateElement, buttonsList, msg);
 						} else {
 							for (int i = 0; i < values.size(); i++) {
+								logger.debug("Meter Value = "+values.get(i));
 								title = payload.equalsIgnoreCase(Constants.PAYLOAD_RATEPLAN_ADDONS_CONSUMPTION) ? consumptionNames.get(i) : titles.get(i);
+								logger.debug("Meter Title ="+title);
 								if ((title.equalsIgnoreCase(Constants.MOBILE_INTERNET_CONSUMPTION_NAME_EN) || title.equalsIgnoreCase(Constants.MOBILE_INTERNET_CONSUMPTION_NAME_AR))
 										&& !payload.equalsIgnoreCase(Constants.PAYLOAD_RATEPLAN_DETAILS)) {
 									title = consumptionNames.size() > i ? consumptionNames.get(i) : title;
 								}
 								String perc = String.valueOf(percentageList.get(i));
-								if (perc.contains(Constants.IS_KEY_HAS_DOT)) {
+								/*if (perc.contains(Constants.IS_KEY_HAS_DOT)) {
 									perc = perc.substring(0, perc.indexOf('.'));
-								}
+								}*/
 								elemnetImageUrl = botTemplateElement.getImageUrl() + perc + Constants.ELEMENT_PHOTO_EXTENSTION;
 								element = createElement(buttonsList, elemnetImageUrl, title, values.get(i));
 								elements.add(element);
@@ -163,7 +163,7 @@ public class GenericTemplateService {
 							: Element.create(title, Optional.of(botTemplateElement.getSubTitle().getEnglishText()), empty(), empty(), Optional.of(buttonsList));
 					elements.add(element);
 				}
-			}
+			}}
 		
 		if (botGTemplateMessage.isListTemplate() != null) {
 			return ListTemplate.create(elements);
@@ -173,11 +173,37 @@ public class GenericTemplateService {
 	}
 
 	/**
+	 * @param customerProfile
+	 * @param userlocale
+	 * @param buttonsList
+	 * @param productName
+	 * @return
+	 */
+	public List<Button> controlElementPerRateplan(CustomerProfile customerProfile, String userlocale, List<Button> buttonsList, String productName) {
+		String payload = productName.contains(Constants.HARLEY_PRODUCT_NAME) ? Constants.PAYLOAD_HARLEY_ACTIONS:Constants.PAYLOAD_EMERALD_ACTIONS;
+		String buttonLabel =productName.contains(Constants.HARLEY_PRODUCT_NAME) ? getHarleyActionsButtonLabel(userlocale):getEmeraldActionsButtonLabel(userlocale);
+		UserSelection userSelection = utilService.getUserSelectionsFromCache(customerProfile.getMsisdn());
+		userSelection.setEmeraldRateplanProductName(productName);
+		utilService.updateUserSelectionsInCache(customerProfile.getSenderID(), userSelection);
+		List<Button> emeraldActions = new ArrayList<>();
+		emeraldActions.add(buttonsList.get(0));
+		emeraldActions.add(buttonsList.get(1));
+		PostbackButton emeraldActionButton = PostbackButton.create(buttonLabel,payload );
+		emeraldActions.add(emeraldActionButton);
+		buttonsList = new ArrayList<>(emeraldActions);
+		return buttonsList;
+	}
+
+	/**
 	 * @param userlocale
 	 * @return
 	 */
-	private String getEmeraldButtonLabel(String userlocale) {
+	private String getEmeraldActionsButtonLabel(String userlocale) {
 		return userlocale.contains(Constants.LOCALE_AR) ? "خدمات اميرالد" : "Emerald Services";
+	}
+	
+	private String getHarleyActionsButtonLabel(String userlocale) {
+		return userlocale.contains(Constants.LOCALE_AR) ? "خدمات دماغ تانية" : "Demagh Tanya Services";
 	}
 
 	/**
@@ -269,10 +295,10 @@ public class GenericTemplateService {
 	public Map<String, String> getCommercialNameAndRenewalDateForMainBundle(String userlocale, JSONObject bundleDetails) {
 		String comercialName, renwalDate, details;
 		Map<String, String> detailsMap = new HashMap<>();
-		boolean isHasRenewalDate = hasRenewalDate(bundleDetails);
+		boolean isHasRenewalDate = isRenewelDateNull(bundleDetails);
 		comercialName = jsonUtilService.getArabicOrEnglishValue(bundleDetails.getJSONObject(Constants.JSON_KEY_COMMERCIAL_NAME), userlocale);
 		details = Constants.EMPTY_STRING;
-		if (isHasRenewalDate) {
+		if (!isHasRenewalDate) {
 			renwalDate = jsonUtilService.getRenewalDateValue(bundleDetails.getJSONObject(Constants.JSON_KEY_RENEWAL_DATE), userlocale);
 			details = finalDetails(comercialName, renwalDate, userlocale);
 		} else {
@@ -357,8 +383,8 @@ public class GenericTemplateService {
 
 	}
 
-	public boolean hasRenewalDate(JSONObject bundleDetails) {
-		return bundleDetails.get(Constants.JSON_KEY_RENEWAL_DATE) == null;
+	public static boolean isRenewelDateNull(JSONObject bundleDetails) {
+		return bundleDetails.get(Constants.JSON_KEY_RENEWAL_DATE).toString().equals("null");
 	}
 
 	public void generictemplateWithJsonObject(String payload, String response, ArrayList<MessagePayload> messagePayloadList, CustomerProfile customerProfile, Messenger messenger,
@@ -371,6 +397,10 @@ public class GenericTemplateService {
 		JSONObject jsonResponse = new JSONObject(response);
 		if (payload.equalsIgnoreCase(Constants.PAYLOAD_ACCOUNT_DETAILS)) {
 			accountDetailsRouting(messenger, senderId, jsonResponse);
+		} else if(payload.equalsIgnoreCase(Constants.ALL_FREE_SERVICES_PAYLOAD)){
+			Template gTemplate = harleyService.getEtisalatFreeServicesForHarleyRateplan(response , chatBotService, customerProfile.getLocale());
+			MessagePayload  gPayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(gTemplate));
+			messagePayloadList.add(gPayload);
 		} else if (payload.equalsIgnoreCase(Constants.EMERALD_TRANSFER_AND_DISTRIBUTE_PRODUCTS_PAYLOAD)) {
 			logger.debug(Constants.LOGGER_INFO_PREFIX + "Emerald Parent Trafic Cases for distribute " + response);
 			Template gTemplate = emeraldService.getAllEmeraldTraficCases(new JSONObject(response), customerProfile.getLocale());
@@ -389,6 +419,7 @@ public class GenericTemplateService {
 		} else {
 			JSONArray ratePlan = jsonResponse.getJSONArray(Constants.JSON_KEY_RATEPLAN);
 			JSONArray connect = jsonResponse.getJSONArray(Constants.JSON_KEY_MOBILE_INTERNET);
+			JSONArray ratePlanAddonConsumption = jsonResponse.getJSONArray(Constants.JSON_KEY_RATEPLAN_ADON);
 			JSONArray mobileInternetAddonConsumption = jsonResponse.getJSONArray(Constants.JSON_KEY_MOBILE_INTERNET_ADON);
 			boolean isPostPaid = jsonResponse.getBoolean("postPaid");
 			userSelections.setPostPaid(isPostPaid);
@@ -412,8 +443,7 @@ public class GenericTemplateService {
 				userSelections.setSubscribed(true);
 				ArrayList<String> consumptionNames = new ArrayList<>();
 				if (payload.equalsIgnoreCase(Constants.PAYLOAD_RATEPLAN_ADDONS_CONSUMPTION)) {// Check here
-					// setConsumptionNamesList(userLocale, ratePlanAddonConsumption,
-					// consumptionNames);
+					 setConsumptionNamesList(userLocale, ratePlanAddonConsumption,consumptionNames);
 				} else if (payload.equals(Constants.PAYLOAD_MOBILEINTERNET_ADDONS_CONSUMPTION)) {
 					setConsumptionNamesList(userLocale, mobileInternetAddonConsumption, consumptionNames);
 				}
@@ -544,22 +574,50 @@ public class GenericTemplateService {
 		String userLocale = customerProfile.getLocale();
 		String phoneNumber = customerProfile.getMsisdn();
 		UserSelection userSelections = utilService.getUserSelectionsFromCache(senderId);
+		//MessagePayload messagePayload;
 		if (payload.equalsIgnoreCase(Constants.PALOAD_SALLEFNY)) {
-			JSONArray products = new JSONArray(response);
-			GenericTemplate gTemplate = sallefnyService.sallefnyHandling(products, userLocale);
-			MessagePayload messagePayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(gTemplate));
+			MessagePayload messagePayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(sallefnyService.sallefnyHandling(response, userLocale)));
 			messagePayloadList.add(messagePayload);
-		} else if (payload.contains(Constants.PAYLOAD_MIGRATE)) {
-			Template gTemplate = migrationService.migrationHandling(payload, phoneNumber, userLocale, new JSONArray(response));
-			MessagePayload gPayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(gTemplate));
+		} else if(payload.equalsIgnoreCase(Constants.EMERALD_ADDON_CATEGORY_PREFEX)){
+			MessagePayload gPayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(emeraldService.getEmeraldRateplanRateplanAddosAccordingToCategoryId(response, userSelections, userLocale)));
+			messagePayloadList.add(gPayload);
+		}else if (payload.contains(Constants.PAYLOAD_MIGRATE)) {
+			MessagePayload gPayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(migrationService.migrationHandling(payload, phoneNumber, userLocale, new JSONArray(response))));
 			messagePayloadList.add(gPayload);
 		} else if (payload.equalsIgnoreCase(Constants.BALANCE_DEDUCTION_AKWAKART)) {
-			Template gTemplate = akwaKartService.checkEligibilityAndReturnProducts(response, userLocale);
-			MessagePayload gPayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(gTemplate));
+			MessagePayload gPayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(akwaKartService.checkEligibilityAndReturnProducts(response, userLocale)));
+			messagePayloadList.add(gPayload);
+		} else if(payload.equalsIgnoreCase(Constants.HARLEY_ADDON_CATEGORY_PREFEX)) {
+			MessagePayload gPayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(harleyService.harleyAddonRateplansByCategoryId(senderId,response,userLocale)));
 			messagePayloadList.add(gPayload);
 		} else {
 			customerEligibilityHandling(payload, senderId, userLocale, messagePayloadList, phoneNumber, userSelections, response);
 		}
+		
+		
+		/*switch (payload) {
+		case Constants.PALOAD_SALLEFNY:
+			messagePayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(sallefnyService.sallefnyHandling(response, userLocale)));
+			messagePayloadList.add(messagePayload);
+			break;
+		case Constants.PAYLOAD_MIGRATE:
+			messagePayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(migrationService.migrationHandling(payload, phoneNumber, userLocale, new JSONArray(response))));
+			messagePayloadList.add(messagePayload);
+			break;
+		case Constants.BALANCE_DEDUCTION_AKWAKART:
+			messagePayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(akwaKartService.checkEligibilityAndReturnProducts(response, userLocale)));
+			messagePayloadList.add(messagePayload);
+			break;
+		case Constants.HARLEY_ADDON_CATEGORY_PREFEX:
+			messagePayload = MessagePayload.create(senderId, MessagingType.RESPONSE, TemplateMessage.create(harelyService.harleyAddonRateplansByCategoryId(senderId,response,userLocale)));
+			messagePayloadList.add(messagePayload);
+			break;
+		default:
+			customerEligibilityHandling(payload, senderId, userLocale, messagePayloadList, phoneNumber, userSelections, response);
+			break;
+		}*/
+		
+	
 
 	}
 
@@ -606,5 +664,6 @@ public class GenericTemplateService {
 			}
 		}
 	}
-
+	
+	
 }

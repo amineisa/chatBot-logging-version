@@ -95,7 +95,7 @@ public class Configuration {
 		cfg.getNetworkConfig().getJoin().getTcpIpConfig().addMember(secondServerIp).setEnabled(true);
 		cfg.setInstanceName(Constants.HAZEL_OBJECT_NAME);
 		logger.info("Hazelcast Shiro session persistence initialized.");
-		//	return Hazelcast.getOrCreateHazelcastInstance(cfg).getMap(Constants.USER_SELECTION_MAP_KEY);
+		//return Hazelcast.getOrCreateHazelcastInstance(cfg).getMap(Constants.USER_SELECTION_MAP_KEY);
 		return Hazelcast.newHazelcastInstance(cfg).getMap(Constants.USER_SELECTION_MAP_KEY);
 
 	}
